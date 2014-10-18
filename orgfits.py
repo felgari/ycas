@@ -19,16 +19,7 @@
 import sys
 import os
 import shutil
-
-FILENAME_EXT = 'fit'
-FILENAME_SEP = '-'
-BIAS_STRING = 'bias'
-FLAT_STRING = 'flat'
-FILTERS = [ 'V', 'B', 'R', 'CN', 'Cont4430', 'Cont6840' ]
-
-BIAS_DIRECTORY = 'bias'
-FLAT_DIRECTORY = 'flat'
-DATA_DIRECTORY = 'data'
+import constants
 
 def get_image_filter(filename):
     """ Returns the filter indicated in the filename if any. """

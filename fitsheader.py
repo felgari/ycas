@@ -20,9 +20,7 @@ import sys
 import os
 import glob
 import pyfits
-
-DATA_DIRECTORY = 'data'
-DATA_FILE_FINAL_NAME = "_final.fit"
+import constants
 
 NO_VALUE = "NO VALUE"
 
@@ -54,7 +52,7 @@ def summarize_fit_headers():
                 #print "Found a directory for data: " + full_dir
 
                 # Get the list of files.
-                files = glob.glob(os.path.join(full_dir, "*" + DATA_FILE_FINAL_NAME))
+                files = glob.glob(os.path.join(full_dir, "*" + DATA_FINAL_PATTERN))
                 #print "Found " + str(len(files)) + " data files"
                 
                 for fl in files:

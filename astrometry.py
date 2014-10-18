@@ -21,27 +21,7 @@ import os
 import glob
 import pyfits
 import subprocess32 as subprocess
-
-DATA_DIRECTORY = 'data'
-
-DATA_FINAL_PATTERN = "_final.fit"
-
-DATANAME_CHAR_SEP = "-"
-
-FIRST_DATA_IMG = "001"
-
-FITS_FILE_EXTENSION = '.fit'
-
-CATALOGUE_FILE_EXTENSION = '.cat'
-
-INDEX_FILE_EXTENSION = '-indx.xyls'
-
-ASTROMETRY_COMMAND = "solve-field"
-
-# Overwrite previous files and limit the number of objects to look at"
-ASTROMETRY_PARAMS = "--overwrite -d 40"
-
-ASTROMETRY_WCS_TABLE_INDEX = 1
+import constants
 
 def write_xy_catalog(table_file_name, catalogue_file_name):
 
@@ -50,7 +30,7 @@ def write_xy_catalog(table_file_name, catalogue_file_name):
 
         print "X,Y coordinates file exists"
         print "Table file name: " + table_file_name
-        print "Catalogue file name: " + catalogue_file_name
+        print "Catalog file name: " + catalogue_file_name
 
         # Open the FITS file received.
         f = pyfits.open(table_file_name) 
@@ -116,7 +96,7 @@ def do_astrometry():
                 # Get the astrometry for each file.
                 for fl in files_to_catalog:
 
-                    catalog_name = fl.replace(DATA_FINAL_PATTERN, CATALOGUE_FILE_EXTENSION)
+                    catalog_name = fl.replace(DATA_FINAL_PATTERN, "." + CATALOG_FILE_EXTENSION)
 
                     # Check if the catalog file already exists.
                     if os.path.exists(catalog_name) == False :
@@ -137,7 +117,7 @@ def do_astrometry():
 
                             # From wcs file generates a text file with x,y values.
                             write_xy_catalog( \
-                                fl.replace(FITS_FILE_EXTENSION, INDEX_FILE_EXTENSION), \
+                                fl.replace("." + FIT_FILE_EXT, INDEX_FILE_EXTENSION), \
                                 catalog_name)
                     else:
                         print "Catalog file already exists: " + catalog_name

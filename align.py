@@ -19,15 +19,7 @@
 import sys
 import os
 import glob
-
-DATA_DIRECTORY = 'data'
-
-DATA_FINAL_PATTERN = "_final.fit"
-DATA_ALIGN_PATTERN = "_align.fit"
-
-CATALOGUE_FILE_EXTENSION = '.cat'
-
-DATANAME_CHAR_SEP = "-"
+import constants
 
 def align_images():
     print "Aligning images ..."
@@ -50,7 +42,7 @@ def align_images():
 
                 # Get the list of catalog files ignoring hidden files.
                 files_full_path = \
-                    [f for f in glob.glob(os.path.join(full_dir, "*" + CATALOGUE_FILE_EXTENSION)) \
+                    [f for f in glob.glob(os.path.join(full_dir, "*." + CATALOG_FILE_EXTENSION)) \
                     if not os.path.basename(f).startswith('.')]
                 print "Found " + str(len(files_full_path)) + " catalog files"
                 
@@ -77,7 +69,7 @@ def align_images():
                         align_images = \
                             [s.replace(DATA_FINAL_PATTERN, DATA_ALIGN_PATTERN) for s in data_images ]
 
-                        catalog = reference_image.replace(DATA_FINAL_PATTERN, CATALOGUE_FILE_EXTENSION)
+                        catalog = reference_image.replace(DATA_FINAL_PATTERN, "." + CATALOG_FILE_EXTENSION)
 
                         print "- Catalog: " + catalog
                         print "- Data images: " + str(data_images)

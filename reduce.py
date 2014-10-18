@@ -20,21 +20,7 @@ import sys
 import os
 import glob
 from pyraf import iraf
-
-FILENAME_EXT = "fit"
-
-BIAS_DIRECTORY = "bias"
-FLAT_DIRECTORY = 'flat'
-DATA_DIRECTORY = 'data'
-
-PATH_FROM_FLAT_TO_BIAS = os.path.join("..", "..", BIAS_DIRECTORY)
-PATH_FROM_DATA_TO_BIAS = os.path.join("..", "..", BIAS_DIRECTORY)
-PATH_FROM_DATA_TO_FLAT = os.path.join("..", "..", FLAT_DIRECTORY)
-
-MASTERBIAS_FILENAME = "bias_avg.fit"
-MASTERFLAT_FILENAME = "flat_avg.fit"
-WORK_FILE_SUFFIX = "_work"
-DATA_FINAL_SUFFIX = "_final"
+import constants
 
 LIST_OF_FILES_MAX_LENGTH = 20
 

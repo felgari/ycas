@@ -21,12 +21,7 @@ import os
 import glob
 from pyraf import iraf
 from pyraf.iraf import noao, digiphot, apphot
-
-DATA_DIRECTORY = "data"
-FIT_FILE_EXT = "fit"
-CAT_FILE_EXT = "cat"
-MAGNITUDE_FILE_EXT = "mag"
-DATA_FINAL_SUFFIX = "_final"
+import constants
 
 def init_iraf():
     # The display of graphics is not used, so skips Pyraf graphics 
