@@ -19,7 +19,7 @@
 import sys
 import os
 import shutil
-import constants
+from constants import *
 
 def get_image_filter(filename):
     """ Returns the filter indicated in the filename if any. """

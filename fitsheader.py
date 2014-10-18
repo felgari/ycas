@@ -20,7 +20,7 @@ import sys
 import os
 import glob
 import pyfits
-import constants
+from constants import *
 
 NO_VALUE = "NO VALUE"
 

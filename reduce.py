@@ -20,7 +20,7 @@ import sys
 import os
 import glob
 from pyraf import iraf
-import constants
+from constants import *
 
 LIST_OF_FILES_MAX_LENGTH = 20
 

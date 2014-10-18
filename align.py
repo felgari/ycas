@@ -19,7 +19,7 @@
 import sys
 import os
 import glob
-import constants
+from constants import *
 
 def align_images():
     print "Aligning images ..."

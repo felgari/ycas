@@ -21,7 +21,7 @@ import os
 import glob
 import pyfits
 import subprocess32 as subprocess
-import constants
+from constants import *
 
 def write_xy_catalog(table_file_name, catalogue_file_name):
 

@@ -21,7 +21,7 @@ import os
 import glob
 from pyraf import iraf
 from pyraf.iraf import noao, digiphot, apphot
-import constants
+from constants import *
 
 def init_iraf():
     # The display of graphics is not used, so skips Pyraf graphics 
