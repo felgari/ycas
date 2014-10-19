@@ -3,6 +3,8 @@
 
 # Copyright (c) 2014 Felipe Gallego. All rights reserved.
 #
+# This file is part of ycas: https://github.com/felgari/ycas
+#
 # This is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -24,14 +26,15 @@ FLAT_DIRECTORY = 'flat'
 DATA_DIRECTORY = 'data'
 
 # File extensions.
+FIT_FILE_EXT = "fit"
+CATALOG_FILE_EXT = 'cat'
+MAGNITUDE_FILE_EXT = "mag"
+CSV_FILE_EXT = "csv"
+TSV_FILE_EXT = "tsv"
+RDLS_FILE_EXT = "rdls"
+INDEX_FILE_PATTERN = '-indx.xyls'
 DATA_FINAL_PATTERN = "_final.fit"
 DATA_ALIGN_PATTERN = "_align.fit"
-FILENAME_EXT = 'fit'
-CATALOG_FILE_EXTENSION = 'cat'
-INDEX_FILE_EXTENSION = '-indx.xyls'
-FIT_FILE_EXT = "fit"
-CAT_FILE_EXT = "cat"
-MAGNITUDE_FILE_EXT = "mag"
 
 # Directory paths.
 PATH_FROM_FLAT_TO_BIAS = os.path.join("..", "..", BIAS_DIRECTORY)

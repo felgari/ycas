@@ -3,6 +3,8 @@
 
 # Copyright (c) 2014 Felipe Gallego. All rights reserved.
 #
+# This file is part of ycas: https://github.com/felgari/ycas
+#
 # This is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -33,10 +35,10 @@ def write_xy_catalog(table_file_name, catalogue_file_name):
         print "Catalog file name: " + catalogue_file_name
 
         # Open the FITS file received.
-        f = pyfits.open(table_file_name) 
+        fits_file = pyfits.open(table_file_name) 
 
         # Assume the first extension is a table.
-        tbdata = f[ASTROMETRY_WCS_TABLE_INDEX].data  
+        tbdata = fits_file[ASTROMETRY_WCS_TABLE_INDEX].data  
 
         # Write x,y coordinates to a text file.
         text_file = open(catalogue_file_name, "w")
@@ -45,6 +47,8 @@ def write_xy_catalog(table_file_name, catalogue_file_name):
             text_file.write(str(tbdata[i][0]) + " " + str(tbdata[i][1]) + "\n")
 
         text_file.close()
+        
+        fits_file.close()
 
     else:
         print "X,Y coordinates file does not exists so no catalog file is created."
@@ -81,14 +85,14 @@ def do_astrometry():
                 # Remove duplicates.
                 unique_data_names = list(set(data_names))
 
-                # The name of the directory that contains the imagen matches
+                # The name of the directory that contains the image matches
                 # the name of the filter.
                 filter_name = split_path[-1]
 
                 # Complete the name of all files.
                 files_to_catalog = \
                     [ os.path.join(full_dir, udn + DATANAME_CHAR_SEP + FIRST_DATA_IMG + \
-                        filter_name + DATA_FINAL_PATTERN) \
+                        filter_name + DATA_ALIGN_PATTERN) \
                         for udn in unique_data_names ]
 
                 print "Files to catalog: " + str(files_to_catalog)
@@ -96,7 +100,7 @@ def do_astrometry():
                 # Get the astrometry for each file.
                 for fl in files_to_catalog:
 
-                    catalog_name = fl.replace(DATA_FINAL_PATTERN, "." + CATALOG_FILE_EXTENSION)
+                    catalog_name = fl.replace(DATA_FINAL_PATTERN, "." + CATALOG_FILE_EXT)
 
                     # Check if the catalog file already exists.
                     if os.path.exists(catalog_name) == False :
@@ -108,7 +112,7 @@ def do_astrometry():
                         return_code = subprocess.call(command, \
                             shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-                        print "Execution return code: " + str(return_code)
+                        print "Astrometry execution return code: " + str(return_code)
 
                         number_of_images += 1
 
@@ -117,7 +121,7 @@ def do_astrometry():
 
                             # From wcs file generates a text file with x,y values.
                             write_xy_catalog( \
-                                fl.replace("." + FIT_FILE_EXT, INDEX_FILE_EXTENSION), \
+                                fl.replace("." + FIT_FILE_EXT, INDEX_FILE_PATTERN), \
                                 catalog_name)
                     else:
                         print "Catalog file already exists: " + catalog_name

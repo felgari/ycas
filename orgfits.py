@@ -3,6 +3,8 @@
 
 # Copyright (c) 2014 Felipe Gallego. All rights reserved.
 #
+# This file is part of ycas: https://github.com/felgari/ycas
+#
 # This is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -26,7 +28,7 @@ def get_image_filter(filename):
 
     filtername = ''
 
-    filename_no_ext = filename[:-len('.' + FILENAME_EXT)]    
+    filename_no_ext = filename[:-len('.' + FIT_FILE_EXT)]    
 
     for f in FILTERS:
         index = filename_no_ext.rfind(f)
@@ -101,7 +103,7 @@ def organize_files():
             # without the initial dot.
             filext = os.path.splitext(fn)[-1][1:]
 
-            if filext == FILENAME_EXT:
+            if filext == FIT_FILE_EXT:
                 # Analyze name.
                 print "Analyzing: " + os.path.join(path, fn)
                 analyze_name(fn, path)

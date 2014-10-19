@@ -3,6 +3,8 @@
 
 # Copyright (c) 2014 Felipe Gallego. All rights reserved.
 #
+# This file is part of ycas: https://github.com/felgari/ycas
+#
 # This is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -19,8 +21,21 @@
 import sys
 import os
 import glob
+from pyraf import iraf
+from pyraf.iraf import proto
 from constants import *
 
+def set_align_pars():
+    
+    # Set imalign parameters.
+    iraf.imalign.boxsize = 11
+    iraf.imalign.bigbox = 25
+    iraf.imalign.niterate = 3
+    iraf.imalign.shiftimage = "yes"
+    iraf.imalign.interp_type = "linear"
+    iraf.imalign.boundary_typ = "nearest"
+    iraf.imalign.verbose = "no"
+  
 def align_images():
     print "Aligning images ..."
 
@@ -42,7 +57,7 @@ def align_images():
 
                 # Get the list of catalog files ignoring hidden files.
                 files_full_path = \
-                    [f for f in glob.glob(os.path.join(full_dir, "*." + CATALOG_FILE_EXTENSION)) \
+                    [f for f in glob.glob(os.path.join(full_dir, "*." + CATALOG_FILE_EXT)) \
                     if not os.path.basename(f).startswith('.')]
                 print "Found " + str(len(files_full_path)) + " catalog files"
                 
@@ -50,7 +65,7 @@ def align_images():
                 catalog_names = [ os.path.basename(f[0:f.find(DATANAME_CHAR_SEP)]) \
                                     for f in files_full_path ]
 
-                print "Catalogos: " + str(catalog_names)
+                print "Catalogs: " + str(catalog_names)
 
                 # Align the images corresponding to each catalog.
                 for cn in catalog_names:
@@ -64,19 +79,29 @@ def align_images():
                         # Sort the images by name.
                         data_images.sort()
 
+                        # The reference image is the first one.
                         reference_image = data_images[0]
+                        
+                        # Remove the first image from the list to align.
+                        data_images = data_images[1:]
 
+                        # Get the names of the aligned images.
                         align_images = \
                             [s.replace(DATA_FINAL_PATTERN, DATA_ALIGN_PATTERN) for s in data_images ]
 
-                        catalog = reference_image.replace(DATA_FINAL_PATTERN, "." + CATALOG_FILE_EXTENSION)
+                        catalog = reference_image.replace(DATA_FINAL_PATTERN, "." + CATALOG_FILE_EXT)
+                        
+                        # Perform imalign on images one by one.
+                        for i in range(len(data_images)):
+                            
+                            image = data_images[i]
+                            aligned_image = align_images[i]
 
-                        print "- Catalog: " + catalog
-                        print "- Data images: " + str(data_images)
-                        print "- Reference image: " + reference_image
-                        print "- Align files: " + str(align_images)
-
-                        #pyraf.imalin(data_images, reference_image, catalog, align_images)
+                            try:
+                                iraf.imalign(image, reference_image, catalog, aligned_image, Stdout=1)
+                            except iraf.IrafError as exc:
+                                print "Error executing imalign on image: " + image
+                                print "Iraf error is: " + str(exc)   
                     else:
                         print "Only 1 data image, alignment is not necessary."
 
@@ -93,6 +118,8 @@ def main(argv=None):
 
     if argv is None:
         argv = sys.argv
+        
+    set_align_pars()
 
     # Calculate the x,y coordinates of each object in the data images.
     align_images()
@@ -101,4 +128,3 @@ def main(argv=None):
 if __name__ == "__main__":
 
     sys.exit(main())
-

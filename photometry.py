@@ -3,6 +3,8 @@
 
 # Copyright (c) 2014 Felipe Gallego. All rights reserved.
 #
+# This file is part of ycas: https://github.com/felgari/ycas
+#
 # This is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -22,6 +24,8 @@ import glob
 from pyraf import iraf
 from pyraf.iraf import noao, digiphot, apphot
 from constants import *
+
+TXDUMP_FIELDS = "id,xc,yc,mag,merr"
 
 def init_iraf():
     # The display of graphics is not used, so skips Pyraf graphics 
@@ -56,17 +60,7 @@ def save_parameters():
     iraf.centerpars.saveParList(filename='center.par')
     iraf.datapars.saveParList(filename='data.par')
     iraf.fitskypars.saveParList(filename='fitsky.par')
-    iraf.photpars.saveParList(filename='phot.par')
-    
-def get_work_file_names(cat_file):  
-    
-    image_file_name = \
-        cat_file.replace("." + CAT_FILE_EXT, DATA_FINAL_SUFFIX + "." + FIT_FILE_EXT)
-    
-    output_mag_file_name = \
-        cat_file.replace("." + CAT_FILE_EXT, "." + MAGNITUDE_FILE_EXT)
-    
-    return image_file_name, output_mag_file_name  
+    iraf.photpars.saveParList(filename='phot.par') 
 
 def do_phot(image_file_name, catalog_file_name, output_mag_file_name):
 
@@ -77,9 +71,13 @@ def do_phot(image_file_name, catalog_file_name, output_mag_file_name):
     print "Calculating magnitudes for: " + image_file_name + \
         " in " + output_mag_file_name
         
-    iraf.phot(image = image_file_name, 
-                coords = catalog_file_name, 
-                output = output_mag_file_name)
+    try:
+        iraf.phot(image = image_file_name, 
+                    coords = catalog_file_name, 
+                    output = output_mag_file_name)
+    except iraf.IrafError as exc:
+        print "Error executing phot on : " + image_file_name 
+        print "Iraf error is: " + str(exc)
 
 def do_photometry():    
     # Walk from current directory.
@@ -96,15 +94,72 @@ def do_photometry():
                 print "Found a directory for data: " + full_dir
 
                 # Get the list of catalog files.
-                files = glob.glob(os.path.join(full_dir, "*." + CAT_FILE_EXT))
-                print "Found " + str(len(files)) + " catalog files"
+                catalog_files = glob.glob(os.path.join(full_dir, "*." + CATALOG_FILE_EXT))
+                print "Found " + str(len(catalog_files)) + " catalog files"
                 
-                for cat_file in files:
-                    image_file_name, output_mag_file_name = \
-                        get_work_file_names(cat_file)
-                 
-                    do_phot(image_file_name, cat_file, output_mag_file_name)           
+                # Each catalog indicates one or more images.
+                for cat_file in catalog_files:
+                    
+                    # The images used are the aligned ones with a name that matches
+                    # the name of the catalog, so the catalog references are valid
+                    # for all these images.
+                    object_name = cat_file[0:cat_file.find(DATANAME_CHAR_SEP)]
+                     
+                    image_file_pattern = object_name + "*" + DATA_ALIGN_PATTERN
+                    
+                    images_of_catalog = glob.glob(image_file_pattern)
+                        
+                    print "Found " + str(len(images_of_catalog)) + " images for this catalog."
+                        
+                    # Calculate the magnitudes for each image related to the catalog.
+                    for image in images_of_catalog:
+                            
+                        output_mag_file_name = \
+                            image.replace(DATA_ALIGN_PATTERN, 
+                                                "." + MAGNITUDE_FILE_EXT)
+                     
+                        do_phot(image, cat_file, output_mag_file_name)    
+                    
+def txdump_photometry_info():
+    # Walk from current directory.
+    for path,dirs,files in os.walk('.'):
+        
+        # Process only directories without subdirectories.
+        if len(dirs) == 0:
+            split_path = path.split(os.sep) 
+            
+            # Check if current directory is for data images.
+            if split_path[-2] == DATA_DIRECTORY:
+                # Get the full path of the directory.                
+                full_dir = path
+                print "Found a directory for data: " + full_dir
 
+                # Get the list of magnitude files.
+                mag_files = glob.glob(os.path.join(full_dir, "*." + MAGNITUDE_FILE_EXT))
+                print "Found " + str(len(mag_files)) + " magnitude files"    
+                
+                # Reduce each data file one by one.
+                for mfile in mag_files:                  
+    
+                    # Get the name of the file where the magnitude data will be saved.
+                    mag_dest_file_name = \
+                        mfile.replace("." + MAGNITUDE_FILE_EXT, \
+                                      MAGNITUDE_FILE_EXT + "." + CSV_FILE_EXT)
+                    
+                    # Remove the destiny file if exists.
+                    if os.path.exists(mag_dest_file_name):
+                        os.remove(mag_dest_file_name)
+                    
+                    mag_dest_file = open(mag_dest_file_name, 'w' )
+                    
+                    try:
+                        iraf.txdump(mfile, fields=TXDUMP_FIELDS, expr='yes', Stdout=mag_dest_file)
+                    except iraf.IrafError as exc:
+                        print "Error executing txdump to get: " + mag_dest_file_name
+                        print "Iraf error is: " + str(exc)
+                        
+                    mag_dest_file.close()
+                           
 def main(argv=None):
     """ main function.
 
@@ -122,10 +177,14 @@ def main(argv=None):
     # Init iraf package.
     init_iraf()
 
+    # Set the parameters for photometry.
     set_phot_pars()
 
     # Calculate the photometry.
     do_photometry()
+    
+    # Export photometry info to a text file with only the columns needed.
+    txdump_photometry_info()
 
 # Where all begins ...
 if __name__ == "__main__":
