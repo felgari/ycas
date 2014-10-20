@@ -18,6 +18,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+"""
+This module organize the files to process into different directories
+depending on the type of image: bias, flat or data.
+The module assume that images are initially stored in directories that 
+corresponds to the day which were taken.
+Into each day the images are organized in a directory for bias, another
+for flats anf another for data.
+Also flats and data images are organized in different subdirectories,
+one for each filter. 
+"""
+
 import sys
 import os
 import shutil
