@@ -18,63 +18,95 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+"""
+This module performs the reduction of images. Walk the directories looking for
+bias, flat and data images.
+For bias images calculates the average bias.
+For flats images, subtract the bias and calculates the average flat for each filter.
+Finally, to each data image subtract bias and divide by the flat corresponding to
+its filter.
+"""
+
 import sys
 import os
 import glob
 from pyraf import iraf
 from constants import *
 
-LIST_OF_FILES_MAX_LENGTH = 20
-
 def do_masterbias():
-    print "Doing masterbias ..."
+	""" Calculation of all the masterbias files.
+	
+	This function search for bias files from current directory.
+	The bias images are located in specific directories that only
+	contains bias images and have a specific denomination, so searching
+	for bias files is searching these directories.
+	Once a directory for bias had been found a masterbias is calculated
+	with an average operation using all the bias files.
+	
+	"""
+
+	print "Doing masterbias ..."
 
     # Walk from current directory.
-    for path,dirs,files in os.walk('.'):
-
-        # Check if current directory is for bias fits.
-        for dr in dirs:
-
-            if dr == BIAS_DIRECTORY:
-
-                # Get the full path of the directory.                
-                full_dir = os.path.join(path, dr)
-                print "Found a directory for 'bias': " + full_dir
-
-                # Get the list of files.
-                files = glob.glob(os.path.join(full_dir, "*." + FIT_FILE_EXT))
-                print "Found " + str(len(files)) + " bias files"
-
-                # Buid the masterbias file name.
-                masterbias_name = os.path.join(full_dir, MASTERBIAS_FILENAME) 
-                
-                # Check if masterbias already exists.
-                if os.path.exists(masterbias_name) == True:
-                    print "Masterbias file exists, " + masterbias_name + \
-                        " so resume to next directory."
-                else:
-                    # Put the files list in a string.
-                    list_of_files = str(files).translate(None, "[]\'")
-
-                    # Getting statistics for bias files.
-                    means = iraf.imstat(list_of_files, fields='mean', Stdout=1)
-                    means = means[1:]
-                    mean_strings = [str(m).translate(None, ",\ ") for m in means]
-                    mean_values = [float(m) for m in mean_strings]                
-
-                    print "Bias images - Max. mean: " + str(max(mean_values)) + \
-                        " Min. mean: " + str(min(mean_values))
-
-                    print "Creating bias file: " + masterbias_name
-
-                    # Combine all the bias files.
-                    try:
-                        iraf.imcombine(list_of_files, masterbias_name, Stdout=1)
-                    except iraf.IrafError as exc:
-                        print "Error executing imcombine: Combining bias with: " + list_of_files  
-                        print "Iraf error is: " + str(exc)                      
+	for path,dirs,files in os.walk('.'):
+		
+		# Check if current directory is for bias fits.
+		for dr in dirs:
+			if dr == BIAS_DIRECTORY:
+				
+				# Get the full path of the directory.                
+				full_dir = os.path.join(path, dr)
+				print "Found a directory for 'bias': " + full_dir
+	
+	            # Get the list of files.
+				files = glob.glob(os.path.join(full_dir, "*." + FIT_FILE_EXT))
+				print "Found " + str(len(files)) + " bias files"
+	
+				# Build the masterbias file name.
+				masterbias_name = os.path.join(full_dir, MASTERBIAS_FILENAME) 
+	            
+	            # Check if masterbias already exists.
+				if os.path.exists(masterbias_name) == True:
+					print "Masterbias file exists, " + masterbias_name + \
+						" so resume to next directory."
+				else:
+					# Put the files list in a string.
+					list_of_files = str(files).translate(None, "[]\'")
+	
+					# Getting statistics for bias files.
+					means = iraf.imstat(list_of_files, fields='mean', Stdout=1)
+	                means = means[1:]
+	                mean_strings = [str(m).translate(None, ",\ ") for m in means]
+	                mean_values = [float(m) for m in mean_strings]                
+	
+	                print "Bias images - Max. mean: " + str(max(mean_values)) + \
+	                    " Min. mean: " + str(min(mean_values))
+	
+	                print "Creating bias file: " + masterbias_name
+	
+	                # Combine all the bias files.
+	                try:
+	                    iraf.imcombine(list_of_files, masterbias_name, Stdout=1)
+	                except iraf.IrafError as exc:
+	                    print "Error executing imcombine: Combining bias with: " + list_of_files  
+	                    print "Iraf error is: " + str(exc)                      
 
 def do_masterflat():
+    """ Calculation of all the masterflat files.
+	
+	This function search for flat files from current directory.
+	The flat images are located in specific directories that only
+	contains flat images and have a specific denomination, so searching
+	for flat files is searching these directories.
+	Usually data images are taken using differente filters, so flat images
+	are taken using the same filters, and into each flat directory the flat
+	images are divides in different directories, one for each filter.
+	Once a directory for flat had been found, a bias subtraction is performed
+	with each flat image. Finally a masterflat is calculated for each flat 
+	directory with an average operation using all the bias files.
+	
+    """
+    
     print "Doing masterflat ..."
 
     # Walk from current directory.
@@ -131,7 +163,21 @@ def do_masterflat():
                         print "Iraf error is: " + str(exc)
                         
 def reduce_data():
-    
+    """ Reduction of all data images.
+	
+	This function search data images to reduce then. The data images are 
+	located in specific directories that only contains data images.
+	Once a data images directory has been found, the directory that contains
+	the bias and flats images that are related to that data images are located
+	These directories of bias and flats are located in specific locations after
+	the directory of data images.
+	For each data image a bias subtraction and a subsequent division by the 
+	flat is performed.
+	The resulting image is saved in the same directory but with a different
+	name to keep the original file.
+	
+	"""
+	
     print "Reducing data ..."
 
     # Walk from current directory.
@@ -211,10 +257,13 @@ def main(argv=None):
     # Load the images package and does not show any output of the tasks.
     iraf.images(_doprint=0)
 
+	# Process bias files to obtain the average bias.
     do_masterbias()
 
+	# Process flat files to subtract bias from then and calculate the average flat.
     do_masterflat()
 
+	# Reduce data images applying bias and flats.
     reduce_data()
 
 # Where all begins ...

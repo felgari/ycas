@@ -18,6 +18,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+"""
+This module calculates the photometry of the objects detected previously
+by means of astrometry in a set of data images.
+The photometry values calculated are stored in a text file that contains
+all the measures for the objects of an image.
+"""
+
 import sys
 import os
 import glob
@@ -28,6 +35,12 @@ from constants import *
 TXDUMP_FIELDS = "id,xc,yc,mag,merr"
 
 def init_iraf():
+    """
+    
+    This function initializes the pyraf environment.
+    
+    """
+    
     # The display of graphics is not used, so skips Pyraf graphics 
     # initialization and run in terminal-only mode to avoid warning messages.
     os.environ['PYRAF_NO_DISPLAY'] = '1'
@@ -45,6 +58,13 @@ def init_iraf():
     iraf.phot.verify = "no"
 
 def set_phot_pars():
+    """
+    
+    This function sets the pyraf parameters used to perform
+    the photometry of images.
+    
+    """        
+    
     # Set photometry parameters.
     iraf.photpars.apertures = 14
     iraf.fitskypars.annulus = 25
@@ -55,6 +75,11 @@ def set_phot_pars():
     iraf.datapars.airmass = "AIRMASS"
 
 def save_parameters():
+    """
+    
+    This function saves the parameters used to do the photometry.
+    
+    """    
     
     # Save parameters in files.
     iraf.centerpars.saveParList(filename='center.par')
@@ -63,7 +88,14 @@ def save_parameters():
     iraf.photpars.saveParList(filename='phot.par') 
 
 def do_phot(image_file_name, catalog_file_name, output_mag_file_name):
-
+    """
+    
+    This function calculates the photometry of the images. 
+    Receives the image to use, a catalog with the position of the objects
+    contained in the image and the name of the output file.
+    
+    """
+    
     # If magnitude file exists, remove it to avoid error.
     if os.path.exists(output_mag_file_name):
         os.remove(output_mag_file_name)
@@ -79,7 +111,18 @@ def do_phot(image_file_name, catalog_file_name, output_mag_file_name):
         print "Error executing phot on : " + image_file_name 
         print "Iraf error is: " + str(exc)
 
-def do_photometry():    
+def do_photometry():   
+    """
+    
+    This function walk the directories searching for catalog files
+    that contains the x,y coordinates of the objects detected by the
+    astrometry. 
+    For each catalog the corresponding data image is located and passes
+    along with the catalog to a function that calculates the photometry
+    of the objects in the catalog file.
+    
+    """
+    
     # Walk from current directory.
     for path,dirs,files in os.walk('.'):
         
@@ -105,7 +148,7 @@ def do_photometry():
                     # for all these images.
                     object_name = cat_file[0:cat_file.find(DATANAME_CHAR_SEP)]
                      
-                    image_file_pattern = object_name + "*" + DATA_ALIGN_PATTERN
+                    image_file_pattern = object_name + "*" + DATA_FINAL_PATTERN
                     
                     images_of_catalog = glob.glob(image_file_pattern)
                         
@@ -115,12 +158,20 @@ def do_photometry():
                     for image in images_of_catalog:
                             
                         output_mag_file_name = \
-                            image.replace(DATA_ALIGN_PATTERN, 
+                            image.replace(DATA_FINAL_PATTERN, 
                                                 "." + MAGNITUDE_FILE_EXT)
                      
                         do_phot(image, cat_file, output_mag_file_name)    
                     
 def txdump_photometry_info():
+    """
+    
+    This function search files containing the results of photometry
+    and using txdump extracts the coordinates and photometric measure
+    to save it to a text file.
+    
+    """
+    
     # Walk from current directory.
     for path,dirs,files in os.walk('.'):
         

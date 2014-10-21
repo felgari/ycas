@@ -24,7 +24,7 @@ depending on the type of image: bias, flat or data.
 The module assume that images are initially stored in directories that 
 corresponds to the day which were taken.
 Into each day the images are organized in a directory for bias, another
-for flats anf another for data.
+for flats and another for data.
 Also flats and data images are organized in different subdirectories,
 one for each filter. 
 """
@@ -35,7 +35,13 @@ import shutil
 from constants import *
 
 def get_image_filter(filename):
-    """ Returns the filter indicated in the filename if any. """
+    """ Returns the filter indicated in the filename if any. 
+	
+	This function extracts from a file name the name of the filter.
+	The filter name is part of the file name and is located in a
+	particular position.
+	
+	"""
 
     filtername = ''
 
@@ -50,7 +56,12 @@ def get_image_filter(filename):
     return filtername    
 
 def create_directory(path, dirname):
-    """ Create a directory with the given name. """
+    """ Create a directory with the given name. 
+	
+	This function creates a directory with the given name located in the
+	path received.
+	
+	"""
 
     complete_dirname = os.path.join(path,dirname)
 
@@ -63,12 +74,16 @@ def create_directory(path, dirname):
             if not os.path.isdir(complete_dirname):
                 raise
 
-def analyze_name(filename, path):
-    """ The file name has the the form type-orderfilter.fit'.
-        Where 'type' could be 'flat', 'bias' or a proper name.
-        A '-' character separates the 'orderfilter' part that
-        indicates the ordinal number of the image and optionally
-        a filter, only bias has no filter. """
+def analyze_and_organize_dir(filename, path):
+    """ 
+	
+	The file name has the the form type-orderfilter.fit'.
+	Where 'type' could be 'flat', 'bias' or a proper name.
+	A '-' character separates the 'orderfilter' part that
+	indicates the ordinal number of the image and optionally
+	a filter, only bias has no filter. 
+		
+	"""
 
     file_source = os.path.join(path, filename)
 
@@ -106,6 +121,14 @@ def analyze_name(filename, path):
                 os.path.abspath(file_destination))
 
 def organize_files():
+    """ Search directories with images to organize.
+    
+    This function walks the directories searching for image files,
+    when a directory with image files is found the directory contents
+    are analyzed and organized.
+    
+    """
+    
     # Walk from current directory.
     for path,dirs,files in os.walk('.'):
         # For each file move it to he proper directory.
@@ -117,7 +140,7 @@ def organize_files():
             if filext == FIT_FILE_EXT:
                 # Analyze name.
                 print "Analyzing: " + os.path.join(path, fn)
-                analyze_name(fn, path)
+                analyze_and_organize_dir(fn, path)
             else:
                 print "Ignoring file: " + fn
 
@@ -141,4 +164,3 @@ def main(argv=None):
 if __name__ == "__main__":
 
     sys.exit(main())
-

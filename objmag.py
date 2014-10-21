@@ -18,6 +18,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+"""
+This module obtains the magnitude of a set of object using the photometry
+values calculated previously.
+The magnitud values are stored in different files for each object.
+"""
+
 import sys
 import os
 import glob
@@ -40,6 +46,14 @@ MEASURES_DEC_COL_NUMBER = 2
 MEASURE_FIRST_COL_NUMBER = 3 
 
 def get_rdls_data(rdls_file):
+    """
+    
+    This function returns the AR, DEC values stores in a RDLS
+    file generated during the photometry step.
+    This file is a FIT file that contains a table and this
+    function returns the values in a list.
+    
+    """
     
     # Open the FITS file received.
     fits_file = pyfits.open(rdls_file) 
@@ -62,6 +76,16 @@ def get_rdls_data(rdls_file):
     return ldata
 
 def group_measures_for_object(rdls_file, full_dir):
+    """
+    
+    This function generates a text file that groups in a line
+    all the photometry measures that exists in a directory for
+    a set of object contained in a fit image.
+    The output file contains a row for each object with the
+    AR, DEC coordinates and the list of values measured for
+    the object.
+    
+    """
     
     # Get RDLS data.
     rdls_data = get_rdls_data(rdls_file)    
@@ -109,7 +133,16 @@ def group_measures_for_object(rdls_file, full_dir):
         writer.writerows(rdls_data)
         
 def group_measures():
-
+    """
+    
+    This function searches directories that contains RDLS files.
+    When a RDLS file is found, another function is called to
+    generate a test file that contains all the photometric measures
+    that exists in that directory for the objects related to the
+    RDLs file.
+    
+    """
+    
     # Walk from current directory.
     for path,dirs,files in os.walk('.'):
 
@@ -133,6 +166,14 @@ def group_measures():
                     group_measures_for_object(rdls_file, full_dir)
                     
 def search_mesures_files(obj_name):
+    """
+    
+    This function searches directories that contains files with
+    photometric measures.
+    The function returns a list that contains all the files with
+    measures that has been found.
+    
+    """
     
     objs_files = list()
     
@@ -159,7 +200,15 @@ def search_mesures_files(obj_name):
         
     return objs_files      
 
-def extract_measures_from_files(objs_files, ar_str, dec_str):
+def extract_object_measures(objs_files, ar_str, dec_str):
+    """
+    
+    This function received a set of files and a pair or AR, DEC
+    coordinates and returns a list of measures that exists in
+    these files for the object whose AR, DEC coordinates are more
+    similar to those received.
+    
+    """
     
     ar = float(ar_str)
     dec = float(dec_str)
@@ -201,6 +250,13 @@ def extract_measures_from_files(objs_files, ar_str, dec_str):
     return measures    
 
 def save_object_measures(obj_name, measures):
+    """
+    
+    This function receives the name of an object and a set of measures 
+    that corresponds to that object and writes this measures to a text
+    file with a name that references the object.
+    
+    """
     
     output_file_name = obj_name + "." + TSV_FILE_EXT
     
@@ -211,6 +267,15 @@ def save_object_measures(obj_name, measures):
         writer.writerows(measures)    
 
 def get_measures_of_objects():
+    """
+    
+    This function read from a text file a list of objects whose
+    photometric measures are needed. For each object, this function 
+    calls another function that read the measures that exists for 
+    an object and returns a list of the measures. 
+    This list of measures for an object is saved to a text file.
+    
+    """
     
     # Read the file that contains the objects of interest.
     with open(INT_OBJECTS_FILE_NAME, 'rb') as fr:
@@ -233,7 +298,7 @@ def get_measures_of_objects():
         
         print "Found: " + str(objs_files)
         
-        measures = extract_measures_from_files(objs_files, \
+        measures = extract_object_measures(objs_files, \
                                                obj[OBJECTS_AR_COL_NUMBER], \
                                                obj[OBJECTS_DEC_COL_NUMBER])
         

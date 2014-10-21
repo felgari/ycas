@@ -18,6 +18,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+"""
+This module aligns a set of data images related to the same part of
+the sky, usually images taken in a sequence, using pyraf imalin.
+"""
+
 import sys
 import os
 import glob
@@ -26,6 +31,12 @@ from pyraf.iraf import proto
 from constants import *
 
 def set_align_pars():
+    """
+    
+    This function sets the parameters used to perform the alignment
+    with pyraf imalin.
+    
+    """
     
     # Set imalign parameters.
     iraf.imalign.boxsize = 11
@@ -37,6 +48,18 @@ def set_align_pars():
     iraf.imalign.verbose = "no"
   
 def align_images():
+    """
+    
+    This function searches directories that contains data images and
+    align these images using pyraf imalin.
+    The images are processed in sets that contains images of the same
+    object.
+    One of the images along with the set of x,y coordinates of the
+    images are used to perform the alignment.
+    The images aligned are stored in new files to keep the original ones.
+    
+    """
+    
     print "Aligning images ..."
 
     number_of_images = 0

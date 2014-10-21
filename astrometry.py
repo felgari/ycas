@@ -18,6 +18,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+"""
+This module calculates the astrometry for a set of data images that
+exists from a given directory.
+The astrometry is calculated with a external program from 'astrometry.net'.
+"""
+
 import sys
 import os
 import glob
@@ -26,6 +32,13 @@ import subprocess32 as subprocess
 from constants import *
 
 def write_xy_catalog(table_file_name, catalogue_file_name):
+    """
+    This function opens the FITS file that contains the table of x,y 
+    coordinates and write these coordinates to a text file that only
+    contains this x,y values. this text file will be used later for
+    photometry.
+    
+    """
 
     # Check if the file containing x,y coordinates exists.
     if os.path.exists(table_file_name):
@@ -54,6 +67,16 @@ def write_xy_catalog(table_file_name, catalogue_file_name):
         print "X,Y coordinates file does not exists so no catalog file is created."
         
 def do_astrometry():
+    """
+        
+    This function searches directories that contains files of data images.
+    When a directory with data images is found the astrometry is calculated
+    for each data image calling an external program from 'astrometry.net'.
+    The x,y positions calculated are stored to a file that contains only 
+    those x and y position to be used later in photometry.
+    
+    """
+    
     print "Doing astrometry ..."
 
     number_of_images = 0
@@ -151,4 +174,3 @@ def main(argv=None):
 if __name__ == "__main__":
 
     sys.exit(main())
-
