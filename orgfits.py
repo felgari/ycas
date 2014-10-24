@@ -36,12 +36,12 @@ from constants import *
 
 def get_image_filter(filename):
     """ Returns the filter indicated in the filename if any. 
-	
-	This function extracts from a file name the name of the filter.
-	The filter name is part of the file name and is located in a
-	particular position.
-	
-	"""
+    
+    This function extracts from a file name the name of the filter.
+    The filter name is part of the file name and is located in a
+    particular position.
+    
+    """
 
     filtername = ''
 
@@ -57,11 +57,11 @@ def get_image_filter(filename):
 
 def create_directory(path, dirname):
     """ Create a directory with the given name. 
-	
-	This function creates a directory with the given name located in the
-	path received.
-	
-	"""
+    
+    This function creates a directory with the given name located in the
+    path received.
+    
+    """
 
     complete_dirname = os.path.join(path,dirname)
 
@@ -76,14 +76,14 @@ def create_directory(path, dirname):
 
 def analyze_and_organize_dir(filename, path):
     """ 
-	
-	The file name has the the form type-orderfilter.fit'.
-	Where 'type' could be 'flat', 'bias' or a proper name.
-	A '-' character separates the 'orderfilter' part that
-	indicates the ordinal number of the image and optionally
-	a filter, only bias has no filter. 
-		
-	"""
+    
+    The file name has the the form type-orderfilter.fit'.
+    Where 'type' could be 'flat', 'bias' or a proper name.
+    A '-' character separates the 'orderfilter' part that
+    indicates the ordinal number of the image and optionally
+    a filter, only bias has no filter. 
+    	
+    """
 
     file_source = os.path.join(path, filename)
 

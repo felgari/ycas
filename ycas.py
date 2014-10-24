@@ -42,9 +42,9 @@ def main(argv=None):
 
     A main function allows the easy calling from other modules and also from the
     command line.
-	
-	This function performs all the steps needed to process the images.
-	Each step is a calling to a function that implements a concrete task.
+    
+    This function performs all the steps needed to process the images.
+    Each step is a calling to a function that implements a concrete task.
 
     Arguments:
     argv - List of arguments passed to the script.
@@ -55,30 +55,30 @@ def main(argv=None):
         argv = sys.argv
         
     # This step organizes the images in directories depending on the type of image:
-	# bias, flat or data.
+    # bias, flat or data.
     print "* Step 1 * Organize image files in directories."
     orgfits.main()
     
-	# This step reduces the data images applying the bias and flats.
+    # This step reduces the data images applying the bias and flats.
     print "* Step 2 * Reduce images."    
     reduce.main()
     
-	# This step find objects in the images. The result is a list of x,y and AR,DEC
-	# coordinates.
+    # This step find objects in the images. The result is a list of x,y and AR,DEC
+    # coordinates.
     print "* Step 3 * Perform astrometry."    
     astrometry.main()
     
-	# This step aligns the data images of the same object. This step is optional as
-	# the rest of steps could be performed with images not aligned.
+    # This step aligns the data images of the same object. This step is optional as
+    # the rest of steps could be performed with images not aligned.
     print "* Step 4 * Perform alignment."    
     align.main()    
     
-	# This step calculates the photometry of the objects detected doing the astrometry.
+    # This step calculates the photometry of the objects detected doing the astrometry.
     print "* Step 5 * Perform photometry."     
     photometry.main()
     
-	# This step process the magnitudes calculated for each object and generates a file
-	# that associate to each object all its measures.
+    # This step process the magnitudes calculated for each object and generates a file
+    # that associate to each object all its measures.
     print "* Step 6 * Process magnitudes of each object."     
     objmag.main()
 
