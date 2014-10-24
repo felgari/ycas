@@ -73,37 +73,37 @@ def do_masterbias():
     # Walk from current directory.
     for path,dirs,files in os.walk('.'):
     	
-    	# Check if current directory is for bias fits.
-    	for dr in dirs:
-    		if dr == BIAS_DIRECTORY:
+        # Check if current directory is for bias fits.
+        for dr in dirs:
+            if dr == BIAS_DIRECTORY:
     				
-    			# Get the full path of the directory.                
-    			full_dir = os.path.join(path, dr)
-    			print "Found a directory for 'bias': " + full_dir
-    			
-    			# Get the list of files.
-    			files = glob.glob(os.path.join(full_dir, "*." + FIT_FILE_EXT))
-    			print "Found " + str(len(files)) + " bias files"
-    			
-    			# Build the masterbias file name.
-    			masterbias_name = os.path.join(full_dir, MASTERBIAS_FILENAME) 
-    			
-    			# Check if masterbias already exists.
-    			if os.path.exists(masterbias_name) == True:
-    				print "Masterbias file exists, " + masterbias_name + \
-    					" so resume to next directory."
-    			else:
-    				# Put the files list in a string.
-    				list_of_files = str(files).translate(None, "[]\'")
-    				
-    				show_bias_statistics(list_of_files)
-    				    	
-    				# Combine all the bias files.
-    				try:
-    					iraf.imcombine(list_of_files, masterbias_name, Stdout=1)
-    				except iraf.IrafError as exc:
-    					print "Error executing imcombine: Combining bias with: " + list_of_files  
-    					print "Iraf error is: " + str(exc)      
+                # Get the full path of the directory.                
+                full_dir = os.path.join(path, dr)
+                print "Found a directory for 'bias': " + full_dir
+                
+                # Get the list of files.
+                files = glob.glob(os.path.join(full_dir, "*." + FIT_FILE_EXT))
+                print "Found " + str(len(files)) + " bias files"
+                
+                # Build the masterbias file name.
+                masterbias_name = os.path.join(full_dir, MASTERBIAS_FILENAME) 
+                
+                # Check if masterbias already exists.
+                if os.path.exists(masterbias_name) == True:
+                    print "Masterbias file exists, " + masterbias_name + \
+                        " so resume to next directory."
+                else:
+                    # Put the files list in a string.
+                    list_of_files = str(files).translate(None, "[]\'")
+                    
+                    show_bias_statistics(list_of_files)
+                        	
+                    # Combine all the bias files.
+                    try:
+                        iraf.imcombine(list_of_files, masterbias_name, Stdout=1)
+                    except iraf.IrafError as exc:
+                        print "Error executing imcombine: Combining bias with: " + list_of_files  
+                        print "Iraf error is: " + str(exc)      
                         
 def normalize_flats(files):
     """ Normalize a set of flat files. 
