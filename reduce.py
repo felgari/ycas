@@ -33,6 +33,29 @@ import glob
 from pyraf import iraf
 from constants import *
 
+def show_files_statistics(list_of_files):
+	""" Show the statistics for the files received.
+	
+	This function applies imstat to the files received and
+	print the results.
+	
+	"""
+	
+	# Getting statistics for bias files.
+	try:
+		means = iraf.imstat(list_of_files, fields='mean', Stdout=1)
+		means = means[1:]
+		mean_strings = [str(m).translate(None, ",\ ") for m in means]
+		mean_values = [float(m) for m in mean_strings]
+		
+		print "Bias images - Max. mean: " + str(max(mean_values)) + \
+				" Min. mean: " + str(min(mean_values))
+				
+		print "Creating bias file: " + masterbias_name	
+	except iraf.IrafError as exc:
+		print "Error executing imstat: Stats for bias images: " + list_of_files
+		print "Iraf error is: " + str(exc)   		
+
 def do_masterbias():
 	""" Calculation of all the masterbias files.
 	
@@ -46,50 +69,86 @@ def do_masterbias():
 	"""
 
 	print "Doing masterbias ..."
-
-    # Walk from current directory.
+	
+	# Walk from current directory.
 	for path,dirs,files in os.walk('.'):
 		
 		# Check if current directory is for bias fits.
 		for dr in dirs:
 			if dr == BIAS_DIRECTORY:
-				
+					
 				# Get the full path of the directory.                
 				full_dir = os.path.join(path, dr)
 				print "Found a directory for 'bias': " + full_dir
-	
-	            # Get the list of files.
+				
+				# Get the list of files.
 				files = glob.glob(os.path.join(full_dir, "*." + FIT_FILE_EXT))
 				print "Found " + str(len(files)) + " bias files"
-	
+				
 				# Build the masterbias file name.
 				masterbias_name = os.path.join(full_dir, MASTERBIAS_FILENAME) 
-	            
-	            # Check if masterbias already exists.
+				
+				# Check if masterbias already exists.
 				if os.path.exists(masterbias_name) == True:
 					print "Masterbias file exists, " + masterbias_name + \
 						" so resume to next directory."
 				else:
 					# Put the files list in a string.
 					list_of_files = str(files).translate(None, "[]\'")
-	
-					# Getting statistics for bias files.
-					means = iraf.imstat(list_of_files, fields='mean', Stdout=1)
-	                means = means[1:]
-	                mean_strings = [str(m).translate(None, ",\ ") for m in means]
-	                mean_values = [float(m) for m in mean_strings]                
-	
-	                print "Bias images - Max. mean: " + str(max(mean_values)) + \
-	                    " Min. mean: " + str(min(mean_values))
-	
-	                print "Creating bias file: " + masterbias_name
-	
-	                # Combine all the bias files.
-	                try:
-	                    iraf.imcombine(list_of_files, masterbias_name, Stdout=1)
-	                except iraf.IrafError as exc:
-	                    print "Error executing imcombine: Combining bias with: " + list_of_files  
-	                    print "Iraf error is: " + str(exc)                      
+					
+					show_bias_statistics(list_of_files)
+					    	
+					# Combine all the bias files.
+					try:
+						iraf.imcombine(list_of_files, masterbias_name, Stdout=1)
+					except iraf.IrafError as exc:
+						print "Error executing imcombine: Combining bias with: " + list_of_files  
+						print "Iraf error is: " + str(exc)      
+	                    
+def normalize_flats(files):
+    """ Normalize a set of flat files. 
+    
+    This function receives a list of flat files and returns a list of
+    files of the flat files after normalize them.
+    The normalization is performed dividing the flat image by the mean
+    value of the flat image. This mean is the result of applying imstat
+    to each image.
+    
+    """
+    
+    # The output list of normalized files is created.
+    list_of_norm_flat_files = []
+		
+    for fl in files:
+        # Get the 'work' and 'normalized' names for the flat files to process.
+        work_file = fl.replace("." + FIT_FILE_EXT, \
+                               WORK_FILE_SUFFIX + "." + FIT_FILE_EXT)
+        
+        norm_file = fl.replace("." + FIT_FILE_EXT, \
+                               NORM_FILE_SUFFIX + "." + FIT_FILE_EXT)
+        
+        # Getting statistics for flat file.
+        try:
+            flat_stats = iraf.imstat(work_file, fields='mean', Stdout=1)
+            flat_stats = flat_stats[1]	
+            mean_value = float(flat_stats)
+            
+            try:
+                # Normalize flat dividing flat by its mean value.
+                iraf.imarith(work_file, '/', mean_value, norm_file)
+                
+                # If success, add the file to the list of normalized flats.
+                list_of_norm_flat_files.extend([norm_file])
+				
+            except iraf.IrafError as exc:
+                print "Error executing imarith: normalizing flat image: " + fl
+                print "Iraf error is: " + str(exc)
+		
+        except iraf.IrafError as exc:
+            print "Error executing imstat: getting stats for flat image: " + fl
+            print "Iraf error is: " + str(exc)   	
+    
+    return list_of_norm_flat_files
 
 def do_masterflat():
     """ Calculation of all the masterflat files.
@@ -146,14 +205,21 @@ def do_masterflat():
                     masterbias_name = os.path.join(full_dir, PATH_FROM_FLAT_TO_BIAS, MASTERBIAS_FILENAME)
 
                     try:
-                        # Create the work files substracting bias from flat.
+                        # Create the work files subtracting bias from flat.
                         iraf.imarith(list_of_flat_files, '-', masterbias_name, list_of_work_flat_files)
                         
-                        print "Creating bias file: " + masterflat_name                        
+                        print "Normalizing flat files for: " + masterflat_name    
+                        
+                        norm_flat_files = normalize_flats(files)
+
+                        print "Creating flat files for: " + masterflat_name  
+                        
+                        # Create list of names of the normalized flat files.
+                        list_of_norm_flat_files = str(norm_flat_files).translate(None, "[]\'")                    
                             
                         try:
                             # Combine all the flat files.
-                            iraf.imcombine(list_of_work_flat_files, masterflat_name, Stdout=1)
+                            iraf.imcombine(list_of_norm_flat_files, masterflat_name, Stdout=1)
                         except iraf.IrafError as exc:
                             print "Error executing imcombine. Combining flats with: " + list_of_work_flat_files    
                             print "Iraf error is: " + str(exc)                    

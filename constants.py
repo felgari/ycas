@@ -51,6 +51,7 @@ FILTERS = [ 'V', 'B', 'R', 'CN', 'Cont4430', 'Cont6840' ]
 MASTERBIAS_FILENAME = "bias_avg.fit"
 MASTERFLAT_FILENAME = "flat_avg.fit"
 WORK_FILE_SUFFIX = "_work"
+NORM_FILE_SUFFIX = "_norm"
 DATA_FINAL_SUFFIX = "_final"
 
 # External commands
