@@ -71,8 +71,10 @@ def set_phot_pars():
     iraf.fitskypars.dannulus = 36
     iraf.fitskypars.salgorithm = "mode"
     iraf.centerpars.cbox = 0
+    # Name of the fields FITS that contains these values.
     iraf.datapars.exposure = "EXPTIME"
     iraf.datapars.airmass = "AIRMASS"
+    iraf.datapars.obstime = "MJD"
 
 def save_parameters():
     """
