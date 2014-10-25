@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # Copyright (c) 2014 Felipe Gallego. All rights reserved.
@@ -31,6 +31,7 @@ one for each filter.
 
 import sys
 import os
+import logging
 import shutil
 from constants import *
 
@@ -68,7 +69,7 @@ def create_directory(path, dirname):
     # Check if the directory exists.
     if not os.path.exists(complete_dirname):
         try: 
-            print "Creating directory: " + complete_dirname
+            logging.info("Creating directory: " + complete_dirname)
             os.makedirs(complete_dirname)
         except OSError:
             if not os.path.isdir(complete_dirname):
@@ -115,7 +116,7 @@ def analyze_and_organize_dir(filename, path):
 
         file_destination = os.path.join(path, DATA_DIRECTORY, filtername, filename)
 
-    print "Moving '" + file_source + "' to '" + file_destination + "'"
+    logging.info("Moving '" + file_source + "' to '" + file_destination + "'")
 
     shutil.move(os.path.abspath(file_source),
                 os.path.abspath(file_destination))
@@ -139,10 +140,10 @@ def organize_files():
 
             if filext == FIT_FILE_EXT:
                 # Analyze name.
-                print "Analyzing: " + os.path.join(path, fn)
+                logging.info("Analyzing: " + os.path.join(path, fn))
                 analyze_and_organize_dir(fn, path)
             else:
-                print "Ignoring file: " + fn
+                logging.info("Ignoring file: " + fn)
 
 def main(argv=None):
     """ main function.

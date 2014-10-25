@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # Copyright (c) 2014 Felipe Gallego. All rights reserved.
@@ -25,6 +25,7 @@ the sky, usually images taken in a sequence, using pyraf imalin.
 
 import sys
 import os
+import logging
 import glob
 from pyraf import iraf
 from pyraf.iraf import proto
@@ -60,7 +61,7 @@ def align_images():
     
     """
     
-    print "Aligning images ..."
+    logging.info("Aligning images ...")
 
     number_of_images = 0
     number_of_successfull_images = 0
@@ -76,19 +77,19 @@ def align_images():
             if split_path[-2] == DATA_DIRECTORY:
                 # Get the full path of the directory.                
                 full_dir = path
-                print "Found a directory for data: " + full_dir
+                logging.info("Found a directory for data: " + full_dir)
 
                 # Get the list of catalog files ignoring hidden files.
                 files_full_path = \
                     [f for f in glob.glob(os.path.join(full_dir, "*." + CATALOG_FILE_EXT)) \
                     if not os.path.basename(f).startswith('.')]
-                print "Found " + str(len(files_full_path)) + " catalog files"
+                logging.info("Found " + str(len(files_full_path)) + " catalog files")
                 
                 # Get the list of unique catalog names.
                 catalog_names = [ os.path.basename(f[0:f.find(DATANAME_CHAR_SEP)]) \
                                     for f in files_full_path ]
 
-                print "Catalogs: " + str(catalog_names)
+                logging.info("Catalogs: " + str(catalog_names))
 
                 # Align the images corresponding to each catalog.
                 for cn in catalog_names:
@@ -123,10 +124,10 @@ def align_images():
                             try:
                                 iraf.imalign(image, reference_image, catalog, aligned_image, Stdout=1)
                             except iraf.IrafError as exc:
-                                print "Error executing imalign on image: " + image
-                                print "Iraf error is: " + str(exc)   
+                                logging.error("Error executing imalign on image: " + image)
+                                logging.error("Iraf error is: " + str(exc))   
                     else:
-                        print "Only 1 data image, alignment is not necessary."
+                        logging.info("Only 1 data image, alignment is not necessary.")
 
 def main(argv=None):
     """ main function.

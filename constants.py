@@ -19,6 +19,16 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import logging
+
+# Log levels.
+LOG_LEVELS = { "CRITICAL" : logging.CRITICAL,
+              "ERROR": logging.ERROR,
+              "WARNING": logging.WARNING,
+              "INFO": logging.INFO,
+              "DEBUG": logging.DEBUG }
+
+DEFAULT_LOG_LEVEL_NAME = "WARNING"
 
 # Directories.
 BIAS_DIRECTORY = 'bias'

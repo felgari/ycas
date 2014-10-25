@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # Copyright (c) 2014 Felipe Gallego. All rights reserved.
@@ -29,6 +29,7 @@ its filter.
 
 import sys
 import os
+import logging
 import glob
 from pyraf import iraf
 from constants import *
@@ -48,13 +49,13 @@ def show_files_statistics(list_of_files):
     	mean_strings = [str(m).translate(None, ",\ ") for m in means]
     	mean_values = [float(m) for m in mean_strings]
     	
-    	print "Bias images - Max. mean: " + str(max(mean_values)) + \
-    			" Min. mean: " + str(min(mean_values))
+    	logging.info("Bias images - Max. mean: " + str(max(mean_values)) + \
+    			" Min. mean: " + str(min(mean_values)))
     			
-    	print "Creating bias file: " + masterbias_name	
+    	logging.info("Creating bias file: " + masterbias_name)	
     except iraf.IrafError as exc:
-    	print "Error executing imstat: Stats for bias images: " + list_of_files
-    	print "Iraf error is: " + str(exc)   		
+    	logging.error("Error executing imstat: Stats for bias images: " + list_of_files)
+    	logging.error("Iraf error is: " + str(exc))   		
 
 def do_masterbias():
     """ Calculation of all the masterbias files.
@@ -68,7 +69,7 @@ def do_masterbias():
     
     """
 
-    print "Doing masterbias ..."
+    logging.info("Doing masterbias ...")
     
     # Walk from current directory.
     for path,dirs,files in os.walk('.'):
@@ -79,19 +80,19 @@ def do_masterbias():
     				
                 # Get the full path of the directory.                
                 full_dir = os.path.join(path, dr)
-                print "Found a directory for 'bias': " + full_dir
+                logging.info("Found a directory for 'bias': " + full_dir)
                 
                 # Get the list of files.
                 files = glob.glob(os.path.join(full_dir, "*." + FIT_FILE_EXT))
-                print "Found " + str(len(files)) + " bias files"
+                logging.info("Found " + str(len(files)) + " bias files")
                 
                 # Build the masterbias file name.
                 masterbias_name = os.path.join(full_dir, MASTERBIAS_FILENAME) 
                 
                 # Check if masterbias already exists.
                 if os.path.exists(masterbias_name) == True:
-                    print "Masterbias file exists, " + masterbias_name + \
-                        " so resume to next directory."
+                    logging.info("Masterbias file exists, " + masterbias_name + \
+                        " so resume to next directory.")
                 else:
                     # Put the files list in a string.
                     list_of_files = str(files).translate(None, "[]\'")
@@ -102,8 +103,9 @@ def do_masterbias():
                     try:
                         iraf.imcombine(list_of_files, masterbias_name, Stdout=1)
                     except iraf.IrafError as exc:
-                        print "Error executing imcombine: Combining bias with: " + list_of_files  
-                        print "Iraf error is: " + str(exc)      
+                        logging.error("Error executing imcombine: Combining bias with: " + 
+                                      list_of_files)  
+                        logging.info("Iraf error is: " + str(exc))    
                         
 def normalize_flats(files):
     """ Normalize a set of flat files. 
@@ -141,12 +143,12 @@ def normalize_flats(files):
                 list_of_norm_flat_files.extend([norm_file])
     			
             except iraf.IrafError as exc:
-                print "Error executing imarith: normalizing flat image: " + fl
-                print "Iraf error is: " + str(exc)
+                logging.error("Error executing imarith: normalizing flat image: " + fl)
+                logging.error("Iraf error is: " + str(exc))
     	
         except iraf.IrafError as exc:
-            print "Error executing imstat: getting stats for flat image: " + fl
-            print "Iraf error is: " + str(exc)       
+            logging.error("Error executing imstat: getting stats for flat image: " + fl)
+            logging.error("Iraf error is: " + str(exc))       
     
     return list_of_norm_flat_files
 
@@ -166,7 +168,7 @@ def do_masterflat():
     
     """
     
-    print "Doing masterflat ..."
+    logging.info("Doing masterflat ...")
 
     # Walk from current directory.
     for path,dirs,files in os.walk('.'):
@@ -179,19 +181,19 @@ def do_masterflat():
             if split_path[-2] == FLAT_DIRECTORY:
                 # Get the full path of the directory.                
                 full_dir = path
-                print "Found a directory for 'flat': " + full_dir
+                logging.info("Found a directory for 'flat': " + full_dir)
 
                 # Get the list of files.
                 files = glob.glob(os.path.join(full_dir, "*." + FIT_FILE_EXT))
-                print "Found " + str(len(files)) + " flat files"
+                logging.info("Found " + str(len(files)) + " flat files")
                 
                 # Buid the masterflat file name.
                 masterflat_name = os.path.join(full_dir, MASTERFLAT_FILENAME) 
                 
                 # Check if masterflat already exists.
                 if os.path.exists(masterflat_name) == True:
-                    print "Masterflat file exists, " + masterflat_name + \
-                        " so resume to next directory."
+                    logging.info("Masterflat file exists, " + masterflat_name + \
+                                 " so resume to next directory.")
                 else:
                     # Put the files list in a string.
                     list_of_flat_files = str(files).translate(None, "[]\'")
@@ -208,11 +210,11 @@ def do_masterflat():
                         # Create the work files subtracting bias from flat.
                         iraf.imarith(list_of_flat_files, '-', masterbias_name, list_of_work_flat_files)
                         
-                        print "Normalizing flat files for: " + masterflat_name    
+                        logging.info("Normalizing flat files for: " + masterflat_name)    
                         
                         norm_flat_files = normalize_flats(files)
 
-                        print "Creating flat files for: " + masterflat_name  
+                        logging.info("Creating flat files for: " + masterflat_name)  
                         
                         # Create list of names of the normalized flat files.
                         list_of_norm_flat_files = str(norm_flat_files).translate(None, "[]\'")                    
@@ -221,12 +223,14 @@ def do_masterflat():
                             # Combine all the flat files.
                             iraf.imcombine(list_of_norm_flat_files, masterflat_name, Stdout=1)
                         except iraf.IrafError as exc:
-                            print "Error executing imcombine. Combining flats with: " + list_of_work_flat_files    
-                            print "Iraf error is: " + str(exc)                    
+                            logging.error("Error executing imcombine. Combining flats with: " + \
+                                          list_of_work_flat_files)    
+                            logging.error("Iraf error is: " + str(exc))                    
                         
                     except iraf.IrafError as exc:
-                        print "Error executing imarith. Subtracting masterbias to: " + list_of_flat_files
-                        print "Iraf error is: " + str(exc)
+                        logging.error("Error executing imarith. Subtracting masterbias to: " + \
+                                      list_of_flat_files)
+                        logging.error("Iraf error is: " + str(exc))
                         
 def reduce_data():
     """ Reduction of all data images.
@@ -244,7 +248,7 @@ def reduce_data():
     
     """
     
-    print "Reducing data ..."
+    logging.info("Reducing data ...")
 
     # Walk from current directory.
     for path,dirs,files in os.walk('.'):
@@ -257,11 +261,11 @@ def reduce_data():
             if split_path[-2] == DATA_DIRECTORY:
                 # Get the full path of the directory.                
                 full_dir = path
-                print "Found a directory for data: " + full_dir
+                logging.info("Found a directory for data: " + full_dir)
 
                 # Get the list of files.
                 data_files = glob.glob(os.path.join(full_dir, "*." + FIT_FILE_EXT))
-                print "Found " + str(len(data_files)) + " data files"
+                logging.info("Found " + str(len(data_files)) + " data files")
                 
                 # The masterbias file name.
                 masterbias_name = \
@@ -297,14 +301,14 @@ def reduce_data():
                             os.remove(work_file)
                                                                 
                         except iraf.IrafError as exc:
-                            print "Error executing imarith: " + work_file + \
-                                    " / " + masterflat_name + " to " + final_file      
-                            print "Iraf error is: " + str(exc)                  
+                            logging.error("Error executing imarith: " + work_file + \
+                                          " / " + masterflat_name + " to " + final_file)     
+                            logging.error("Iraf error is: " + str(exc))                  
                         
                     except iraf.IrafError as exc:
-                        print "Error executing imarith: " + dfile + \
-                            " - " + masterbias_name + " to " + work_file
-                        print "Iraf error is: " + str(exc)
+                        logging.error("Error executing imarith: " + dfile + \
+                                        " - " + masterbias_name + " to " + work_file)
+                        logging.error("Iraf error is: " + str(exc))
                         
 def main(argv=None):
     """ main function.

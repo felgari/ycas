@@ -108,16 +108,16 @@ def do_phot(image_file_name, catalog_file_name, output_mag_file_name):
     if os.path.exists(output_mag_file_name):
         os.remove(output_mag_file_name)
 
-    print "Calculating magnitudes for: " + image_file_name + \
-        " in " + output_mag_file_name
+    logging.info("Calculating magnitudes for: " + image_file_name + \
+                 " in " + output_mag_file_name)
         
     try:
         iraf.phot(image = image_file_name, 
                     coords = catalog_file_name, 
                     output = output_mag_file_name)
     except iraf.IrafError as exc:
-        print "Error executing phot on : " + image_file_name 
-        print "Iraf error is: " + str(exc)
+        logging.error("Error executing phot on : " + image_file_name) 
+        logging.error( "Iraf error is: " + str(exc))
 
 def do_photometry():   
     """
@@ -142,11 +142,14 @@ def do_photometry():
             if split_path[-2] == DATA_DIRECTORY:
                 # Get the full path of the directory.                
                 full_dir = path
-                print "Found a directory for data: " + full_dir
+                logging.info("Found a directory for data: " + full_dir)
 
                 # Get the list of catalog files.
-                catalog_files = glob.glob(os.path.join(full_dir, "*." + CATALOG_FILE_EXT))
-                print "Found " + str(len(catalog_files)) + " catalog files"
+                catalog_files = glob.glob(os.path.join(full_dir, "*." + \
+                                                       CATALOG_FILE_EXT))
+                
+                logging.info("Found " + str(len(catalog_files)) + \
+                             " catalog files")
                 
                 # Each catalog indicates one or more images.
                 for cat_file in catalog_files:
@@ -160,7 +163,8 @@ def do_photometry():
                     
                     images_of_catalog = glob.glob(image_file_pattern)
                         
-                    print "Found " + str(len(images_of_catalog)) + " images for this catalog."
+                    logging.info("Found " + str(len(images_of_catalog)) + \
+                                 " images for this catalog.")
                         
                     # Calculate the magnitudes for each image related to the catalog.
                     for image in images_of_catalog:
@@ -191,11 +195,11 @@ def txdump_photometry_info():
             if split_path[-2] == DATA_DIRECTORY:
                 # Get the full path of the directory.                
                 full_dir = path
-                print "Found a directory for data: " + full_dir
+                logging.info("Found a directory for data: " + full_dir)
 
                 # Get the list of magnitude files.
                 mag_files = glob.glob(os.path.join(full_dir, "*." + MAGNITUDE_FILE_EXT))
-                print "Found " + str(len(mag_files)) + " magnitude files"    
+                logging.info("Found " + str(len(mag_files)) + " magnitude files")    
                 
                 # Reduce each data file one by one.
                 for mfile in mag_files:                  
@@ -214,8 +218,9 @@ def txdump_photometry_info():
                     try:
                         iraf.txdump(mfile, fields=TXDUMP_FIELDS, expr='yes', Stdout=mag_dest_file)
                     except iraf.IrafError as exc:
-                        print "Error executing txdump to get: " + mag_dest_file_name
-                        print "Iraf error is: " + str(exc)
+                        logging.error("Error executing txdump to get: " + \
+                                      mag_dest_file_name)
+                        logging.error("Iraf error is: " + str(exc))
                         
                     mag_dest_file.close()
                            

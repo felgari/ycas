@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # Copyright (c) 2014 Felipe Gallego. All rights reserved.
@@ -26,6 +26,7 @@ The magnitud values are stored in different files for each object.
 
 import sys
 import os
+import logging
 import glob
 import pyfits
 import csv
@@ -98,7 +99,8 @@ def group_measures_for_object(rdls_file, full_dir):
     # At this point all the csv are related to magnitude values. 
     csv_files = glob.glob(object_name + "*." + CSV_FILE_EXT)
     
-    print "Found " + str(len(csv_files)) + " csv files for object " + object_name
+    logging.info("Found " + str(len(csv_files)) + " csv files for object " \
+                 + object_name)
     
     # Sort the list of csv files to ensure a right processing.
     csv_files.sort()
@@ -125,7 +127,7 @@ def group_measures_for_object(rdls_file, full_dir):
     # corresponds to the RDLS file, to a file in tsv format.
     output_file = object_name + "." + TSV_FILE_EXT
     
-    print "Writing file: " + output_file
+    logging.info("Writing file: " + output_file)
     
     with open(output_file, 'w') as fw:
         
@@ -155,13 +157,14 @@ def group_measures():
             if split_path[-2] == DATA_DIRECTORY:
                 # Get the full path of the directory.                
                 full_dir = path
-                print "Found a directory for data: " + full_dir
+                logging.info("Found a directory for data: " + full_dir)
 
                 # Get the list of RDLS files ignoring hidden files.
                 rdls_files_full_path = \
                     [f for f in glob.glob(os.path.join(full_dir, "*." + RDLS_FILE_EXT)) \
                     if not os.path.basename(f).startswith('.')]
-                print "Found " + str(len(rdls_files_full_path)) + " RDLS files"        
+                logging.info("Found " + str(len(rdls_files_full_path)) + \
+                             " RDLS files")        
 
                 for rdls_file in rdls_files_full_path:
                     group_measures_for_object(rdls_file, full_dir)
@@ -189,7 +192,7 @@ def search_mesures_files(obj_name):
             if split_path[-2] == DATA_DIRECTORY:
                 # Get the full path of the directory.                
                 full_dir = path
-                #print "Found a directory for data: " + full_dir
+                logging.info("Found a directory for data: " + full_dir)
 
                 # Get the list of RDLS files ignoring hidden files.
                 obj_files_full_path = \
@@ -291,19 +294,17 @@ def get_measures_of_objects():
     for obj in objects:
         obj_name = obj[0]
         
-        print "Searching measures for object: " + obj_name
+        logging.info("Searching measures for object: " + obj_name)
         objs_files = search_mesures_files(obj_name)
         
         # Sort the files by name to ensure that early measures are processed first.
         objs_files.sort()        
         
-        print "Found: " + str(objs_files)
+        logging.info("Found: " + str(objs_files))
         
         measures = extract_object_measures(objs_files, \
                                                obj[OBJECTS_AR_COL_NUMBER], \
                                                obj[OBJECTS_DEC_COL_NUMBER])
-        
-        #print "Measures: " + str(measures)
         
         save_object_measures(obj_name, measures)
     

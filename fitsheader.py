@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # Copyright (c) 2014 Felipe Gallego. All rights reserved.
@@ -24,6 +24,7 @@ This module performs operations with the headers of FIT files.
 
 import sys
 import os
+import logging
 import glob
 import pyfits
 from constants import *
@@ -48,8 +49,6 @@ def summarize_fit_headers():
         line += FIT_HEADER_FIELDS[i]
         line += FIELD_SEP
 
-    print line
-
     # Walk from current directory.
     for path,dirs,files in os.walk('.'):
 
@@ -61,11 +60,11 @@ def summarize_fit_headers():
             if split_path[-2] == DATA_DIRECTORY:
                 # Get the full path of the directory.                
                 full_dir = path
-                #print "Found a directory for data: " + full_dir
+                logging.info("Found a directory for data: " + full_dir)
 
                 # Get the list of files.
                 files = glob.glob(os.path.join(full_dir, "*" + DATA_FINAL_PATTERN))
-                #print "Found " + str(len(files)) + " data files"
+                logging.info("Found " + str(len(files)) + " data files")
                 
                 for fl in files:
 
@@ -85,8 +84,6 @@ def summarize_fit_headers():
                             line += NO_VALUE
                             
                         line += FIELD_SEP
-                        
-                    print line
                     
                     hdulist.close()
                     
