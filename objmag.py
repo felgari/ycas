@@ -32,7 +32,8 @@ import csv
 from constants import *
 
 # Number of the column that contains the magnitude value.
-CSV_MAG_COL = 3 
+CSV_TIME_COL = 3 
+CSV_MAG_COL = 4 
 
 # Name of the file that contains information about the objects of interest.
 INT_OBJECTS_FILE_NAME = "objects.tsv"

@@ -32,7 +32,7 @@ from pyraf import iraf
 from pyraf.iraf import noao, digiphot, apphot
 from constants import *
 
-TXDUMP_FIELDS = "id,xc,yc,mag,merr"
+FWHM = 5.5
 
 def init_iraf():
     """
@@ -57,7 +57,7 @@ def init_iraf():
     iraf.phot.interactive = "no"
     iraf.phot.verify = "no"
 
-def set_phot_pars():
+def set_phot_pars(fwhm):
     """
     
     This function sets the pyraf parameters used to perform
@@ -66,15 +66,21 @@ def set_phot_pars():
     """        
     
     # Set photometry parameters.
-    iraf.photpars.apertures = 14
-    iraf.fitskypars.annulus = 25
-    iraf.fitskypars.dannulus = 36
+    iraf.photpars.apertures = APERTURE_MULT * fwhm
+    iraf.fitskypars.annulus = ANNULUS_MULT * fwhm
+    iraf.fitskypars.dannulus = DANNULUS_VALUE
     iraf.fitskypars.salgorithm = "mode"
     iraf.centerpars.cbox = 0
+    iraf.centerpars.calgori = "centroid"
+    
     # Name of the fields FITS that contains these values.
-    iraf.datapars.exposure = "EXPTIME"
+    iraf.datapars.exposure = "EXPOSURE"
     iraf.datapars.airmass = "AIRMASS"
     iraf.datapars.obstime = "MJD"
+    iraf.datapars.readnoise = OSN_CCD_T150_READNOISE
+    iraf.datapars.epadu = OSN_CCD_T150_GAIN
+    iraf.datapars.datamax = OSN_CCD_T150_DATAMAX
+    iraf.datapars.datamin = DATAMIN_VALUE
 
 def save_parameters():
     """
@@ -231,7 +237,7 @@ def main(argv=None):
     init_iraf()
 
     # Set the parameters for photometry.
-    set_phot_pars()
+    set_phot_pars(FWHM)
 
     # Calculate the photometry.
     do_photometry()

@@ -61,3 +61,22 @@ ASTROMETRY_COMMAND = "solve-field"
 ASTROMETRY_PARAMS = "--overwrite -d 20"
 
 ASTROMETRY_WCS_TABLE_INDEX = 1
+
+# Photometry paramters
+
+# Multipliers to calculate some photometry parameters as multipliers 
+# of the seeing value.
+APERTURE_MULT = 2
+ANNULUS_MULT = 4
+
+DANNULUS_VALUE = 5
+DATAMIN_VALUE = -0.001
+DATAMAX_VALUE = 65536
+
+TXDUMP_FIELDS = "id,xc,yc,otime,mag,merr"
+
+# Parameters for the T150 CCD of the OSN.
+# http://www.osn.iaa.es/content/CCDT150-Camera
+OSN_CCD_T150_READNOISE = 8.23
+OSN_CCD_T150_GAIN = 1.5
+OSN_CCD_T150_DATAMAX = 65536
