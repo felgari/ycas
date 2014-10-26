@@ -30,6 +30,8 @@ LOG_LEVELS = { "CRITICAL" : logging.CRITICAL,
 
 DEFAULT_LOG_LEVEL_NAME = "WARNING"
 
+DEFAULT_LOG_FILE_NAME = "ycas_log.txt"
+
 # Directories.
 BIAS_DIRECTORY = 'bias'
 FLAT_DIRECTORY = 'flat'

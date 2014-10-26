@@ -68,7 +68,7 @@ def write_xy_catalog(table_file_name, catalogue_file_name):
     else:
         logging.info("X,Y coordinates file does not exists so no catalog file is created.")
         
-def do_astrometry(yparser):
+def do_astrometry(progargs):
     """
         
     This function searches directories that contains files of data images.
@@ -118,7 +118,7 @@ def do_astrometry(yparser):
                 # Complete the name of all files.
                 files_to_catalog = \
                     [ os.path.join(full_dir, udn + DATANAME_CHAR_SEP + FIRST_DATA_IMG + \
-                        filter_name + DATA_ALIGN_PATTERN) \
+                        filter_name + DATA_FINAL_PATTERN) \
                         for udn in unique_data_names ]
 
                 logging.info("Files to catalog: " + str(files_to_catalog))
@@ -132,7 +132,7 @@ def do_astrometry(yparser):
                     if os.path.exists(catalog_name) == False :
 
                         command = ASTROMETRY_COMMAND + " " + ASTROMETRY_PARAMS + \
-                        str(yparser.number_of_objects_for_astrometry) + " " + fl
+                        str(progargs.number_of_objects_for_astrometry) + " " + fl
                         logging.info("Executing: " + command)
 
                         # Executes astrometry.net to get the astrometry of the image.

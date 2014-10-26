@@ -31,12 +31,14 @@ the photometric magnitude of the objects.
 
 import sys
 import logging
+import yargparser
 import orgfits
 import reduce
 import align
 import astrometry
 import photometry
 import objmag
+from constants import *
 
 def convert_logging_level(level):
     
@@ -51,32 +53,32 @@ def convert_logging_level(level):
     
     return logging_level
 
-def init_log(parg):
+def init_log(progargs):
     """ Initializes the file log and messages format. 
     
-        parg - ProgramArguments object, it contains the
+        progargs - ProgramArguments object, it contains the
             information of all program arguments received.
     
     """    
     
     # If no log level is indicated use the default level.
-    if parg.log_level_provided:
-        logging_level = LOG_LEVELS[parg.log_level]
+    if progargs.log_level_provided:
+        logging_level = LOG_LEVELS[progargs.log_level]
     else:
         logging_level = LOG_LEVELS[DEFAULT_LOG_LEVEL_NAME]
     
     # If a file name has been provided as program argument use it.
-    if parg.log_file_provided:
-        log_file = parg.log_file_name
+    if progargs.log_file_provided:
+        log_file = progargs.log_file_name
     else:
-        log_file = sys.stdout
+        log_file = DEFAULT_LOG_FILE_NAME
     
     # Set the file, format and level of logging output.
     logging.basicConfig(filename=log_file, \
-                        format='%(asctime)s:%(levelname)s:%(message)s', \
-                        logging_level=logging.DEBUG)
+                        format="%(asctime)s:%(levelname)s:%(message)s", \
+                        level=logging_level)
     
-    logging. info("Logging initialized.")
+    logging.info("Logging initialized.")
 
 def main():
     """ Main function.
@@ -90,24 +92,24 @@ def main():
     """
         
     # Create object to process program arguments.
-    yp = yargparser.ProgramArguments()
+    progargs = yargparser.ProgramArguments()
     
     # Process program arguments.
-    yp.parse()           
+    progargs.parse()           
         
     # Initializes logging.
-    init_log()
+    init_log(progargs)
         
     # This step organizes the images in directories depending on the type of image:
     # bias, flat or data.
-    if yp.organization_requested:
+    if progargs.organization_requested:
         logging.info("* Step 1 * Organizing image files in directories.")
-        orgfits.organize_files(yp)
+        orgfits.organize_files(progargs)
     else:
         logging.info("* Step 1 * Skipping organizing image files in directories. Not requested.")
     
     # This step reduces the data images applying the bias and flats.
-    if yp.reduction_requested:
+    if progargs.reduction_requested:
         logging.info("* Step 2 * Reducing images.") 
         reduce.reduce_images()
     else:
@@ -115,22 +117,22 @@ def main():
     
     # This step find objects in the images. The result is a list of x,y and AR,DEC
     # coordinates.
-    if yp.astrometry_requested:
+    if progargs.astrometry_requested:
         logging.info("* Step 3 * Performing astrometry.")
-        astrometry.do_astrometry()
+        astrometry.do_astrometry(progargs)
     else:
         logging.info("* Step 3 * Skipping performing astrometry. Not requested.")
     
     # This step aligns the data images of the same object. This step is optional as
     # the rest of steps could be performed with images not aligned.
-    if yp.align_requested:
+    if progargs.align_requested:
         logging.info("* Step 4 * Performing alignment.")    
         align.align_images()
     else:
         logging.info("* Step 4 * Skipping performing alignment. Not requested.")
         
     # This step calculates the photometry of the objects detected doing the astrometry.
-    if yp.photometry_requested:
+    if progargs.photometry_requested:
         logging.info("* Step 5 * Performing photometry.")     
         photometry.calculate_photometry()
     else:
@@ -138,8 +140,11 @@ def main():
         
     # This step process the magnitudes calculated for each object and generates a file
     # that associate to each object all its measures.
-    logging.info("* Step 6 * Processing magnitudes of each object.")     
-    objmag.main()
+    if progargs.magnitudes_requested:
+        logging.info("* Step 6 * Processing magnitudes of each object.")     
+        objmag.mesaures_of_objects()
+    else:
+        logging.info("* Step 6 * Skipping processing magnitudes of each object. Not requested.")        
 
 # Where all begins ...
 if __name__ == "__main__":

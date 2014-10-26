@@ -76,7 +76,7 @@ def create_directory(path, dirname):
             if not os.path.isdir(complete_dirname):
                 raise
 
-def analyze_and_organize_dir(filename, path, yparser):
+def analyze_and_organize_dir(filename, path, progargs):
     """ 
     
     The file name has the the form type-orderfilter.fit'.
@@ -91,38 +91,61 @@ def analyze_and_organize_dir(filename, path, yparser):
 
     # If the file is a bias.
     if filename.startswith(BIAS_STRING):
-        create_directory(path, yparser.bias_directory)
+        create_directory(path, progargs.bias_directory)
 
-        file_destination = os.path.join(path, yparser.bias_directory, filename)
+        file_destination = os.path.join(path, progargs.bias_directory, filename)
 
     # If the file is a flat.
     elif filename.startswith(FLAT_STRING):
-        create_directory(path, yparser.flat_directory)
+        create_directory(path, progargs.flat_directory)
 
         filtername = get_image_filter(filename)
 
         if len(filtername) > 0:
-            create_directory(path, os.path.join(yparser.flat_directory, filtername))
+            create_directory(path, os.path.join(progargs.flat_directory, filtername))
 
-        file_destination = os.path.join(path, yparser.flat_directory, filtername, filename)
+        file_destination = os.path.join(path, progargs.flat_directory, filtername, filename)
 
     # Else the file is a data image.
     else:
-        create_directory(path, yparser.data_directory)
+        create_directory(path, progargs.data_directory)
 
         filtername = get_image_filter(filename)
 
         if len(filtername) > 0:
-            create_directory(path, os.path.join(yparser.data_directory, filtername))
+            create_directory(path, os.path.join(progargs.data_directory, filtername))
 
-        file_destination = os.path.join(path, yparser.data_directory, filtername, filename)
+        file_destination = os.path.join(path, progargs.data_directory, filtername, filename)
 
     logging.info("Moving '" + file_source + "' to '" + file_destination + "'")
 
     shutil.move(os.path.abspath(file_source),
                 os.path.abspath(file_destination))
+    
+def ignore_current_directory(dir, progargs):
+    """ Determines if current directory should be ignored.
+    
+    A directory whose name matches that of bias, flat or data directories or
+    has a parent directory named as a flat or data directory, it is ignored 
+    as this directory could be a directory created in a previous run and a new
+    bias/flat/data directory should be created from them 
+    
+    """
+    ignore  = False
+    
+    head, current_directory = os.path.split(dir)
+    rest, parent_directrory = os.path.split(head)
+    
+    if current_directory == progargs.bias_directory or \
+        current_directory == progargs.flat_directory or \
+        parent_directrory == progargs.flat_directory or \
+        current_directory == progargs.data_directory or \
+        parent_directrory == progargs.data_directory:
+        ignore  = True
+    
+    return ignore    
 
-def organize_files(yparser):
+def organize_files(progargs):
     """ Search directories with images to organize.
     
     This function walks the directories searching for image files,
@@ -133,15 +156,21 @@ def organize_files(yparser):
     
     # Walk from current directory.
     for path,dirs,files in os.walk('.'):
-        # For each file move it to he proper directory.
-        for fn in files:
-            # The extension is the final string of the list 
-            # without the initial dot.
-            filext = os.path.splitext(fn)[-1][1:]
-
-            if filext == FIT_FILE_EXT:
-                # Analyze name.
-                logging.info("Analyzing: " + os.path.join(path, fn))
-                analyze_and_organize_dir(fn, path, yparser)
-            else:
-                logging.info("Ignoring file: " + fn)
+        
+        # Check if current directory could be created previously
+        # to contain bias or flat,  in that case the directory is ignored.        
+        if ignore_current_directory(path, progargs):
+            logging.info("Ignoring directory: " + path)
+        else:
+            # For each file move it to he proper directory.
+            for fn in files:
+                # The extension is the final string of the list 
+                # without the initial dot.
+                filext = os.path.splitext(fn)[-1][1:]
+    
+                if filext == FIT_FILE_EXT:
+                    # Analyze name.
+                    logging.info("Analyzing: " + os.path.join(path, fn))
+                    analyze_and_organize_dir(fn, path, progargs)
+                else:
+                    logging.info("Ignoring file: " + fn)

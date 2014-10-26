@@ -42,6 +42,8 @@ def show_files_statistics(list_of_files):
     
     """
     
+    print "Files: " + str(list_of_files)
+    
     # Getting statistics for bias files.
     try:
     	means = iraf.imstat(list_of_files, fields='mean', Stdout=1)
@@ -52,7 +54,7 @@ def show_files_statistics(list_of_files):
     	logging.info("Bias images - Max. mean: " + str(max(mean_values)) + \
     			" Min. mean: " + str(min(mean_values)))
     			
-    	logging.info("Creating bias file: " + masterbias_name)	
+    	logging.info("Creating bias file: " + MASTERBIAS_FILENAME)	
     except iraf.IrafError as exc:
     	logging.error("Error executing imstat: Stats for bias images: " + list_of_files)
     	logging.error("Iraf error is: " + str(exc))   		
@@ -97,7 +99,7 @@ def do_masterbias():
                     # Put the files list in a string.
                     list_of_files = str(files).translate(None, "[]\'")
                     
-                    show_bias_statistics(list_of_files)
+                    show_files_statistics(list_of_files)
                         	
                     # Combine all the bias files.
                     try:
@@ -278,37 +280,40 @@ def reduce_data():
                                  split_path[-1], MASTERFLAT_FILENAME)
 
                 # Reduce each data file one by one.
-                for dfile in data_files:                 
-
-                    # Get the work file between bias and flatted result.
-                    work_file = dfile.replace("." + FIT_FILE_EXT, \
-                                              WORK_FILE_SUFFIX + "." + FIT_FILE_EXT)
-                       
-                    try: 
-                        # Create the work files subtracting bias from flat.
-                        iraf.imarith(dfile, '-', masterbias_name, work_file)     
-                        
-                        # Get the name of the final file.
-                        final_file = dfile.replace("." + FIT_FILE_EXT, \
-                                                   DATA_FINAL_SUFFIX + "." + \
-                                                   FIT_FILE_EXT)   
-
-                        try:
-                            # Create the final data dividing by master flat.
-                            iraf.imarith(work_file, "/", masterflat_name, final_file)
+                for dfile in data_files:     
+                    
+                    # Get the name of the final file.
+                    final_file = dfile.replace("." + FIT_FILE_EXT, \
+                                               DATA_FINAL_SUFFIX + "." + \
+                                               FIT_FILE_EXT)   
+                     
+                    if os.path.exists(final_file):           
+                        logging.info("Ignoring file for reduction, already exists: " + final_file)
+                    else:
+                        # Get the work file between bias and flat result.
+                        work_file = dfile.replace("." + FIT_FILE_EXT, \
+                                                  WORK_FILE_SUFFIX + "." + FIT_FILE_EXT)
+                           
+                        try: 
+                            # Create the work files subtracting bias from flat.
+                            iraf.imarith(dfile, '-', masterbias_name, work_file)     
+    
+                            try:
+                                # Create the final data dividing by master flat.
+                                iraf.imarith(work_file, "/", masterflat_name, final_file)
+                                
+                                # Remove work file to save storage space.
+                                os.remove(work_file)
+                                                                    
+                            except iraf.IrafError as exc:
+                                logging.error("Error executing imarith: " + work_file + \
+                                              " / " + masterflat_name + " to " + final_file)     
+                                logging.error("Iraf error is: " + str(exc))                  
                             
-                            # Remove work file to save storage space.
-                            os.remove(work_file)
-                                                                
                         except iraf.IrafError as exc:
-                            logging.error("Error executing imarith: " + work_file + \
-                                          " / " + masterflat_name + " to " + final_file)     
-                            logging.error("Iraf error is: " + str(exc))                  
-                        
-                    except iraf.IrafError as exc:
-                        logging.error("Error executing imarith: " + dfile + \
-                                        " - " + masterbias_name + " to " + work_file)
-                        logging.error("Iraf error is: " + str(exc))
+                            logging.error("Error executing imarith: " + dfile + \
+                                            " - " + masterbias_name + " to " + work_file)
+                            logging.error("Iraf error is: " + str(exc))
                         
 def reduce_images():
     """ Complete reduction process.

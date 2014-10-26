@@ -26,7 +26,7 @@ these arguments to other modules.
 
 import argparse
 import logging
-import constants
+from constants import *
 
 class ProgramArguments(object):
     """ Encapsulates the definition and processing of program arguments.
@@ -66,20 +66,26 @@ class ProgramArguments(object):
         self.__parser.add_argument("-l", metavar="log file name", dest="l", \
                                    help="File to save the log messages") 
         
-        self.__parser.add_argument("-v", metavar="log level", dest="l", \
+        self.__parser.add_argument("-v", metavar="log level", dest="v", \
                                    help="Level of the log messages to generate")         
         
-        self.__parser.add_argument("-o", dest="o", help="Organize the images")                
+        self.__parser.add_argument("-o", dest="o", action="store_true", \
+                                   help="Organize the images")                
         
-        self.__parser.add_argument("-r", dest="r", help="Reduce the images")       
+        self.__parser.add_argument("-r", dest="r", action="store_true", \
+                                   help="Reduce the images")       
         
-        self.__parser.add_argument("-m", dest="m", 
+        self.__parser.add_argument("-s", dest="s", action="store_true",  
                                    help="Calculate the astrometry")  
         
-        self.__parser.add_argument("-a", dest="a", help="Align the images")   
+        self.__parser.add_argument("-a", dest="a", action="store_true", \
+                                   help="Align the images")   
         
-        self.__parser.add_argument("-p", dest="p", 
-                                   help="Calculate the photometry of the images")               
+        self.__parser.add_argument("-p", dest="p", action="store_true", 
+                                   help="Calculate the photometry of the images")       
+        
+        self.__parser.add_argument("-m", dest="m", action="store_true", 
+                                   help="Calculate the magnitudes of the images")                 
         
         self.__args = None    
         
@@ -117,23 +123,27 @@ class ProgramArguments(object):
     
     @property
     def organization_requested(self):
-        return self.__args.o <> None         
+        return self.__args.o         
     
     @property
     def reduction_requested(self):
-        return self.__args.r <> None  
+        return self.__args.r  
     
     @property
     def astrometry_requested(self):
-        return self.__args.m <> None  
+        return self.__args.s  
     
     @property
     def align_requested(self):
-        return self.__args.a <> None 
+        return self.__args.a 
     
     @property
     def photometry_requested(self):
-        return self.__args.p <> None  
+        return self.__args.p  
+    
+    @property
+    def magnitudes_requested(self):
+        return self.__args.m      
     
     def parse(self):
         """ Parse program arguments.

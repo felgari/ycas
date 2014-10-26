@@ -140,7 +140,7 @@ def group_measures():
     
     This function searches directories that contains RDLS files.
     When a RDLS file is found, another function is called to
-    generate a test file that contains all the photometric measures
+    generate a text file that contains all the photometric measures
     that exists in that directory for the objects related to the
     RDLs file.
     
@@ -308,25 +308,13 @@ def get_measures_of_objects():
         
         save_object_measures(obj_name, measures)
     
-def main(argv=None):
-    """ main function.
+def mesaures_of_objects():
+    """ 
 
-    A main function allows the easy calling from other modules and also from the
-    command line.
-
-    Arguments:
-    argv - List of arguments passed to the script.
+    Get the magnitudes of the objects grouping all the measures calculated.
 
     """
-
-    if argv is None:
-        argv = sys.argv
             
     group_measures()
     
     get_measures_of_objects()
-
-# Where all begins ...
-if __name__ == "__main__":
-
-    sys.exit(main())
