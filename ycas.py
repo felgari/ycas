@@ -51,23 +51,23 @@ def convert_logging_level(level):
     
     return logging_level
 
-def init_log(level, file):
+def init_log(parg):
     """ Initializes the file log and messages format. 
     
-        level - Level to set for the log.
-        file - File where the log messages will be saved.
+        parg - ProgramArguments object, it contains the
+            information of all program arguments received.
     
     """    
     
     # If no log level is indicated use the default level.
-    if level == None:
-        logging_level = LOG_LEVELS[DEFAULT_LOG_LEVEL_NAME]
+    if parg.log_level_provided:
+        logging_level = LOG_LEVELS[parg.log_level]
     else:
-        logging_level = convert_logging_level(level)
+        logging_level = LOG_LEVELS[DEFAULT_LOG_LEVEL_NAME]
     
     # If a file name has been provided as program argument use it.
-    if file != None:
-        log_file = file
+    if parg.log_file_provided:
+        log_file = parg.log_file_name
     else:
         log_file = sys.stdout
     
@@ -78,8 +78,8 @@ def init_log(level, file):
     
     logging. info("Logging initialized.")
 
-def main(argv=None):
-    """ main function.
+def main():
+    """ Main function.
 
     A main function allows the easy calling from other modules and also from the
     command line.
@@ -87,40 +87,55 @@ def main(argv=None):
     This function performs all the steps needed to process the images.
     Each step is a calling to a function that implements a concrete task.
 
-    Arguments:
-    argv - List of arguments passed to the script.
-
     """
-
-    if argv is None:
-        argv = sys.argv
+        
+    # Create object to process program arguments.
+    yp = yargparser.ProgramArguments()
+    
+    # Process program arguments.
+    yp.parse()           
         
     # Initializes logging.
     init_log()
         
     # This step organizes the images in directories depending on the type of image:
     # bias, flat or data.
-    logging.info("* Step 1 * Organizing image files in directories.")
-    orgfits.main()
+    if yp.organization_requested:
+        logging.info("* Step 1 * Organizing image files in directories.")
+        orgfits.organize_files(yp)
+    else:
+        logging.info("* Step 1 * Skipping organizing image files in directories. Not requested.")
     
     # This step reduces the data images applying the bias and flats.
-    logging.info("* Step 2 * Reducing images.") 
-    reduce.main()
+    if yp.reduction_requested:
+        logging.info("* Step 2 * Reducing images.") 
+        reduce.reduce_images()
+    else:
+        logging.info("* Step 2 * Skipping reducing images. Not requested.")
     
     # This step find objects in the images. The result is a list of x,y and AR,DEC
     # coordinates.
-    logging.info("* Step 3 * Performing astrometry.")
-    astrometry.main()
+    if yp.astrometry_requested:
+        logging.info("* Step 3 * Performing astrometry.")
+        astrometry.do_astrometry()
+    else:
+        logging.info("* Step 3 * Skipping performing astrometry. Not requested.")
     
     # This step aligns the data images of the same object. This step is optional as
     # the rest of steps could be performed with images not aligned.
-    logging.info("* Step 4 * Performing alignment.")    
-    align.main()    
-    
+    if yp.align_requested:
+        logging.info("* Step 4 * Performing alignment.")    
+        align.align_images()
+    else:
+        logging.info("* Step 4 * Skipping performing alignment. Not requested.")
+        
     # This step calculates the photometry of the objects detected doing the astrometry.
-    logging.info("* Step 5 * Performing photometry.")     
-    photometry.main()
-    
+    if yp.photometry_requested:
+        logging.info("* Step 5 * Performing photometry.")     
+        photometry.calculate_photometry()
+    else:
+        logging.info("* Step 5 * Skipping performing photometry. Not requested.")
+        
     # This step process the magnitudes calculated for each object and generates a file
     # that associate to each object all its measures.
     logging.info("* Step 6 * Processing magnitudes of each object.")     

@@ -62,6 +62,8 @@ def align_images():
     """
     
     logging.info("Aligning images ...")
+    
+    set_align_pars()
 
     number_of_images = 0
     number_of_successfull_images = 0
@@ -128,27 +130,3 @@ def align_images():
                                 logging.error("Iraf error is: " + str(exc))   
                     else:
                         logging.info("Only 1 data image, alignment is not necessary.")
-
-def main(argv=None):
-    """ main function.
-
-    A main function allows the easy calling from other modules and also from the
-    command line.
-
-    Arguments:
-    argv - List of arguments passed to the script.
-
-    """
-
-    if argv is None:
-        argv = sys.argv
-        
-    set_align_pars()
-
-    # Calculate the x,y coordinates of each object in the data images.
-    align_images()
-
-# Where all begins ...
-if __name__ == "__main__":
-
-    sys.exit(main())

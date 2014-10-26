@@ -154,25 +154,3 @@ def do_astrometry():
     logging.info("Astrometry results:")
     logging.info("- Number of images processed: " + str(number_of_images))
     logging.info("- Images processed successfully: " + str(number_of_successfull_images))
-
-def main(argv=None):
-    """ main function.
-
-    A main function allows the easy calling from other modules and also from the
-    command line.
-
-    Arguments:
-    argv - List of arguments passed to the script.
-
-    """
-
-    if argv is None:
-        argv = sys.argv
-
-    # Calculate the x,y coordinates of each object in the data images.
-    do_astrometry()
-
-# Where all begins ...
-if __name__ == "__main__":
-
-    sys.exit(main())

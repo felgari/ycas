@@ -224,19 +224,12 @@ def txdump_photometry_info():
                         
                     mag_dest_file.close()
                            
-def main(argv=None):
-    """ main function.
+def calculate_photometry():
+    """ Calculates the photometry of data images.
 
-    A main function allows the easy calling from other modules and also from the
-    command line.
-
-    Arguments:
-    argv - List of arguments passed to the script.
+    This function calculates the photometry for all the data images found.
 
     """
-
-    if argv is None:
-        argv = sys.argv
 
     # Init iraf package.
     init_iraf()
@@ -249,9 +242,3 @@ def main(argv=None):
     
     # Export photometry info to a text file with only the columns needed.
     txdump_photometry_info()
-
-# Where all begins ...
-if __name__ == "__main__":
-
-    sys.exit(main())
-

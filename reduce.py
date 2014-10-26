@@ -310,19 +310,12 @@ def reduce_data():
                                         " - " + masterbias_name + " to " + work_file)
                         logging.error("Iraf error is: " + str(exc))
                         
-def main(argv=None):
-    """ main function.
+def reduce_images():
+    """ Complete reduction process.
 
-    A main function allows the easy calling from other modules and also from the
-    command line.
-
-    Arguments:
-    argv - List of arguments passed to the script.
+    This function performs the reduction of data images.
 
     """
-
-    if argv is None:
-        argv = sys.argv
 
     # Load the images package and does not show any output of the tasks.
     iraf.images(_doprint=0)
@@ -335,8 +328,3 @@ def main(argv=None):
 
     # Reduce data images applying bias and flats.
     reduce_data()
-
-# Where all begins ...
-if __name__ == "__main__":
-
-    sys.exit(main())

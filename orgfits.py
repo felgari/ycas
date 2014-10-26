@@ -32,6 +32,7 @@ one for each filter.
 import sys
 import os
 import logging
+import yargparser
 import shutil
 from constants import *
 
@@ -75,7 +76,7 @@ def create_directory(path, dirname):
             if not os.path.isdir(complete_dirname):
                 raise
 
-def analyze_and_organize_dir(filename, path):
+def analyze_and_organize_dir(filename, path, yparser):
     """ 
     
     The file name has the the form type-orderfilter.fit'.
@@ -90,38 +91,38 @@ def analyze_and_organize_dir(filename, path):
 
     # If the file is a bias.
     if filename.startswith(BIAS_STRING):
-        create_directory(path, BIAS_DIRECTORY)
+        create_directory(path, yparser.bias_directory)
 
-        file_destination = os.path.join(path, BIAS_DIRECTORY, filename)
+        file_destination = os.path.join(path, yparser.bias_directory, filename)
 
     # If the file is a flat.
     elif filename.startswith(FLAT_STRING):
-        create_directory(path, FLAT_DIRECTORY)
+        create_directory(path, yparser.flat_directory)
 
         filtername = get_image_filter(filename)
 
         if len(filtername) > 0:
-            create_directory(path, os.path.join(FLAT_DIRECTORY, filtername))
+            create_directory(path, os.path.join(yparser.flat_directory, filtername))
 
-        file_destination = os.path.join(path, FLAT_DIRECTORY, filtername, filename)
+        file_destination = os.path.join(path, yparser.flat_directory, filtername, filename)
 
     # Else the file is a data image.
     else:
-        create_directory(path, DATA_DIRECTORY)
+        create_directory(path, yparser.data_directory)
 
         filtername = get_image_filter(filename)
 
         if len(filtername) > 0:
-            create_directory(path, os.path.join(DATA_DIRECTORY, filtername))
+            create_directory(path, os.path.join(yparser.data_directory, filtername))
 
-        file_destination = os.path.join(path, DATA_DIRECTORY, filtername, filename)
+        file_destination = os.path.join(path, yparser.data_directory, filtername, filename)
 
     logging.info("Moving '" + file_source + "' to '" + file_destination + "'")
 
     shutil.move(os.path.abspath(file_source),
                 os.path.abspath(file_destination))
 
-def organize_files():
+def organize_files(yparser):
     """ Search directories with images to organize.
     
     This function walks the directories searching for image files,
@@ -141,27 +142,6 @@ def organize_files():
             if filext == FIT_FILE_EXT:
                 # Analyze name.
                 logging.info("Analyzing: " + os.path.join(path, fn))
-                analyze_and_organize_dir(fn, path)
+                analyze_and_organize_dir(fn, path, yparser)
             else:
                 logging.info("Ignoring file: " + fn)
-
-def main(argv=None):
-    """ main function.
-
-    A main function allows the easy calling from other modules and also from the
-    command line.
-
-    Arguments:
-    argv - List of arguments passed to the script.
-
-    """
-
-    if argv is None:
-        argv = sys.argv
-
-    organize_files()
-
-# Where all begins ...
-if __name__ == "__main__":
-
-    sys.exit(main())
