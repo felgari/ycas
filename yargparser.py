@@ -43,7 +43,9 @@ class ProgramArguments(object):
         
         self.__bias_directory = BIAS_DIRECTORY
         self.__flat_directory = FLAT_DIRECTORY
-        self.__data_directory = DATA_DIRECTORY                
+        self.__data_directory = DATA_DIRECTORY      
+        
+        self.__astrometry_num_of_objects = ASTROMETRY_NUM_OBJS          
 
             
         # Initiate arguments of the parser.
@@ -95,7 +97,7 @@ class ProgramArguments(object):
          
     @property          
     def number_of_objects_for_astrometry(self):        
-        return self.__args.no
+        return self.__astrometry_num_of_objects
     
     @property    
     def log_file_provided(self): 
@@ -151,4 +153,7 @@ class ProgramArguments(object):
             
         if self.__args.d <> None:
             self.__data_directory = self.__args.d
+            
+        if self.__args.no <> None:
+            self.__astrometry_num_of_objects = self.__args.no
      

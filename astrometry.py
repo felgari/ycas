@@ -27,6 +27,7 @@ The astrometry is calculated with a external program from 'astrometry.net'.
 import sys
 import os
 import logging
+import yargparser
 import glob
 import pyfits
 import subprocess32 as subprocess
@@ -67,7 +68,7 @@ def write_xy_catalog(table_file_name, catalogue_file_name):
     else:
         logging.info("X,Y coordinates file does not exists so no catalog file is created.")
         
-def do_astrometry():
+def do_astrometry(yparser):
     """
         
     This function searches directories that contains files of data images.
@@ -130,7 +131,8 @@ def do_astrometry():
                     # Check if the catalog file already exists.
                     if os.path.exists(catalog_name) == False :
 
-                        command = ASTROMETRY_COMMAND + " " + ASTROMETRY_PARAMS + " " + fl
+                        command = ASTROMETRY_COMMAND + " " + ASTROMETRY_PARAMS + \
+                        str(yparser.number_of_objects_for_astrometry) + " " + fl
                         logging.info("Executing: " + command)
 
                         # Executes astrometry.net to get the astrometry of the image.

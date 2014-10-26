@@ -67,8 +67,10 @@ DATA_FINAL_SUFFIX = "_final"
 # External commands
 ASTROMETRY_COMMAND = "solve-field"
 
+# Default number of objects to look at when doing astrometry.
+ASTROMETRY_NUM_OBJS = 20
 # Overwrite previous files and limit the number of objects to look at"
-ASTROMETRY_PARAMS = "--overwrite -d 20"
+ASTROMETRY_PARAMS = "--overwrite -d "
 
 ASTROMETRY_WCS_TABLE_INDEX = 1
 
