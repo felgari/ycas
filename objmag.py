@@ -142,8 +142,6 @@ def get_object_references(rdls_file, objects):
         temp_ar_diff = abs(float(rd[RDLS_AR_COL_NUMBER]) - ar)
         temp_dec_diff = abs(float(rd[RDLS_DEC_COL_NUMBER]) - dec)   
         
-        print object_name + " AR/DEC " + str(rd[RDLS_AR_COL_NUMBER]) + " " + str(rd[RDLS_DEC_COL_NUMBER])
-        
         # If current row coordinates are smaller than previous this
         # row is chosen as candidate for the object.
         if temp_ar_diff < ar_diff and temp_dec_diff < dec_diff:
