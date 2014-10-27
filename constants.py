@@ -109,8 +109,9 @@ MEASURES_AR_COL_NUMBER = 1
 MEASURES_DEC_COL_NUMBER = 2
 MEASURE_FIRST_COL_NUMBER = 3 
 
-RDLS_AR_COL_NUMBER = 0
-RDLS_DEC_COL_NUMBER = 1
+RDLS_AR_IDX_NUMBER = 0
+RDLS_AR_COL_NUMBER = 1
+RDLS_DEC_COL_NUMBER = 2
 
 # Name of the file that contains information about the objects of interest.
 INT_OBJECTS_FILE_NAME = "objects.tsv"

@@ -142,9 +142,11 @@ def get_object_references(rdls_file, objects):
         temp_ar_diff = abs(float(rd[RDLS_AR_COL_NUMBER]) - ar)
         temp_dec_diff = abs(float(rd[RDLS_DEC_COL_NUMBER]) - dec)   
         
+        print object_name + " AR/DEC " + str(rd[RDLS_AR_COL_NUMBER]) + " " + str(rd[RDLS_DEC_COL_NUMBER])
+        
         # If current row coordinates are smaller than previous this
         # row is chosen as candidate for the object.
-        if temp_ar_diff+temp_dec_diff < ar_diff+dec_diff:
+        if temp_ar_diff < ar_diff and temp_dec_diff < dec_diff:
             ar_diff = temp_ar_diff
             dec_diff = temp_dec_diff
             index = i        
@@ -169,6 +171,9 @@ def get_measurements_for_object(rdls_file, path, objects):
     # Get the list of files with magnitudes for the images of this object.
     # At this point all the csv are related to magnitude values. 
     csv_files = glob.glob(os.path.join(path, object_name + "*." + CSV_FILE_EXT))
+    
+    # The name of the directory that contains the file is the name of the filter
+    path_head, filter_name = os.path.split(path)
     
     logging.info("Found " + str(len(csv_files)) + " csv files for object " \
                  + object_name)
@@ -196,7 +201,7 @@ def get_measurements_for_object(rdls_file, path, objects):
                     fields = str(row).translate(None, "[]\'").split()
                     
                     # Add magnitude value to the appropriate row from RDLS file.
-                    measurements.append([fields[CSV_TIME_COL], fields[CSV_MAG_COL]])
+                    measurements.append([fields[CSV_TIME_COL], fields[CSV_MAG_COL], filter_name])
                 
                 nrow += 1
                 
