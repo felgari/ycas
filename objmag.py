@@ -129,8 +129,6 @@ def get_object_references(rdls_file, objects):
     # Get coordinates for the object related to the RDLS file.
     ar, dec = get_ar_dec_for_object(objects, object_name)    
     
-    print object_name + ": AR/DEC " + str(ar) + " " + str(dec)
-    
     # Get RDLS data.
     rdls_data = get_rdls_data(rdls_file) 
     
