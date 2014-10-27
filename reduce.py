@@ -47,7 +47,7 @@ def show_files_statistics(list_of_files):
     # Getting statistics for bias files.
     try:
     	means = iraf.imstat(list_of_files, fields='mean', Stdout=1)
-    	means = means[1:]
+    	means = means[IMSTAT_FIRST_VALUE:]
     	mean_strings = [str(m).translate(None, ",\ ") for m in means]
     	mean_values = [float(m) for m in mean_strings]
     	

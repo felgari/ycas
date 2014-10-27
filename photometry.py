@@ -69,6 +69,7 @@ def set_phot_pars(fwhm):
     iraf.photpars.apertures = APERTURE_MULT * fwhm
     iraf.fitskypars.annulus = ANNULUS_MULT * fwhm
     iraf.fitskypars.dannulus = DANNULUS_VALUE
+    iraf.fitskypars.skyvalue = SKY_VALUE
     iraf.fitskypars.salgorithm = "mode"
     iraf.centerpars.cbox = 0
     iraf.centerpars.calgori = "centroid"
@@ -110,7 +111,25 @@ def do_phot(image_file_name, catalog_file_name, output_mag_file_name):
 
     logging.info("Calculating magnitudes for: " + image_file_name + \
                  " in " + output_mag_file_name)
-        
+    
+    # Calculate datamin for this image.
+    try:
+        imstat_output = iraf.imstat(image_file_name, fields='mean,stddev', Stdout=1)
+        imstat_values = imstat_output[IMSTAT_FIRST_VALUE]
+        values = imstat_values.split()
+        iraf.datapars.datamin = float(values[0]) - DATAMIN_MULT * float(values[1])
+    except iraf.IrafError as exc:
+        # Set a default value for datamin.
+        iraf.datapars.datamin = DATAMIN_VALUE        
+        logging.error("Error executing imstat: Stats for data image: " + image_file_name)
+        logging.error("Iraf error is: " + str(exc)) 
+    except ValueError as ve:
+        # Set a default value for datamin.
+        iraf.datapars.datamin = DATAMIN_VALUE
+        logging.error("Value Error calculating datamin for image: " + image_file_name)
+        logging.error("mean is: " + values[0] + " stddev is: " + values[1])
+        logging.error("Value Error is: " + str(ve))                         
+                
     try:
         iraf.phot(image = image_file_name, 
                     coords = catalog_file_name, 
