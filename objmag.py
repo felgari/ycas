@@ -36,7 +36,9 @@ from constants import *
 def get_object_name_from_rdls(rdls_file):
     
     # From the file name get the name of the object.
-    return rdls_file[0:rdls_file.find(DATANAME_CHAR_SEP)]    
+    object_name_with_path = rdls_file[0:rdls_file.find(DATANAME_CHAR_SEP)]
+     
+    return os.path.basename(object_name_with_path)     
 
 def get_ar_dec_for_object(objects, object_name):
     """
@@ -51,7 +53,7 @@ def get_ar_dec_for_object(objects, object_name):
     dec = 0.0
     
     for obj in objects:
-        if obj[0] == object_name:
+        if obj[OBJ_NAME_COL] == object_name:
             ar = float(obj[OBJ_AR_COL])
             dec = float(obj[OBJ_DEC_COL])
     
@@ -122,10 +124,12 @@ def get_object_references(rdls_file, objects):
     index = -1
     
     # Get the name of the object related to this RDLS file.
-    object_name = rdls_file[0:rdls_file.find(DATANAME_CHAR_SEP)]
+    object_name = get_object_name_from_rdls(rdls_file)
     
     # Get coordinates for the object related to the RDLS file.
     ar, dec = get_ar_dec_for_object(objects, object_name)    
+    
+    print object_name + ": AR/DEC " + str(ar) + " " + str(dec)
     
     # Get RDLS data.
     rdls_data = get_rdls_data(rdls_file) 
@@ -149,8 +153,9 @@ def get_object_references(rdls_file, objects):
     
         i += 1
         
-    return index, object_name
-    
+    logging.info("Found index for object " + object_name + " at " + str(index))
+        
+    return index, object_name    
 
 def get_measurements_for_object(rdls_file, path, objects):
     """
@@ -165,7 +170,7 @@ def get_measurements_for_object(rdls_file, path, objects):
     
     # Get the list of files with magnitudes for the images of this object.
     # At this point all the csv are related to magnitude values. 
-    csv_files = glob.glob(object_name + "*." + CSV_FILE_EXT)
+    csv_files = glob.glob(os.path.join(path, object_name + "*." + CSV_FILE_EXT))
     
     logging.info("Found " + str(len(csv_files)) + " csv files for object " \
                  + object_name)
@@ -251,9 +256,7 @@ def compile_measurements_of_objects(objects):
                     # If any measurement has been get.
                     if len(me) > 0:
                         # Get the name of the object.
-                        object_name_with_path = get_object_name_from_rdls(rdls_file)                    
-                        
-                        object_name = os.path.basename(object_name_with_path)
+                        object_name = get_object_name_from_rdls(rdls_file)                    
                         
                         try:
                             # Retrieve the list that contains the measurements 
