@@ -142,7 +142,7 @@ def main():
     # that associate to each object all its measures.
     if progargs.magnitudes_requested:
         logging.info("* Step 6 * Processing magnitudes of each object.")     
-        objmag.mesaures_of_objects()
+        objmag.compile_objects_measurements(progargs)
     else:
         logging.info("* Step 6 * Skipping processing magnitudes of each object. Not requested.")        
 

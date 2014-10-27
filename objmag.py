@@ -21,31 +21,63 @@
 """
 This module obtains the magnitude of a set of object using the photometry
 values calculated previously.
-The magnitud values are stored in different files for each object.
+The magnitude values are stored in different files for each object.
 """
 
 import sys
 import os
 import logging
+import yargparser
 import glob
 import pyfits
 import csv
 from constants import *
 
-# Number of the column that contains the magnitude value.
-CSV_TIME_COL = 3 
-CSV_MAG_COL = 4 
+def get_object_name_from_rdls(rdls_file):
+    
+    # From the file name get the name of the object.
+    return rdls_file[0:rdls_file.find(DATANAME_CHAR_SEP)]    
 
-# Name of the file that contains information about the objects of interest.
-INT_OBJECTS_FILE_NAME = "objects.tsv"
+def get_ar_dec_for_object(objects, object_name):
+    """
+    
+    This function receives the name of an object and the set of objects
+    and returns the coordinates for that object contained in the
+    list of objects.
+    
+    """
+    
+    ar = 0.0
+    dec = 0.0
+    
+    for obj in objects:
+        if obj[0] == object_name:
+            ar = float(obj[OBJ_AR_COL])
+            dec = float(obj[OBJ_DEC_COL])
+    
+    return ar, dec
 
-# Number of the columns that contains AR and DEC values in each type of file.
-OBJECTS_AR_COL_NUMBER = 1
-OBJECTS_DEC_COL_NUMBER = 2
-
-MEASURES_AR_COL_NUMBER = 1
-MEASURES_DEC_COL_NUMBER = 2
-MEASURE_FIRST_COL_NUMBER = 3 
+def read_objects_of_interest(progargs):
+    """
+        
+    Read the list of objects of interest from the file indicated.
+    This file contains the name of the object and the AR, DEC 
+    coordinates of each object.
+    
+    """
+    
+    objects = list()
+    
+    # Read the file that contains the objects of interest.
+    with open(progargs.interest_object_file_name, 'rb') as fr:
+        reader = csv.reader(fr, delimiter='\t')        
+        
+        for row in reader:    
+            objects.append(row)   
+            
+    logging.info("Read the following objects: " +  str(objects))            
+            
+    return objects     
 
 def get_rdls_data(rdls_file):
     """
@@ -75,25 +107,61 @@ def get_rdls_data(rdls_file):
         ldata.append([n, row[0], row[1]])
         n += 1
     
-    return ldata
+    return ldata  
 
-def group_measures_for_object(rdls_file, full_dir):
+def get_object_references(rdls_file, objects):
     """
     
-    This function generates a text file that groups in a line
-    all the photometry measures that exists in a directory for
-    a set of object contained in a fit image.
-    The output file contains a row for each object with the
-    AR, DEC coordinates and the list of values measured for
-    the object.
+    This function takes and RDLS file and a list of objects and 
+    returns the index in the RDLS file whose coordinates get the
+    better match for those of the object and also the name of the
+    object.
     
     """
+    
+    index = -1
+    
+    # Get the name of the object related to this RDLS file.
+    object_name = rdls_file[0:rdls_file.find(DATANAME_CHAR_SEP)]
+    
+    # Get coordinates for the object related to the RDLS file.
+    ar, dec = get_ar_dec_for_object(objects, object_name)    
     
     # Get RDLS data.
-    rdls_data = get_rdls_data(rdls_file)    
+    rdls_data = get_rdls_data(rdls_file) 
     
-    # From the file name get the name of the object.
-    object_name = rdls_file[0:rdls_file.find(DATANAME_CHAR_SEP)]
+    ar_diff = 1000.0
+    dec_diff = 1000.0 
+    
+    i = 0
+    for rd in rdls_data:
+        # Compute the difference between the coordinates of the
+        # object in this row and the object received.  
+        temp_ar_diff = abs(float(rd[RDLS_AR_COL_NUMBER]) - ar)
+        temp_dec_diff = abs(float(rd[RDLS_DEC_COL_NUMBER]) - dec)   
+        
+        # If current row coordinates are smaller than previous this
+        # row is chosen as candidate for the object.
+        if temp_ar_diff+temp_dec_diff < ar_diff+dec_diff:
+            ar_diff = temp_ar_diff
+            dec_diff = temp_dec_diff
+            index = i        
+    
+        i += 1
+        
+    return index, object_name
+    
+
+def get_measurements_for_object(rdls_file, path, objects):
+    """
+    
+    This function search in a given path all the files related to
+    an object that contains measurements for that object.
+    
+    """
+    
+    # Get the index of this object in the files that contains the measurements.
+    object_index, object_name = get_object_references(rdls_file, objects)
     
     # Get the list of files with magnitudes for the images of this object.
     # At this point all the csv are related to magnitude values. 
@@ -105,6 +173,9 @@ def group_measures_for_object(rdls_file, full_dir):
     # Sort the list of csv files to ensure a right processing.
     csv_files.sort()
     
+    # To store the measurements.
+    measurements = list()
+    
     # Read magnitudes from csv files and add it to RDLS data.
     # Each csv file contains the magnitudes for all the object of an image.
     for csv_fl in csv_files:
@@ -115,37 +186,42 @@ def group_measures_for_object(rdls_file, full_dir):
             nrow = 0
             
             for row in reader:
-                # Get a list of values from the CSV row read.
-                fields = str(row).translate(None, "[]\'").split()
-                
-                # Add magnitude value to the appropriate row from RDLS file.
-                rdls_data[nrow].extend([fields[CSV_MAG_COL]])
+            
+                # Check if current row corresponds to the object.
+                if nrow == object_index:
+                    # Get a list of values from the CSV row read.
+                    fields = str(row).translate(None, "[]\'").split()
+                    
+                    # Add magnitude value to the appropriate row from RDLS file.
+                    measurements.append([fields[CSV_TIME_COL], fields[CSV_MAG_COL]])
                 
                 nrow += 1
                 
-    # Write results with all the measures taken, for the object that
-    # corresponds to the RDLS file, to a file in tsv format.
-    output_file = object_name + "." + TSV_FILE_EXT
-    
-    logging.info("Writing file: " + output_file)
-    
-    with open(output_file, 'w') as fw:
-        
-        writer = csv.writer(fw, delimiter='\t')
-        
-        writer.writerows(rdls_data)
-        
-def group_measures():
+    return measurements 
+
+
+def compile_measurements_of_objects(objects):
     """
     
-    This function searches directories that contains RDLS files.
-    When a RDLS file is found, another function is called to
-    generate a text file that contains all the photometric measures
-    that exists in that directory for the objects related to the
-    RDLs file.
+    This function receives a list of object and compiles in a text
+    file all the measurements found for each object.
     
     """
     
+    # For each object a list is created to store its measurements.
+    # In turn, all these lists are grouped in a list. 
+    objects_measurements = list()
+    
+    # Create a dictionary to retrieve easily the appropriate list
+    # using the name of the object.
+    objects_index = {}
+    
+    for i in range(len(objects)):
+        objects_measurements.append([])
+        
+        objects_index[objects[i][OBJ_NAME_COL]] = i
+        
+    # Walk all the directories searching for files containing measurements.
     # Walk from current directory.
     for path,dirs,files in os.walk('.'):
 
@@ -155,166 +231,85 @@ def group_measures():
 
             # Check if current directory is for data.
             if split_path[-2] == DATA_DIRECTORY:
-                # Get the full path of the directory.                
-                full_dir = path
-                logging.info("Found a directory for data: " + full_dir)
+               
+                logging.info("Found a directory with data images: " + path)
 
                 # Get the list of RDLS files ignoring hidden files.
                 rdls_files_full_path = \
-                    [f for f in glob.glob(os.path.join(full_dir, "*." + RDLS_FILE_EXT)) \
+                    [f for f in glob.glob(os.path.join(path, "*." + RDLS_FILE_EXT)) \
                     if not os.path.basename(f).startswith('.')]
+                    
                 logging.info("Found " + str(len(rdls_files_full_path)) + \
                              " RDLS files")        
 
+                # Process the images of each object that has a RDLS file.
                 for rdls_file in rdls_files_full_path:
-                    group_measures_for_object(rdls_file, full_dir)
                     
-def search_mesures_files(obj_name):
-    """
-    
-    This function searches directories that contains files with
-    photometric measures.
-    The function returns a list that contains all the files with
-    measures that has been found.
-    
-    """
-    
-    objs_files = list()
-    
-    # Walk from current directory.
-    for path,dirs,files in os.walk('.'):
-
-        # Inspect only directories without subdirectories.
-        if len(dirs) == 0:
-            split_path = path.split(os.sep)
-
-            # Check if current directory is for data.
-            if split_path[-2] == DATA_DIRECTORY:
-                # Get the full path of the directory.                
-                full_dir = path
-                logging.info("Found a directory for data: " + full_dir)
-
-                # Get the list of RDLS files ignoring hidden files.
-                obj_files_full_path = \
-                    [f for f in glob.glob(os.path.join(full_dir, obj_name + "*." + TSV_FILE_EXT)) \
-                    if not os.path.basename(f).startswith('.')]
+                    # Get the measurements for this object in current path.
+                    me = get_measurements_for_object(rdls_file, path, objects)
                     
-                # Add the files found to the list of files for this object.
-                objs_files.extend(obj_files_full_path)
-        
-    return objs_files      
+                    # If any measurement has been get.
+                    if len(me) > 0:
+                        # Get the name of the object.
+                        object_name_with_path = get_object_name_from_rdls(rdls_file)                    
+                        
+                        object_name = os.path.basename(object_name_with_path)
+                        
+                        try:
+                            # Retrieve the list that contains the measurements 
+                            # for this object.
+                            measurements_index = objects_index[object_name]
+                        
+                            object_mea_list = objects_measurements[measurements_index]
+                        
+                            # Add the measurement to the object.
+                            object_mea_list.append(me)
+                        except KeyError as ke:
+                            logging.error("RDLS file with no object of interest: " + \
+                                          object_name)
+                        
+    return objects_measurements
 
-def extract_object_measures(objs_files, ar_str, dec_str):
+def save_objects_measurements(objects, objects_measurements):
     """
     
-    This function received a set of files and a pair or AR, DEC
-    coordinates and returns a list of measures that exists in
-    these files for the object whose AR, DEC coordinates are more
-    similar to those received.
+    This function saves the measurements of each object in a different
+    file.
     
     """
     
-    ar = float(ar_str)
-    dec = float(dec_str)
-    
-    measures = list()
-                   
-    for fl in objs_files:
+    # For each object. The two list received contains the same 
+    # number of objects.
+    for i in range(len(objects)):
         
-        # Read a file that contains measures.
-        with open(fl, 'rb') as fr:
-            reader = csv.reader(fr, delimiter='\t')
+        # Get the name of the output file.
+        output_file_name = objects[i][OBJ_NAME_COL] + "." + TSV_FILE_EXT
+        
+        # Get the measurements for this object
+        measurements = objects_measurements[i]
+    
+        with open(output_file_name, 'w') as fw:
             
-            # These value
-            ar_diff = 1000.0
-            dec_diff = 1000.0
-            
-            object_row = None
-            
-            for row in reader:
-                # Identify the measures of the object using the coordinates.
-                                  
-                # Compute the difference between the coordinates of the
-                # object in this row and the object received.  
-                temp_ar_diff = abs(float(row[MEASURES_AR_COL_NUMBER]) - ar)
-                temp_dec_diff = abs(float(row[MEASURES_DEC_COL_NUMBER]) - dec)   
-                
-                # If current row coordinates are smaller than previous this
-                # row is chosen as candidate for the object.
-                if temp_ar_diff+temp_dec_diff < ar_diff+dec_diff:
-                    ar_diff = temp_ar_diff
-                    dec_diff = temp_dec_diff
-                    object_row = row
-                    
-            # At this point the row of the object has been identified,
-            # so save all the measures of this file with the name of the
-            # name of the file that contained the measures. 
-            measures.extend([[fl] + object_row[MEASURE_FIRST_COL_NUMBER:]])
-                     
-    return measures    
+            writer = csv.writer(fw, delimiter='\t')
 
-def save_object_measures(obj_name, measures):
-    """
-    
-    This function receives the name of an object and a set of measures 
-    that corresponds to that object and writes this measures to a text
-    file with a name that references the object.
-    
-    """
-    
-    output_file_name = obj_name + "." + TSV_FILE_EXT
-    
-    with open(output_file_name, 'w') as fw:
-        
-        writer = csv.writer(fw, delimiter='\t')
-        
-        writer.writerows(measures)    
-
-def get_measures_of_objects():
-    """
-    
-    This function read from a text file a list of objects whose
-    photometric measures are needed. For each object, this function 
-    calls another function that read the measures that exists for 
-    an object and returns a list of the measures. 
-    This list of measures for an object is saved to a text file.
-    
-    """
-    
-    # Read the file that contains the objects of interest.
-    with open(INT_OBJECTS_FILE_NAME, 'rb') as fr:
-        reader = csv.reader(fr, delimiter='\t')
-        
-        objects = list()
-        
-        for row in reader:    
-            objects.append(row)
+            # It is a list that contains sublists, each sublist is
+            # a different measurement, so each one is written as a row.
+            for me in measurements:
             
-    # For each object look for files that contains measures for that object.
-    for obj in objects:
-        obj_name = obj[0]
-        
-        logging.info("Searching measures for object: " + obj_name)
-        objs_files = search_mesures_files(obj_name)
-        
-        # Sort the files by name to ensure that early measures are processed first.
-        objs_files.sort()        
-        
-        logging.info("Found: " + str(objs_files))
-        
-        measures = extract_object_measures(objs_files, \
-                                               obj[OBJECTS_AR_COL_NUMBER], \
-                                               obj[OBJECTS_DEC_COL_NUMBER])
-        
-        save_object_measures(obj_name, measures)
+                # Write each measurement in a row.
+                writer.writerows(me)  
     
-def mesaures_of_objects():
+                                       
+def compile_objects_measurements(progargs):
     """ 
 
-    Get the magnitudes of the objects grouping all the measures calculated.
+    Get the magnitudes of the objects grouping all the measurements calculated.
 
     """
-            
-    group_measures()
     
-    get_measures_of_objects()
+    # Read the list of objects whose measurements are needed.
+    objects = read_objects_of_interest(progargs)
+    
+    objects_measurements = compile_measurements_of_objects(objects)
+    
+    save_objects_measurements(objects, objects_measurements)

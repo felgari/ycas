@@ -41,12 +41,14 @@ class ProgramArguments(object):
 
         """   
         
+        # Initializes variables  with default values.        
         self.__bias_directory = BIAS_DIRECTORY
         self.__flat_directory = FLAT_DIRECTORY
         self.__data_directory = DATA_DIRECTORY      
         
-        self.__astrometry_num_of_objects = ASTROMETRY_NUM_OBJS          
-
+        self.__astrometry_num_of_objects = ASTROMETRY_NUM_OBJS
+        
+        self.__objects_of_interest_file = INT_OBJECTS_FILE_NAME  
             
         # Initiate arguments of the parser.
         self.__parser = argparse.ArgumentParser()
@@ -61,7 +63,10 @@ class ProgramArguments(object):
                                    help="Name for the destiny directory name where the data images are stored")
         
         self.__parser.add_argument("-no", dest="no", metavar="number of objects", type=int, \
-                                   help="Number of objects to take into account in images when doing astrometry")        
+                                   help="Number of objects to take into account in images when doing astrometry")
+        
+        self.__parser.add_argument("-i", metavar="Interest object file", dest="i", \
+                                   help="File that contains the names and coordinates of the objects of interest") 
                 
         self.__parser.add_argument("-l", metavar="log file name", dest="l", \
                                    help="File to save the log messages") 
@@ -112,6 +117,14 @@ class ProgramArguments(object):
     @property
     def log_file_name(self):
         return self.__args.l 
+    
+    @property    
+    def interest_object_file_provided(self): 
+        return self.__args.i <> None      
+    
+    @property
+    def interest_object_file_name(self):
+        return self.__objects_of_interest_file  
 
     @property    
     def log_level_provided(self): 
@@ -153,8 +166,11 @@ class ProgramArguments(object):
         
         """
         
+        # Parse program arguments.
         self.__args = self.__parser.parse_args()
             
+        # Update variables if a program argument has been received
+        # for their value.
         if self.__args.b <> None:
             self.__bias_directory = self.__args.b
             
@@ -166,4 +182,7 @@ class ProgramArguments(object):
             
         if self.__args.no <> None:
             self.__astrometry_num_of_objects = self.__args.no
+            
+        if self.__args.i <> None:
+            self.__objects_of_interest_file = self.__args.i            
      
