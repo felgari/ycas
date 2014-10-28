@@ -66,6 +66,8 @@ WORK_FILE_SUFFIX = "_work"
 NORM_FILE_SUFFIX = "_norm"
 DATA_FINAL_SUFFIX = "_final"
 
+IMSTAT_FIRST_VALUE = 1
+
 # External commands
 ASTROMETRY_COMMAND = "solve-field"
 
@@ -80,12 +82,15 @@ ASTROMETRY_WCS_TABLE_INDEX = 1
 
 # Multipliers to calculate some photometry parameters as multipliers 
 # of the seeing value.
-APERTURE_MULT = 2
+APERTURE_MULT = 3
 ANNULUS_MULT = 4
 
-DANNULUS_VALUE = 5
+DANNULUS_VALUE = 8
+DATAMIN_MULT = 8
 DATAMIN_VALUE = -0.001
 DATAMAX_VALUE = 65536
+
+SKY_VALUE = 0
 
 TXDUMP_FIELDS = "id,xc,yc,otime,mag,merr"
 
