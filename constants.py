@@ -92,7 +92,7 @@ DATAMAX_VALUE = 65536
 
 SKY_VALUE = 0
 
-TXDUMP_FIELDS = "id,xc,yc,otime,mag,merr"
+TXDUMP_FIELDS = "id,xc,yc,otime,mag,xairmass,merr"
 
 # Parameters for the T150 CCD of the OSN.
 # http://www.osn.iaa.es/content/CCDT150-Camera
@@ -104,18 +104,19 @@ OSN_CCD_T150_DATAMAX = 65536
 
 # Number of the column that contains the magnitude value.
 CSV_TIME_COL = 3 
-CSV_MAG_COL = 4 
+CSV_MAG_COL = 4
+CSV_AIRMASS_COL = 5 
 
 # Number of the columns that contains AR and DEC values in each type of file.
-OBJECTS_AR_COL_NUMBER = 1
+OBJECTS_RA_COL_NUMBER = 1
 OBJECTS_DEC_COL_NUMBER = 2
 
-MEASURES_AR_COL_NUMBER = 1
+MEASURES_RA_COL_NUMBER = 1
 MEASURES_DEC_COL_NUMBER = 2
 MEASURE_FIRST_COL_NUMBER = 3 
 
-RDLS_AR_IDX_NUMBER = 0
-RDLS_AR_COL_NUMBER = 1
+RDLS_RA_IDX_NUMBER = 0
+RDLS_RA_COL_NUMBER = 1
 RDLS_DEC_COL_NUMBER = 2
 
 # Name of the file that contains information about the objects of interest.
@@ -123,6 +124,6 @@ INT_OBJECTS_FILE_NAME = "objects.tsv"
 
 # Columns of the file that contains the objects of interest.
 OBJ_NAME_COL = 0
-OBJ_AR_COL = 1
+OBJ_RA_COL = 1
 OBJ_DEC_COL = 2
 

@@ -40,7 +40,7 @@ def get_object_name_from_rdls(rdls_file):
      
     return os.path.basename(object_name_with_path)     
 
-def get_ar_dec_for_object(objects, object_name):
+def get_ra_dec_for_object(objects, object_name):
     """
     
     This function receives the name of an object and the set of objects
@@ -49,15 +49,15 @@ def get_ar_dec_for_object(objects, object_name):
     
     """
     
-    ar = 0.0
+    ra = 0.0
     dec = 0.0
     
     for obj in objects:
         if obj[OBJ_NAME_COL] == object_name:
-            ar = float(obj[OBJ_AR_COL])
+            ra = float(obj[OBJ_RA_COL])
             dec = float(obj[OBJ_DEC_COL])
     
-    return ar, dec
+    return ra, dec
 
 def read_objects_of_interest(progargs):
     """
@@ -127,25 +127,25 @@ def get_object_references(rdls_file, objects):
     object_name = get_object_name_from_rdls(rdls_file)
     
     # Get coordinates for the object related to the RDLS file.
-    ar, dec = get_ar_dec_for_object(objects, object_name)    
+    ar, dec = get_ra_dec_for_object(objects, object_name)    
     
     # Get RDLS data.
     rdls_data = get_rdls_data(rdls_file) 
     
-    ar_diff = 1000.0
+    ra_diff = 1000.0
     dec_diff = 1000.0 
     
     i = 0
     for rd in rdls_data:
         # Compute the difference between the coordinates of the
         # object in this row and the object received.  
-        temp_ar_diff = abs(float(rd[RDLS_AR_COL_NUMBER]) - ar)
+        temp_ra_diff = abs(float(rd[RDLS_RA_COL_NUMBER]) - ar)
         temp_dec_diff = abs(float(rd[RDLS_DEC_COL_NUMBER]) - dec)   
         
         # If current row coordinates are smaller than previous this
         # row is chosen as candidate for the object.
-        if temp_ar_diff < ar_diff and temp_dec_diff < dec_diff:
-            ar_diff = temp_ar_diff
+        if temp_ra_diff < ra_diff and temp_dec_diff < dec_diff:
+            ra_diff = temp_ra_diff
             dec_diff = temp_dec_diff
             index = i        
     
@@ -199,7 +199,10 @@ def get_measurements_for_object(rdls_file, path, objects):
                     fields = str(row).translate(None, "[]\'").split()
                     
                     # Add magnitude value to the appropriate row from RDLS file.
-                    measurements.append([fields[CSV_TIME_COL], fields[CSV_MAG_COL], filter_name])
+                    measurements.append([fields[CSV_TIME_COL], 
+                                         fields[CSV_MAG_COL],
+                                         fields[CSV_AIRMASS_COL], 
+                                         filter_name])
                 
                 nrow += 1
                 
