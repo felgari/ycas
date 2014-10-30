@@ -65,6 +65,7 @@ MASTERFLAT_FILENAME = "flat_avg.fit"
 WORK_FILE_SUFFIX = "_work"
 NORM_FILE_SUFFIX = "_norm"
 DATA_FINAL_SUFFIX = "_final"
+INST_MAG_SUFFIX = "_inst_mag"
 
 IMSTAT_FIRST_VALUE = 1
 
@@ -93,6 +94,12 @@ DATAMAX_VALUE = 65536
 SKY_VALUE = 0
 
 TXDUMP_FIELDS = "id,xc,yc,otime,mag,xairmass,merr"
+
+# Columns of the data that contains the instrumental measures.
+JD_TIME_COL = 0
+INST_MAG_COL = 1
+AIRMASS_COL = 2
+FILTER_COL = 3
 
 # Parameters for the T150 CCD of the OSN.
 # http://www.osn.iaa.es/content/CCDT150-Camera
@@ -127,7 +134,24 @@ OBJ_NAME_COL = 0
 OBJ_RA_COL = 1
 OBJ_DEC_COL = 2
 OBJ_STANDARD_COL = 3
+OBJ_B_MAG_COL = 4
+OBJ_V_MAG_COL = 5
+OBJ_R_MAG_COL = 6
 
 STANDARD_VALUE = "YES"
 NO_STANDARD_VALUE = "NO"
+
+B_FILTER_NAME = "B"
+V_FILTER_NAME = "V"
+R_FILTER_NAME = "R"
+
+# Columns for the data used to calculate extinction coefficients.
+DAY_CE_COL = 0
+JD_TIME_CE_COL = 1
+INST_MAG_CE_COL = 2
+STD_MAG_CE_COL = 3
+AIRMASS_CE_COL = 4
+FILTER_CE_COL = 5
+
+INDEF_VALUE = "INDEF"
 
