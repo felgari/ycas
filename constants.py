@@ -153,5 +153,11 @@ STD_MAG_CE_COL = 3
 AIRMASS_CE_COL = 4
 FILTER_CE_COL = 5
 
+# Columns for extinction coefficient data.
+DAY_CE = 0
+FILTER_CE = 1
+SLOPE_CE = 2
+INTERCEPT_CE = 3
+
 INDEF_VALUE = "INDEF"
 

@@ -378,9 +378,8 @@ def calculate_extinction_coefficient(mag_data):
     
     return slope, intercept
     
-def get_extinction_coefficient(objects, \
-                                     standard_obj_index,\
-                                     instrumental_magnitudes):
+def extinction_coefficient(objects, standard_obj_index, \
+                           instrumental_magnitudes):
     """
     
     Calculate the atmospheric extinction coefficient using the standard objects.
@@ -441,13 +440,45 @@ def get_extinction_coefficient(objects, \
         for f in filters:
             mag = [m for m in all_magnitudes \
                    if m[DAY_CE_COL] == d and m[FILTER_CE_COL] == f] 
+            
+            slope, intercept = calculate_extinction_coefficient(mag)
         
-            ext_coef.append([d, f, calculate_extinction_coefficient(mag)])
+            ext_coef.append([d, f, slope, intercept])
         
     return ext_coef
 
-def calculate_magnitude_out_of_atmosphere(objects, \
-                                          no_standard_obj_index, \
+def find_extinction_coefficient(ext_coef, day, filter):
+    """
+    
+    Returns the parameters related to a extinction coefficient
+    for a day and filter.
+    
+    """
+    
+    ec = [e for e in ext_coef \
+                   if e[DAY_CE] == day and e[FILTER_CE] == filter][0]
+    
+    return ec[SLOPE_CE], ec[INTERCEPT_CE]
+
+def save_calculated_magnitudes(object_name, magnitudes):
+    """
+    
+    Save the instrumental magnitudes to a text file.
+    
+    """
+    
+    # Get the name of the output file.
+    output_file_name = object_name + "." + TSV_FILE_EXT
+
+    # Instrumental magnitudes are stored in files.
+    with open(output_file_name, 'w') as fw:
+        
+        writer = csv.writer(fw, delimiter='\t')
+        
+        # Write each magnitude in a row.
+        writer.writerows(magnitudes)   
+
+def calculate_magnitude_out_of_atmosphere(objects, obj_index, \
                                           instrumental_magnitudes, \
                                           ext_coef):
     """
@@ -457,7 +488,44 @@ def calculate_magnitude_out_of_atmosphere(objects, \
     
     """
     
-    pass
+    # Process each object.
+    for i in obj_index:
+        
+        # Initialize a list to store all the magnitudes calculated.
+        magnitudes = []
+                
+        # Retrieve the object data and the instrumental magnitudes measured.
+        obj = objects[i]   
+        object_inst_mags = instrumental_magnitudes[i]
+        
+        # Process the instrumental magnitudes measured for this object.
+        for inst_mag in object_inst_mags:
+            # For each object the magnitudes are grouped in different lists.
+            for im in inst_mag:
+                
+                # Check the instrumental magnitude is defined.
+                if im[INST_MAG_COL] != INDEF_VALUE :
+                
+                    # Find the coefficients by day and filter.
+                    day = get_day_of_measurement(im[JD_TIME_COL])
+                    filter = im[FILTER_COL]
+                    
+                    slope, intercept = \
+                        find_extinction_coefficient(ext_coef, day, filter)
+                    
+                    # Calculate the magnitude.
+                    # Mo = Minst - intercept - slope * airmass
+                    calc_mag = float(im[INST_MAG_COL]) - intercept - \
+                        slope * float(im[AIRMASS_COL])
+                        
+                    magnitudes.append([im[JD_TIME_COL], calc_mag, \
+                                       im[INST_MAG_COL], filter])
+                else:
+                    logging.info("Standard magnitude undefined for object " + \
+                                 obj[OBJ_NAME_COL])
+                
+        # Save the data for current object.
+        save_calculated_magnitudes(obj[OBJ_NAME_COL], magnitudes)                
 
 def process_instrumental_magnitudes(objects, instrumental_magnitudes):
     """
@@ -484,9 +552,8 @@ def process_instrumental_magnitudes(objects, instrumental_magnitudes):
         else:
             no_standard_obj_index.extend([i])                       
             
-    ext_coef = get_extinction_coefficient(objects, \
-                                                standard_obj_index, \
-                                                instrumental_magnitudes)   
+    ext_coef = extinction_coefficient(objects, standard_obj_index, 
+                                      instrumental_magnitudes)   
     
     calculate_magnitude_out_of_atmosphere(objects, \
                                           no_standard_obj_index, \
