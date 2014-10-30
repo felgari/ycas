@@ -155,15 +155,15 @@ def get_object_references(rdls_file, objects):
         
     return index, object_name    
 
-def get_measurements_for_object(rdls_file, path, objects):
+def get_inst_magnitudes_for_object(rdls_file, path, objects):
     """
     
     This function search in a given path all the files related to
-    an object that contains measurements for that object.
+    an object that contains magnitudes for that object.
     
     """
     
-    # Get the index of this object in the files that contains the measurements.
+    # Get the index of this object in the files that contains the magnitudes.
     object_index, object_name = get_object_references(rdls_file, objects)
     
     # Get the list of files with magnitudes for the images of this object.
@@ -179,8 +179,8 @@ def get_measurements_for_object(rdls_file, path, objects):
     # Sort the list of csv files to ensure a right processing.
     csv_files.sort()
     
-    # To store the measurements.
-    measurements = list()
+    # To store the magnitudes.
+    magnitudes = list()
     
     # Read magnitudes from csv files and add it to RDLS data.
     # Each csv file contains the magnitudes for all the object of an image.
@@ -199,38 +199,37 @@ def get_measurements_for_object(rdls_file, path, objects):
                     fields = str(row).translate(None, "[]\'").split()
                     
                     # Add magnitude value to the appropriate row from RDLS file.
-                    measurements.append([fields[CSV_TIME_COL], 
+                    magnitudes.append([fields[CSV_TIME_COL], 
                                          fields[CSV_MAG_COL],
                                          fields[CSV_AIRMASS_COL], 
                                          filter_name])
                 
                 nrow += 1
                 
-    return measurements 
+    return magnitudes 
 
-
-def compile_measurements_of_objects(objects):
+def compile_instrumental_magnitudes(objects):
     """
     
     This function receives a list of object and compiles in a text
-    file all the measurements found for each object.
+    file all the magnitudes found for each object.
     
     """
     
-    # For each object a list is created to store its measurements.
+    # For each object a list is created to store its magnitudes.
     # In turn, all these lists are grouped in a list. 
-    objects_measurements = list()
+    instrumental_magnitudes = list()
     
     # Create a dictionary to retrieve easily the appropriate list
     # using the name of the object.
     objects_index = {}
     
     for i in range(len(objects)):
-        objects_measurements.append([])
+        instrumental_magnitudes.append([])
         
         objects_index[objects[i][OBJ_NAME_COL]] = i
         
-    # Walk all the directories searching for files containing measurements.
+    # Walk all the directories searching for files containing magnitudes.
     # Walk from current directory.
     for path,dirs,files in os.walk('.'):
 
@@ -254,34 +253,34 @@ def compile_measurements_of_objects(objects):
                 # Process the images of each object that has a RDLS file.
                 for rdls_file in rdls_files_full_path:
                     
-                    # Get the measurements for this object in current path.
-                    me = get_measurements_for_object(rdls_file, path, objects)
+                    # Get the magnitudes for this object in current path.
+                    im = get_inst_magnitudes_for_object(rdls_file, path, objects)
                     
-                    # If any measurement has been get.
-                    if len(me) > 0:
+                    # If any magnitude has been get.
+                    if len(im) > 0:
                         # Get the name of the object.
                         object_name = get_object_name_from_rdls(rdls_file)                    
                         
                         try:
-                            # Retrieve the list that contains the measurements 
+                            # Retrieve the list that contains the magnitudes 
                             # for this object.
-                            measurements_index = objects_index[object_name]
+                            magnitudes_index = objects_index[object_name]
                         
-                            object_mea_list = objects_measurements[measurements_index]
+                            object_mea_list = instrumental_magnitudes[magnitudes_index]
                         
-                            # Add the measurement to the object.
-                            object_mea_list.append(me)
+                            # Add the magnitude to the object.
+                            object_mea_list.append(im)
                         except KeyError as ke:
                             logging.error("RDLS file with no object of interest: " + \
                                           object_name)
                         
-    return objects_measurements
+    return instrumental_magnitudes
 
-def save_objects_measurements(objects, objects_measurements):
+def process_instrumental_magnitudes(objects, instrumental_magnitudes):
     """
     
-    This function saves the measurements of each object in a different
-    file.
+    This function process the instrumental magnitudes to get magnitudes
+    out of the atmosphere.
     
     """
     
@@ -292,31 +291,32 @@ def save_objects_measurements(objects, objects_measurements):
         # Get the name of the output file.
         output_file_name = objects[i][OBJ_NAME_COL] + "." + TSV_FILE_EXT
         
-        # Get the measurements for this object
-        measurements = objects_measurements[i]
+        # Get the magnitudes for this object
+        inst_magnitudes_obj = instrumental_magnitudes[i]
     
+        # Instrumental magnitudes are stored in files.
         with open(output_file_name, 'w') as fw:
             
             writer = csv.writer(fw, delimiter='\t')
 
             # It is a list that contains sublists, each sublist is
-            # a different measurement, so each one is written as a row.
-            for me in measurements:
+            # a different magnitude, so each one is written as a row.
+            for imag in inst_magnitudes_obj:
             
-                # Write each measurement in a row.
-                writer.writerows(me)  
+                # Write each magnitude in a row.
+                writer.writerows(imag)  
     
                                        
-def compile_objects_measurements(progargs):
+def compile_objects_magnitudes(progargs):
     """ 
 
-    Get the magnitudes of the objects grouping all the measurements calculated.
+    Get the magnitudes of the objects grouping all the magnitudes.
 
     """
     
-    # Read the list of objects whose measurements are needed.
+    # Read the list of objects whose magnitudes are needed.
     objects = read_objects_of_interest(progargs)
     
-    objects_measurements = compile_measurements_of_objects(objects)
+    instrumental_magnitudes = compile_instrumental_magnitudes(objects)
     
-    save_objects_measurements(objects, objects_measurements)
+    process_instrumental_magnitudes(objects, instrumental_magnitudes)
