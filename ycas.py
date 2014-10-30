@@ -37,7 +37,7 @@ import reduce
 import align
 import astrometry
 import photometry
-import objmag
+import magnitude
 from constants import *
 
 def convert_logging_level(level):
@@ -142,7 +142,7 @@ def main():
     # that associate to each object all its measures.
     if progargs.magnitudes_requested:
         logging.info("* Step 6 * Processing magnitudes of each object.")     
-        objmag.compile_objects_magnitudes(progargs)
+        magnitude.compile_objects_magnitudes(progargs)
     else:
         logging.info("* Step 6 * Skipping processing magnitudes of each object. Not requested.")        
 
