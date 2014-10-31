@@ -32,7 +32,7 @@ from pyraf import iraf
 from pyraf.iraf import noao, digiphot, apphot
 from constants import *
 
-FWHM = 5.5
+FWHM = 6.0
 
 def init_iraf():
     """

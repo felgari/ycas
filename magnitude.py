@@ -213,8 +213,8 @@ def get_inst_magnitudes_for_object(rdls_file, path, objects):
 def compile_instrumental_magnitudes(objects):
     """
     
-    This function receives a list of object and compiles in a text
-    file all the magnitudes found for each object.
+    This function receives a list of object and compiles all the magnitudes
+    found in a text file for each object.
     
     """
     
@@ -455,27 +455,31 @@ def find_extinction_coefficient(ext_coef, day, filter):
     
     """
     
+    # Default values that don't change the returns the instrumental
+    # magnitude for the extinction corrected magnitude.
     slope = 1.0
     intercept = 0.0
     
     ec = [e for e in ext_coef \
                    if e[DAY_CE] == day and e[FILTER_CE] == filter]
                    
+    # Maybe for the filter indicated has not been calculated an
+    # extinction coefficient.
     if ec != None and len(ec) > 0:
         slope = ec[0][SLOPE_CE]
         intercept = ec[0][INTERCEPT_CE]
     
     return slope, intercept
 
-def save_calculated_magnitudes(object_name, magnitudes):
+def save_extinction_corrected_mag(object_name, magnitudes):
     """
     
-    Save the instrumental magnitudes to a text file.
+    Save the extinction corrected magnitudes to a text file.
     
     """
     
     # Get the name of the output file.
-    output_file_name = object_name + "." + TSV_FILE_EXT
+    output_file_name = object_name + EXT_CORR_MAG_SUFFIX + "." + TSV_FILE_EXT
 
     # Instrumental magnitudes are stored in files.
     with open(output_file_name, 'w') as fw:
@@ -484,61 +488,13 @@ def save_calculated_magnitudes(object_name, magnitudes):
         
         # Write each magnitude in a row.
         writer.writerows(magnitudes)   
-
-def calculate_observed_magnitude(objects, obj_index, \
-                                          instrumental_magnitudes, \
-                                          ext_coef):
-    """
-    
-    Calculate the magnitude of the objects of interest observed using the
-    extinction coefficient calculated previously.
-    
-    """
-    
-    # Process each object.
-    for i in obj_index:
         
-        # Initialize a list to store all the magnitudes calculated.
-        magnitudes = []
-                
-        # Retrieve the object data and the instrumental magnitudes measured.
-        obj = objects[i]   
-        object_inst_mags = instrumental_magnitudes[i]
-        
-        # Process the instrumental magnitudes measured for this object.
-        for inst_mag in object_inst_mags:
-            # For each object the magnitudes are grouped in different lists.
-            for im in inst_mag:
-                
-                # Check the instrumental magnitude is defined.
-                if im[INST_MAG_COL] != INDEF_VALUE :
-                
-                    # Find the coefficients by day and filter.
-                    day = get_day_of_measurement(im[JD_TIME_COL])
-                    filter = im[FILTER_COL]
-                    
-                    slope, intercept = \
-                        find_extinction_coefficient(ext_coef, day, filter)
-                    
-                    # Calculate the observed magnitude.
-                    # Mo = Minst - intercept - slope * airmass
-                    calc_mag = float(im[INST_MAG_COL]) - intercept - \
-                        slope * float(im[AIRMASS_COL])
-                        
-                    magnitudes.append([im[JD_TIME_COL], calc_mag, \
-                                       im[INST_MAG_COL], filter])
-                else:
-                    logging.info("Standard magnitude undefined for object " + \
-                                 obj[OBJ_NAME_COL])
-                
-        # Save the data for current object.
-        save_calculated_magnitudes(obj[OBJ_NAME_COL], magnitudes)                
-
-def process_instrumental_magnitudes(objects, instrumental_magnitudes):
+def get_indexes_of_std_and_no_std(objects, instrumental_magnitudes):
     """
     
-    This function process the instrumental magnitudes to get magnitudes
-    observed.
+    This function returns the indexes for the standard and no standard
+    objects.
+    Also store to a text file the instrumental magnitudes.
     
     """
     
@@ -557,27 +513,147 @@ def process_instrumental_magnitudes(objects, instrumental_magnitudes):
         if objects[i][OBJ_STANDARD_COL] == STANDARD_VALUE:
             standard_obj_index.extend([i])
         else:
-            no_standard_obj_index.extend([i])                       
+            no_standard_obj_index.extend([i])     
+            
+    
+    return standard_obj_index, no_standard_obj_index 
+
+def calculate_extinction_corrected_mag(obj, \
+                                       object_inst_mags, \
+                                       ext_coef):
+    """
+    
+    Calculate the extinction corrected magnitude for the measures
+    of the object received. 
+    The extinction coefficients are applied and the magnitudes 
+    calculated are saved to a file and returned.
+    
+    """
+    
+    magnitudes = []
+    
+    # Process the instrumental magnitudes measured for this object.
+    for inst_mag in object_inst_mags:
+        # For each object the magnitudes are grouped in different lists.
+        for im in inst_mag:
+            
+            # Check the instrumental magnitude is defined.
+            if im[INST_MAG_COL] != INDEF_VALUE :
+            
+                # Find the coefficients by day and filter.
+                day = get_day_of_measurement(im[JD_TIME_COL])
+                filter = im[FILTER_COL]
+                
+                slope, intercept = \
+                    find_extinction_coefficient(ext_coef, day, filter)
+                
+                # Calculate the extinction corrected magnitude.
+                # Mo = Minst - intercept - slope * airmass
+                calc_mag = float(im[INST_MAG_COL]) - intercept - \
+                    slope * float(im[AIRMASS_COL])
+                    
+                magnitudes.append([im[JD_TIME_COL], calc_mag, \
+                                   im[INST_MAG_COL], filter])
+            else:
+                logging.info("Standard magnitude undefined for object " + \
+                             obj[OBJ_NAME_COL])
+            
+    # Save extinction corrected magnitude for current object.
+    save_extinction_corrected_mag(obj[OBJ_NAME_COL], magnitudes)  
+    
+    return magnitudes      
+
+def calculate_transforming_coefficients(objects, \
+                                            standard_obj_index, \
+                                            ext_corr_mags):
+    """
+    
+    From the extinction corrected magnitudes of standard object 
+    calculate the transforming coefficients used to calculate the
+    calibrated magnitudes.
+    
+    """
+    
+    pass # TODO
+
+def calibrated_magnitudes(objects, ext_corr_mags, trans_coef):
+    """
+    
+    Using the transformation coefficients calculate the calibrated
+    magnitudes from the extinction corrected magnitudes and save them
+    to a file.
+    
+    """
+    
+    pass # TODO    
+
+def calculate_calibrated_mag(objects, \
+                             standard_obj_index, \
+                             no_standard_obj_index, \
+                             instrumental_magnitudes, \
+                             ext_coef):
+    """
+    
+    Calculate the calibrated magnitude of the objects 
+    using the extinction coefficient calculated previously and
+    calibrating with the standard magnitudes.
+    
+    """
+    
+    # To store extinction corrected magnitudes of all objects.
+    ext_corr_mags = []
+    
+    # Calculate the extinction corrected magnitudes of standard objects.
+    for i in standard_obj_index:
+        obj_mags = calculate_extinction_corrected_mag(objects[i], \
+                                                      instrumental_magnitudes[i], \
+                                                      ext_coef)
+        ext_corr_mags.append(obj_mags)
+        
+    # Calculate from extinction corrected magnitudes of no standard objects
+    # the transformation coefficients to calculate the calibrated magnitudes.
+    trans_coef = calculate_transforming_coefficients(objects, \
+                                                     standard_obj_index, \
+                                                     ext_corr_mags)
+                       
+    # Calculate the extinction corrected magnitudes of no standard objects.
+    for i in no_standard_obj_index:
+        obj_mags = calculate_extinction_corrected_mag(objects[i], \
+                                                      instrumental_magnitudes[i], \
+                                                      ext_coef)   
+        
+        ext_corr_mags.append(obj_mags) 
+        
+    # Calculate the calibrated magnitudes for all the objects.
+    calibrated_magnitudes(objects, ext_corr_mags, trans_coef)
+
+def process_instrumental_magnitudes(objects, instrumental_magnitudes):
+    """
+    
+    This function process the instrumental magnitudes to get magnitudes
+    calibrated.
+    
+    """
+    
+    standard_obj_index, no_standard_obj_index = \
+        get_indexes_of_std_and_no_std(objects, instrumental_magnitudes)                      
             
     ext_coef = extinction_coefficient(objects, standard_obj_index, 
                                       instrumental_magnitudes)   
     
-    # Calculate observed magnitudes for objects of interest.
-    calculate_observed_magnitude(objects, \
-                                 no_standard_obj_index, \
-                                 instrumental_magnitudes, \
-                                 ext_coef) 
-    
-    # Calculate observed magnitudes for standard objects.
-    calculate_observed_magnitude(objects, \
-                                 standard_obj_index, \
-                                 instrumental_magnitudes, \
-                                 ext_coef)     
+    # Calculate extinction corrected magnitudes for objects.
+    calculate_calibrated_mag(objects, \
+                             standard_obj_index, \
+                             no_standard_obj_index, \
+                             instrumental_magnitudes, \
+                             ext_coef) 
+  
                                        
-def compile_objects_magnitudes(progargs):
+def calculate_magnitudes(progargs):
     """ 
 
-    Get the magnitudes of the objects grouping all the magnitudes.
+    Get the magnitudes of the objects grouping the magnitudes and
+    performing the necessary corrections and calibrations.
 
     """
     

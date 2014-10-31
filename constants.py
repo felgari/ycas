@@ -66,6 +66,7 @@ WORK_FILE_SUFFIX = "_work"
 NORM_FILE_SUFFIX = "_norm"
 DATA_FINAL_SUFFIX = "_final"
 INST_MAG_SUFFIX = "_inst_mag"
+EXT_CORR_MAG_SUFFIX = "_ec_mag"
 
 IMSTAT_FIRST_VALUE = 1
 
