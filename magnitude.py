@@ -478,12 +478,12 @@ def save_calculated_magnitudes(object_name, magnitudes):
         # Write each magnitude in a row.
         writer.writerows(magnitudes)   
 
-def calculate_magnitude_out_of_atmosphere(objects, obj_index, \
+def calculate_magnitude_observed(objects, obj_index, \
                                           instrumental_magnitudes, \
                                           ext_coef):
     """
     
-    Calculate the magnitude of the objects of interest out of the atmosphere using the
+    Calculate the magnitude of the objects of interest observed using the
     extinction coefficient calculated previously.
     
     """
@@ -513,7 +513,7 @@ def calculate_magnitude_out_of_atmosphere(objects, obj_index, \
                     slope, intercept = \
                         find_extinction_coefficient(ext_coef, day, filter)
                     
-                    # Calculate the magnitude.
+                    # Calculate the observed magnitude.
                     # Mo = Minst - intercept - slope * airmass
                     calc_mag = float(im[INST_MAG_COL]) - intercept - \
                         slope * float(im[AIRMASS_COL])
@@ -531,7 +531,7 @@ def process_instrumental_magnitudes(objects, instrumental_magnitudes):
     """
     
     This function process the instrumental magnitudes to get magnitudes
-    out of the atmosphere.
+    observed.
     
     """
     
@@ -555,7 +555,7 @@ def process_instrumental_magnitudes(objects, instrumental_magnitudes):
     ext_coef = extinction_coefficient(objects, standard_obj_index, 
                                       instrumental_magnitudes)   
     
-    calculate_magnitude_out_of_atmosphere(objects, \
+    calculate_magnitude_observed(objects, \
                                           no_standard_obj_index, \
                                           instrumental_magnitudes, \
                                           ext_coef) 
