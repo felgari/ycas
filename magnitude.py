@@ -455,10 +455,17 @@ def find_extinction_coefficient(ext_coef, day, filter):
     
     """
     
-    ec = [e for e in ext_coef \
-                   if e[DAY_CE] == day and e[FILTER_CE] == filter][0]
+    slope = 1.0
+    intercept = 0.0
     
-    return ec[SLOPE_CE], ec[INTERCEPT_CE]
+    ec = [e for e in ext_coef \
+                   if e[DAY_CE] == day and e[FILTER_CE] == filter]
+                   
+    if ec != None and len(ec) > 0:
+        slope = ec[0][SLOPE_CE]
+        intercept = ec[0][INTERCEPT_CE]
+    
+    return slope, intercept
 
 def save_calculated_magnitudes(object_name, magnitudes):
     """
@@ -478,7 +485,7 @@ def save_calculated_magnitudes(object_name, magnitudes):
         # Write each magnitude in a row.
         writer.writerows(magnitudes)   
 
-def calculate_magnitude_observed(objects, obj_index, \
+def calculate_observed_magnitude(objects, obj_index, \
                                           instrumental_magnitudes, \
                                           ext_coef):
     """
@@ -555,10 +562,17 @@ def process_instrumental_magnitudes(objects, instrumental_magnitudes):
     ext_coef = extinction_coefficient(objects, standard_obj_index, 
                                       instrumental_magnitudes)   
     
-    calculate_magnitude_observed(objects, \
-                                          no_standard_obj_index, \
-                                          instrumental_magnitudes, \
-                                          ext_coef) 
+    # Calculate observed magnitudes for objects of interest.
+    calculate_observed_magnitude(objects, \
+                                 no_standard_obj_index, \
+                                 instrumental_magnitudes, \
+                                 ext_coef) 
+    
+    # Calculate observed magnitudes for standard objects.
+    calculate_observed_magnitude(objects, \
+                                 standard_obj_index, \
+                                 instrumental_magnitudes, \
+                                 ext_coef)     
                                        
 def compile_objects_magnitudes(progargs):
     """ 
