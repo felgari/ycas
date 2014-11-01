@@ -461,13 +461,13 @@ def find_extinction_coefficient(ext_coef, day, filter):
     intercept = 0.0
     
     ec = [e for e in ext_coef \
-                   if e[DAY_CE] == day and e[FILTER_CE] == filter]
+                   if e[DAY_CE_DATA] == day and e[FILTER_CE_DATA] == filter]
                    
     # Maybe for the filter indicated has not been calculated an
     # extinction coefficient.
     if ec != None and len(ec) > 0:
-        slope = ec[0][SLOPE_CE]
-        intercept = ec[0][INTERCEPT_CE]
+        slope = ec[0][SLOPE_CE_DATA]
+        intercept = ec[0][INTERCEPT_CE_DATA]
     
     return slope, intercept
 
