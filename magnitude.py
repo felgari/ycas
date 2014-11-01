@@ -210,6 +210,27 @@ def get_inst_magnitudes_for_object(rdls_file, path, objects):
                 
     return magnitudes 
 
+def save_magnitudes(object_name, filename_sufix, inst_magnitudes_obj):
+    """
+    
+    Save the magnitudes to a text file.
+    
+    """
+    
+    # Get the name of the output file.
+    output_file_name = object_name + filename_sufix + "." + TSV_FILE_EXT
+
+    with open(output_file_name, 'w') as fw:
+        
+        writer = csv.writer(fw, delimiter='\t')
+
+        # It is a list that contains sublists, each sublist is
+        # a different magnitude, so each one is written as a row.
+        for imag in inst_magnitudes_obj:
+        
+            # Write each magnitude in a row.
+            writer.writerows(imag)  
+
 def compile_instrumental_magnitudes(objects):
     """
     
@@ -276,29 +297,7 @@ def compile_instrumental_magnitudes(objects):
                             logging.error("RDLS file with no object of interest: " + \
                                           object_name)
                         
-    return instrumental_magnitudes
-
-def save_instrumental_magnitudes(object_name, inst_magnitudes_obj):
-    """
-    
-    Save the instrumental magnitudes to a text file.
-    
-    """
-    
-    # Get the name of the output file.
-    output_file_name = object_name + INST_MAG_SUFFIX + "." + TSV_FILE_EXT
-
-    # Instrumental magnitudes are stored in files.
-    with open(output_file_name, 'w') as fw:
-        
-        writer = csv.writer(fw, delimiter='\t')
-
-        # It is a list that contains sublists, each sublist is
-        # a different magnitude, so each one is written as a row.
-        for imag in inst_magnitudes_obj:
-        
-            # Write each magnitude in a row.
-            writer.writerows(imag)    
+    return instrumental_magnitudes  
             
 def get_day_of_measurement(time_jd):
     """
@@ -355,12 +354,12 @@ def calculate_extinction_coefficient(mag_data):
     a = np.array(mag_data)
     
     # Sort the data only by JD time.
-    na = a[a[:,JD_TIME_CEM_COL].argsort()]
+    na = a[a[:,JD_TIME_CE_CALC_DATA].argsort()]
     
     # Extract the columns necessary to calculate the linear regression.
-    inst_mag = na[:,INST_MAG_CEM_COL]
-    std_mag = na[:,STD_MAG_CEM_COL]
-    airmass = na[:,AIRMASS_CEM_COL]
+    inst_mag = na[:,INST_MAG_CE_CALC_DATA]
+    std_mag = na[:,STD_MAG_CE_CALC_DATA]
+    airmass = na[:,AIRMASS_CE_CALC_DATA]
     
     # Subtract these columns to get the y.
     y = inst_mag.astype(np.float) - std_mag.astype(np.float)
@@ -371,7 +370,7 @@ def calculate_extinction_coefficient(mag_data):
     slope, intercept, r_value, p_value, std_err = \
         stats.linregress(airmass.astype(np.float), y)
     
-    logging.info("Lineal regression for day: " + str(a[0][DAY_CEM_COL]) +
+    logging.info("Lineal regression for day: " + str(a[0][DAY_CE_CALC_DATA]) +
                  " slope: " + str(slope) + " intercept: " + str(intercept) + \
                  " r-value: " + str(r_value) + " p-value: " + str(p_value) + \
                  " std_err: " + str(std_err))
@@ -439,15 +438,15 @@ def extinction_coefficient(objects, standard_obj_index, \
     for d in days:
         for f in filters:
             mag = [m for m in all_magnitudes \
-                   if m[DAY_CEM_COL] == d and m[FILTER_CEM_COL] == f] 
+                   if m[DAY_CE_CALC_DATA] == d and m[FILTER_CE_CALC_DATA] == f] 
             
             slope, intercept = calculate_extinction_coefficient(mag)
         
             ext_coef.append([d, f, slope, intercept])
         
-    return ext_coef
+    return ext_coef, days, filters
 
-def find_extinction_coefficient(ext_coef, day, filter):
+def get_extinction_coefficient(ext_coef, day, filter):
     """
     
     Returns the parameters related to a extinction coefficient
@@ -469,25 +468,7 @@ def find_extinction_coefficient(ext_coef, day, filter):
         slope = ec[0][SLOPE_CE_DATA]
         intercept = ec[0][INTERCEPT_CE_DATA]
     
-    return slope, intercept
-
-def save_extinction_corrected_mag(object_name, magnitudes):
-    """
-    
-    Save the extinction corrected magnitudes to a text file.
-    
-    """
-    
-    # Get the name of the output file.
-    output_file_name = object_name + EXT_CORR_MAG_SUFFIX + "." + TSV_FILE_EXT
-
-    # Instrumental magnitudes are stored in files.
-    with open(output_file_name, 'w') as fw:
-        
-        writer = csv.writer(fw, delimiter='\t')
-        
-        # Write each magnitude in a row.
-        writer.writerows(magnitudes)   
+    return slope, intercept 
         
 def get_indexes_of_std_and_no_std(objects, instrumental_magnitudes):
     """
@@ -506,7 +487,7 @@ def get_indexes_of_std_and_no_std(objects, instrumental_magnitudes):
     for i in range(len(objects)):
         
         # Save instrumental magnitudes to a file.
-        save_instrumental_magnitudes(objects[i][OBJ_NAME_COL], instrumental_magnitudes[i])        
+        save_magnitudes(objects[i][OBJ_NAME_COL], INST_MAG_SUFFIX, instrumental_magnitudes[i])        
         
         # Check if it is a standard object to put the object in
         # the right list.
@@ -518,12 +499,12 @@ def get_indexes_of_std_and_no_std(objects, instrumental_magnitudes):
     
     return standard_obj_index, no_standard_obj_index 
 
-def calculate_extinction_corrected_mag(obj, \
-                                       object_inst_mags, \
-                                       ext_coef):
+def get_extinction_corrected_mag(obj, \
+                                 object_inst_mags, \
+                                 ext_coef):
     """
     
-    Calculate the extinction corrected magnitude for the measures
+    Get the extinction corrected magnitude for the measures
     of the object received. 
     The extinction coefficients are applied and the magnitudes 
     calculated are saved to a file and returned.
@@ -537,7 +518,7 @@ def calculate_extinction_corrected_mag(obj, \
         # For each object the magnitudes are grouped in different lists.
         for im in inst_mag:
             
-            # Check the instrumental magnitude is defined.
+            # Check if the instrumental magnitude is defined.
             if im[INST_MAG_COL] != INDEF_VALUE :
             
                 # Find the coefficients by day and filter.
@@ -545,53 +526,232 @@ def calculate_extinction_corrected_mag(obj, \
                 filter = im[FILTER_COL]
                 
                 slope, intercept = \
-                    find_extinction_coefficient(ext_coef, day, filter)
+                    get_extinction_coefficient(ext_coef, day, filter)
                 
                 # Calculate the extinction corrected magnitude.
                 # Mo = Minst - intercept - slope * airmass
                 calc_mag = float(im[INST_MAG_COL]) - intercept - \
                     slope * float(im[AIRMASS_COL])
                     
-                magnitudes.append([im[JD_TIME_COL], calc_mag, \
+                magnitudes.append([im[JD_TIME_COL], day, calc_mag, \
                                    im[INST_MAG_COL], filter])
             else:
-                logging.info("Standard magnitude undefined for object " + \
+                logging.info("Found an instrumental magnitude undefined for object " + \
                              obj[OBJ_NAME_COL])
             
     # Save extinction corrected magnitude for current object.
-    save_extinction_corrected_mag(obj[OBJ_NAME_COL], magnitudes)  
+    save_magnitudes(obj[OBJ_NAME_COL], CORR_MAG_SUFFIX, [magnitudes])  
     
     return magnitudes      
 
-def calculate_transforming_coefficients(objects, \
-                                            standard_obj_index, \
-                                            ext_corr_mags):
+def calculate_transforming_coefficients(B_V_observed_mag, \
+                                        V_observed_mag, 
+                                        B_V_std_mag, 
+                                        V_std_mag):
+    """
+    
+    Calculate the transforming coefficients.
+    
+    """   
+    
+    # First calculation is:
+    # Vstd - V0 = slope * (B-V)std + intercept
+    y = np.array(V_std_mag).astype(np.float) - \
+        np.array(V_observed_mag).astype(np.float)
+    
+    slope1, intercept1, r_value1, p_value1, std_err1 = \
+        stats.linregress(np.array(B_V_std_mag), y)
+        
+    # Second calculation is:
+    # (B-V)std = slope * (B-V)obs + intercept
+    
+    slope2, intercept2, r_value2, p_value2, std_err2 = \
+        stats.linregress(B_V_observed_mag, B_V_std_mag)      
+    
+    return slope1, intercept1, slope2, intercept2
+
+def get_transforming_coefficients(objects, \
+                                  standard_obj_index, \
+                                  ext_corr_mags, days, filters):
     """
     
     From the extinction corrected magnitudes of standard object 
-    calculate the transforming coefficients used to calculate the
+    get the transforming coefficients used to calculate the
     calibrated magnitudes.
     
-    """
+    """  
     
-    pass # TODO
+    trans_coef = []
+    
+    # Put all the sublists corresponding to magnitudes of different object
+    # in a list with only a level that contains all the magnitudes.
+    magnitudes = [item for sublist in ext_corr_mags for item in sublist]  
+    
+    # Calculate the coefficients by day.
+    for d in days:
+        
+        # To store the magnitudes for a day.
+        B_V_mags_of_day = []
+        V_mags_of_day = []
+        
+        B_V_std_mags_of_objects = []
+        V_std_mags_of_objects = []        
+        
+        # Get filter magnitudes for each object.
+        for i in range(len(standard_obj_index)):
+            
+            object_index = standard_obj_index[i]
+            
+            # Get the list of corrected magnitudes for this object. 
+            obj_mags = ext_corr_mags[i]
+            
+            # To store the magnitudes for this object in each filter.
+            mags_of_B_filter = [m for m in obj_mags \
+                       if m[DAY_CEM_COL] == d and \
+                       m[FILTER_CEM_COL] == B_FILTER_NAME]
+            
+            mags_of_V_filter = [m for m in obj_mags \
+                       if m[DAY_CEM_COL] == d and \
+                       m[FILTER_CEM_COL] == V_FILTER_NAME]           
+            
+            # If this object has measurements for all the filters.
+            # Is is assumed that measurements for each filter are well paired.
+            if len(mags_of_B_filter) > 0 and len(mags_of_V_filter) > 0 and \
+                len(mags_of_B_filter) == len(mags_of_V_filter):
+                
+                B_mags_of_obj = np.array(mags_of_B_filter)[:,CE_MAG_CEM_COL]
+                V_mags_of_obj = np.array(mags_of_V_filter)[:,CE_MAG_CEM_COL] 
+                
+                B_mags = B_mags_of_obj.astype(np.float)
+                V_mags = V_mags_of_obj.astype(np.float)
+            
+                # Compute the mean for the magnitudes of this object
+                # in each filter. 
+                B_mean = np.mean(B_mags)
+                V_mean = np.mean(V_mags)
 
-def calibrated_magnitudes(objects, ext_corr_mags, trans_coef):
+                # Store the mean values of the magnitude observed for
+                # these objects to compute the transforming coefficients 
+                # of this day.
+                B_V_mags_of_day.extend([B_mean - V_mean])
+                V_mags_of_day.extend([V_mean])
+                
+                # Add the standard magnitudes of the object.
+                B_std_mag_object = float(objects[object_index][OBJ_B_MAG_COL])
+                V_std_mag_object = float(objects[object_index][OBJ_V_MAG_COL])
+                
+                B_V_std_mags_of_objects.extend([B_std_mag_object - V_std_mag_object])
+                V_std_mags_of_objects.extend([V_std_mag_object])
+            else:
+                logging.info("There is not measurements in all filters for object: " + \
+                             objects[object_index][OBJ_NAME_COL] + " at day " + str(d))
+
+        # The coefficients are calculated only if there is twice at least,
+        # (any list could be used for this check).
+        if len(B_V_mags_of_day) > 1:
+            # Calculate the transforming coefficients of this day using the
+            # magnitudes found for this day.   
+            c1, c2, c3, c4 = \
+                calculate_transforming_coefficients(B_V_mags_of_day, \
+                                                    V_mags_of_day, \
+                                                    B_V_std_mags_of_objects, \
+                                                    V_std_mags_of_objects)
+                
+            trans_coef.append([d, c1, c2, c3, c4])
+        else:
+            logging.info("No transforming coefficients could be calculated for day " + str(d))
+            
+    return trans_coef
+    
+def calibrated_magnitudes(objects, obj_indexes, ext_corr_mags, trans_coef):
     """
     
     Using the transformation coefficients calculate the calibrated
     magnitudes from the extinction corrected magnitudes and save them
     to a file.
     
-    """
-    
-    pass # TODO    
+    """    
+        
+    # Calculate for each object.
+    for i in obj_indexes:
+        
+        # Only for those days with coefficients calculated.
+        for tc in trans_coef:
+            
+            # Get the day of current transformation coefficient.
+            day = tc[DAY_TRANS_COEF_COL]
+            # Get also the coefficients.
+            c1 = tc[C1_TRANS_COEF_COL]
+            c2 = tc[C2_TRANS_COEF_COL]
+            c3 = tc[C3_TRANS_COEF_COL]
+            c4 = tc[C4_TRANS_COEF_COL]
+            
+            # Magnitudes of the object
+            obj_mags = ext_corr_mags[i]
+            
+            # Data for this object.
+            obj = objects[obj_indexes[i]]
+            
+            # To store the magnitudes for this object in each filter.
+            mags_of_B_filter = [m for m in obj_mags \
+                       if m[DAY_CEM_COL] == day and \
+                       m[FILTER_CEM_COL] == B_FILTER_NAME]
+            
+            mags_of_V_filter = [m for m in obj_mags \
+                       if m[DAY_CEM_COL] == day and \
+                       m[FILTER_CEM_COL] == V_FILTER_NAME]    
+            
+            cal_magnitudes = []
+            
+            # If this object has measurements for all the filters.
+            # Is is assumed that measurements for each filter are well paired.
+            if len(mags_of_B_filter) > 0 and len(mags_of_V_filter) > 0 and \
+                len(mags_of_B_filter) == len(mags_of_V_filter):
+                
+                B_mags_of_obj = np.array(mags_of_B_filter)[:,CE_MAG_CEM_COL]
+                V_mags_of_obj = np.array(mags_of_V_filter)[:,CE_MAG_CEM_COL]
+                
+                B_obs_mags = B_mags_of_obj.astype(np.float)
+                V_obs_mags = V_mags_of_obj.astype(np.float) 
+                B_V_obs_mags = B_obs_mags - V_obs_mags
+                
+                # Calculate the calibrated magnitudes.
+                B_V_cal_mag = c3 * B_V_obs_mags + c4
+                V_cal_mag = V_obs_mags + c1 * B_V_cal_mag + c2
+                
+                B_cal_mag = B_V_cal_mag + V_cal_mag
+                
+                # First the B magnitudes of the object.
+                for j in range(len(mags_of_B_filter)):
+                    om = mags_of_B_filter[j]
+                    
+                    cal_magnitudes.append([om[JD_TIME_CEM_COL], \
+                                          B_cal_mag[j], \
+                                          om[CE_MAG_CEM_COL], \
+                                          om[INST_MAG_CEM_COL], \
+                                          om[FILTER_CEM_COL]])
+
+                for j in range(len(mags_of_V_filter)):
+                    om = mags_of_V_filter[j]
+                    
+                    cal_magnitudes.append([om[JD_TIME_CEM_COL], \
+                                          V_cal_mag[j], \
+                                          om[CE_MAG_CEM_COL], \
+                                          om[INST_MAG_CEM_COL], \
+                                          om[FILTER_CEM_COL]])
+                
+                # Save the calibrated magnitudes to a file.
+                save_magnitudes(obj[OBJ_NAME_COL], CAL_MAG_SUFFIX, [cal_magnitudes])
+            else:
+                logging.info("Calibrated magnitudes are not calculated for object: " + \
+                             obj[OBJ_NAME_COL] + " at day " + str(day) + \
+                             ", object magnitudes not available for all the filters.")                
 
 def calculate_calibrated_mag(objects, \
                              standard_obj_index, \
                              no_standard_obj_index, \
                              instrumental_magnitudes, \
-                             ext_coef):
+                             ext_coef, days, filters):
     """
     
     Calculate the calibrated magnitude of the objects 
@@ -605,27 +765,32 @@ def calculate_calibrated_mag(objects, \
     
     # Calculate the extinction corrected magnitudes of standard objects.
     for i in standard_obj_index:
-        obj_mags = calculate_extinction_corrected_mag(objects[i], \
-                                                      instrumental_magnitudes[i], \
-                                                      ext_coef)
+        obj_mags = get_extinction_corrected_mag(objects[i], \
+                                                instrumental_magnitudes[i], \
+                                                ext_coef)
         ext_corr_mags.append(obj_mags)
         
     # Calculate from extinction corrected magnitudes of no standard objects
     # the transformation coefficients to calculate the calibrated magnitudes.
-    trans_coef = calculate_transforming_coefficients(objects, \
-                                                     standard_obj_index, \
-                                                     ext_corr_mags)
+    trans_coef = get_transforming_coefficients(objects, \
+                                               standard_obj_index, \
+                                               ext_corr_mags, \
+                                               days, filters)
                        
     # Calculate the extinction corrected magnitudes of no standard objects.
     for i in no_standard_obj_index:
-        obj_mags = calculate_extinction_corrected_mag(objects[i], \
-                                                      instrumental_magnitudes[i], \
-                                                      ext_coef)   
+        obj_mags = get_extinction_corrected_mag(objects[i], \
+                                                instrumental_magnitudes[i], \
+                                                ext_coef)   
         
         ext_corr_mags.append(obj_mags) 
         
+    # Build an index that follows the order of the magnitudes inserted.
+    obj_indexes = standard_obj_index
+    obj_indexes.extend(no_standard_obj_index)
+        
     # Calculate the calibrated magnitudes for all the objects.
-    calibrated_magnitudes(objects, ext_corr_mags, trans_coef)
+    calibrated_magnitudes(objects, obj_indexes, ext_corr_mags, trans_coef)
 
 def process_instrumental_magnitudes(objects, instrumental_magnitudes):
     """
@@ -638,15 +803,16 @@ def process_instrumental_magnitudes(objects, instrumental_magnitudes):
     standard_obj_index, no_standard_obj_index = \
         get_indexes_of_std_and_no_std(objects, instrumental_magnitudes)                      
             
-    ext_coef = extinction_coefficient(objects, standard_obj_index, 
-                                      instrumental_magnitudes)   
+    ext_coef, days, filters = \
+        extinction_coefficient(objects, standard_obj_index, \
+                               instrumental_magnitudes)   
     
     # Calculate extinction corrected magnitudes for objects.
     calculate_calibrated_mag(objects, \
                              standard_obj_index, \
                              no_standard_obj_index, \
                              instrumental_magnitudes, \
-                             ext_coef) 
+                             ext_coef, days, filters) 
   
                                        
 def calculate_magnitudes(progargs):

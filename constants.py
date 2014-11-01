@@ -66,7 +66,8 @@ WORK_FILE_SUFFIX = "_work"
 NORM_FILE_SUFFIX = "_norm"
 DATA_FINAL_SUFFIX = "_final"
 INST_MAG_SUFFIX = "_inst_mag"
-EXT_CORR_MAG_SUFFIX = "_ec_mag"
+CORR_MAG_SUFFIX = "_ec_mag"
+CAL_MAG_SUFFIX = "_cal"
 
 IMSTAT_FIRST_VALUE = 1
 
@@ -147,12 +148,12 @@ V_FILTER_NAME = "V"
 R_FILTER_NAME = "R"
 
 # Columns for the data used to calculate extinction coefficients.
-DAY_CEM_COL = 0
-JD_TIME_CEM_COL = 1
-INST_MAG_CEM_COL = 2
-STD_MAG_CEM_COL = 3
-AIRMASS_CEM_COL = 4
-FILTER_CEM_COL = 5
+DAY_CE_CALC_DATA = 0
+JD_TIME_CE_CALC_DATA = 1
+INST_MAG_CE_CALC_DATA = 2
+STD_MAG_CE_CALC_DATA = 3
+AIRMASS_CE_CALC_DATA = 4
+FILTER_CE_CALC_DATA = 5
 
 # Columns for extinction coefficient data.
 DAY_CE_DATA = 0
@@ -162,3 +163,16 @@ INTERCEPT_CE_DATA = 3
 
 INDEF_VALUE = "INDEF"
 
+# Columns for extinction coefficients magnitudes.
+JD_TIME_CEM_COL = 0
+DAY_CEM_COL = 1
+CE_MAG_CEM_COL = 2
+INST_MAG_CEM_COL = 3
+FILTER_CEM_COL = 4
+
+# Columns of the transforming coefficients.
+DAY_TRANS_COEF_COL = 0
+C1_TRANS_COEF_COL = 1
+C2_TRANS_COEF_COL = 2
+C3_TRANS_COEF_COL = 3
+C4_TRANS_COEF_COL = 4
