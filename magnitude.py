@@ -355,12 +355,12 @@ def calculate_extinction_coefficient(mag_data):
     a = np.array(mag_data)
     
     # Sort the data only by JD time.
-    na = a[a[:,JD_TIME_CE_COL].argsort()]
+    na = a[a[:,JD_TIME_CEM_COL].argsort()]
     
     # Extract the columns necessary to calculate the linear regression.
-    inst_mag = na[:,INST_MAG_CE_COL]
-    std_mag = na[:,STD_MAG_CE_COL]
-    airmass = na[:,AIRMASS_CE_COL]
+    inst_mag = na[:,INST_MAG_CEM_COL]
+    std_mag = na[:,STD_MAG_CEM_COL]
+    airmass = na[:,AIRMASS_CEM_COL]
     
     # Subtract these columns to get the y.
     y = inst_mag.astype(np.float) - std_mag.astype(np.float)
@@ -371,7 +371,7 @@ def calculate_extinction_coefficient(mag_data):
     slope, intercept, r_value, p_value, std_err = \
         stats.linregress(airmass.astype(np.float), y)
     
-    logging.info("Lineal regression for day: " + str(a[0][DAY_CE_COL]) +
+    logging.info("Lineal regression for day: " + str(a[0][DAY_CEM_COL]) +
                  " slope: " + str(slope) + " intercept: " + str(intercept) + \
                  " r-value: " + str(r_value) + " p-value: " + str(p_value) + \
                  " std_err: " + str(std_err))
@@ -439,7 +439,7 @@ def extinction_coefficient(objects, standard_obj_index, \
     for d in days:
         for f in filters:
             mag = [m for m in all_magnitudes \
-                   if m[DAY_CE_COL] == d and m[FILTER_CE_COL] == f] 
+                   if m[DAY_CEM_COL] == d and m[FILTER_CEM_COL] == f] 
             
             slope, intercept = calculate_extinction_coefficient(mag)
         

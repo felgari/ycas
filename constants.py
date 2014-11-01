@@ -147,12 +147,12 @@ V_FILTER_NAME = "V"
 R_FILTER_NAME = "R"
 
 # Columns for the data used to calculate extinction coefficients.
-DAY_CE_COL = 0
-JD_TIME_CE_COL = 1
-INST_MAG_CE_COL = 2
-STD_MAG_CE_COL = 3
-AIRMASS_CE_COL = 4
-FILTER_CE_COL = 5
+DAY_CEM_COL = 0
+JD_TIME_CEM_COL = 1
+INST_MAG_CEM_COL = 2
+STD_MAG_CEM_COL = 3
+AIRMASS_CEM_COL = 4
+FILTER_CEM_COL = 5
 
 # Columns for extinction coefficient data.
 DAY_CE = 0
