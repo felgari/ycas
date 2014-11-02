@@ -28,11 +28,12 @@ all the measures for the objects of an image.
 import sys
 import os
 import glob
+import astromatics
 from pyraf import iraf
 from pyraf.iraf import noao, digiphot, apphot
 from constants import *
 
-FWHM = 6.0
+phot_progargs = None
 
 def init_iraf():
     """
@@ -56,18 +57,16 @@ def init_iraf():
     # Set the iraf.phot routine to scripting mode.
     iraf.phot.interactive = "no"
     iraf.phot.verify = "no"
-
-def set_phot_pars(fwhm):
+    
+def set_common_phot_pars():
     """
     
     This function sets the pyraf parameters used to perform
-    the photometry of images.
+    the photometry of images that do not depends of each image.
     
     """        
     
     # Set photometry parameters.
-    iraf.photpars.apertures = APERTURE_MULT * fwhm
-    iraf.fitskypars.annulus = ANNULUS_MULT * fwhm
     iraf.fitskypars.dannulus = DANNULUS_VALUE
     iraf.fitskypars.skyvalue = SKY_VALUE
     iraf.fitskypars.salgorithm = "mode"
@@ -80,8 +79,22 @@ def set_phot_pars(fwhm):
     iraf.datapars.obstime = "MJD"
     iraf.datapars.readnoise = OSN_CCD_T150_READNOISE
     iraf.datapars.epadu = OSN_CCD_T150_GAIN
-    iraf.datapars.datamax = OSN_CCD_T150_DATAMAX
-    iraf.datapars.datamin = DATAMIN_VALUE
+    iraf.datapars.datamax = OSN_CCD_T150_DATAMAX 
+
+def set_image_specific_phot_pars(fwhm, datamin):
+    """
+    
+    This function sets the pyraf parameters used to perform
+    the photometry that depends on each image.
+    
+    """        
+    
+    # Set photometry parameters.
+    iraf.photpars.apertures = APERTURE_MULT * fwhm
+    iraf.fitskypars.annulus = ANNULUS_MULT * fwhm
+    
+    # Name of the fields FITS that contains these values.
+    iraf.datapars.datamin = datamin
 
 def save_parameters():
     """
@@ -96,7 +109,32 @@ def save_parameters():
     iraf.fitskypars.saveParList(filename='fitsky.par')
     iraf.photpars.saveParList(filename='phot.par') 
 
-def do_phot(image_file_name, catalog_file_name, output_mag_file_name):
+
+def calculate_datamin(image_file_name):
+    """
+    Calculate a datamin value for the image received using imstat.
+    
+    """
+    
+    # Set a default value for datamin.
+    datamin = DATAMIN_VALUE
+    
+    try:
+        imstat_output = iraf.imstat(image_file_name, fields='mean,stddev', Stdout=1)
+        imstat_values = imstat_output[IMSTAT_FIRST_VALUE]
+        values = imstat_values.split() # Set a calculated value for datamin.
+        datamin = float(values[0]) - DATAMIN_MULT * float(values[1])
+    except iraf.IrafError as exc:
+        logging.error("Error executing imstat: Stats for data image: " + image_file_name)
+        logging.error("Iraf error is: " + str(exc))
+    except ValueError as ve:
+        logging.error("Value Error calculating datamin for image: " + image_file_name)
+        logging.error("mean is: " + values[0] + " stddev is: " + values[1])
+        logging.error("Value Error is: " + str(ve))
+        
+    return datamin
+
+def do_phot(image_file_name, catalog_file_name, output_mag_file_name, progargs):
     """
     
     This function calculates the photometry of the images. 
@@ -112,25 +150,16 @@ def do_phot(image_file_name, catalog_file_name, output_mag_file_name):
     logging.info("Calculating magnitudes for: " + image_file_name + \
                  " in " + output_mag_file_name)
     
-    # Calculate datamin for this image.
-    try:
-        imstat_output = iraf.imstat(image_file_name, fields='mean,stddev', Stdout=1)
-        imstat_values = imstat_output[IMSTAT_FIRST_VALUE]
-        values = imstat_values.split()
-        iraf.datapars.datamin = float(values[0]) - DATAMIN_MULT * float(values[1])
-    except iraf.IrafError as exc:
-        # Set a default value for datamin.
-        iraf.datapars.datamin = DATAMIN_VALUE        
-        logging.error("Error executing imstat: Stats for data image: " + image_file_name)
-        logging.error("Iraf error is: " + str(exc)) 
-    except ValueError as ve:
-        # Set a default value for datamin.
-        iraf.datapars.datamin = DATAMIN_VALUE
-        logging.error("Value Error calculating datamin for image: " + image_file_name)
-        logging.error("mean is: " + values[0] + " stddev is: " + values[1])
-        logging.error("Value Error is: " + str(ve))                         
+    # Calculate datamin for this image.   
+    datamin = calculate_datamin(image_file_name)                         
+           
+    # Calculate FWHM for this image.
+    fwhm = astromatics.get_fwhm(progargs, image_file_name)
+           
+    # Set the parameters for the photometry that depends on the image.
+    set_image_specific_phot_pars(fwhm, datamin)                
                 
-    try:
+    try:           
         iraf.phot(image = image_file_name, 
                     coords = catalog_file_name, 
                     output = output_mag_file_name)
@@ -138,7 +167,7 @@ def do_phot(image_file_name, catalog_file_name, output_mag_file_name):
         logging.error("Error executing phot on : " + image_file_name) 
         logging.error( "Iraf error is: " + str(exc))
 
-def do_photometry():   
+def do_photometry(progargs):   
     """
     
     This function walk the directories searching for catalog files
@@ -192,7 +221,7 @@ def do_photometry():
                             image.replace(DATA_FINAL_PATTERN, 
                                                 "." + MAGNITUDE_FILE_EXT)
                      
-                        do_phot(image, cat_file, output_mag_file_name)    
+                        do_phot(image, cat_file, output_mag_file_name, progargs)    
                     
 def txdump_photometry_info():
     """
@@ -243,7 +272,7 @@ def txdump_photometry_info():
                         
                     mag_dest_file.close()
                            
-def calculate_photometry():
+def calculate_photometry(progargs):
     """ Calculates the photometry of data images.
 
     This function calculates the photometry for all the data images found.
@@ -252,12 +281,12 @@ def calculate_photometry():
 
     # Init iraf package.
     init_iraf()
-
-    # Set the parameters for photometry.
-    set_phot_pars(FWHM)
+    
+    # Set photometry parameters that do not depend on each image.
+    set_common_phot_pars()
 
     # Calculate the photometry.
-    do_photometry()
+    do_photometry(progargs)
     
     # Export photometry info to a text file with only the columns needed.
     txdump_photometry_info()

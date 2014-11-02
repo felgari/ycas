@@ -67,7 +67,7 @@ NORM_FILE_SUFFIX = "_norm"
 DATA_FINAL_SUFFIX = "_final"
 INST_MAG_SUFFIX = "_inst_mag"
 CORR_MAG_SUFFIX = "_ec_mag"
-CAL_MAG_SUFFIX = "_cal"
+CAL_MAG_SUFFIX = "_cal_mag"
 
 IMSTAT_FIRST_VALUE = 1
 
@@ -80,6 +80,13 @@ ASTROMETRY_NUM_OBJS = 20
 ASTROMETRY_PARAMS = "--overwrite -d "
 
 ASTROMETRY_WCS_TABLE_INDEX = 1
+
+# sextractor parameters.
+SEXTACTOR_COMMENT = "#"
+SEXTACTOR_FWHM_COL = 2
+SEXTACTOR_FWHM_MIN_VALUE = 1.2
+SEXTRACTOR_CFG_DEFAULT_PATH = os.getcwd()
+SEXTRACTOR_CFG_FILENAME = "sextractor.sex"
 
 # Photometry parameters
 
@@ -154,6 +161,7 @@ INST_MAG_CE_CALC_DATA = 2
 STD_MAG_CE_CALC_DATA = 3
 AIRMASS_CE_CALC_DATA = 4
 FILTER_CE_CALC_DATA = 5
+OBJ_NAME_CALC_DATA = 6
 
 # Columns for extinction coefficient data.
 DAY_CE_DATA = 0

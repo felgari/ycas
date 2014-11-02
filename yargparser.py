@@ -46,6 +46,8 @@ class ProgramArguments(object):
         self.__flat_directory = FLAT_DIRECTORY
         self.__data_directory = DATA_DIRECTORY      
         
+        self.__sextractor_cfg_path = SEXTRACTOR_CFG_DEFAULT_PATH
+        
         self.__astrometry_num_of_objects = ASTROMETRY_NUM_OBJS
         
         self.__objects_of_interest_file = INT_OBJECTS_FILE_NAME  
@@ -61,6 +63,9 @@ class ProgramArguments(object):
         
         self.__parser.add_argument("-d", dest="d", metavar="data", \
                                    help="Name for the destiny directory name where the data images are stored")
+        
+        self.__parser.add_argument("-x", dest="x", metavar="sex_cfg", \
+                                   help="Name for directory where the configuration files for sextrator are")        
         
         self.__parser.add_argument("-no", dest="no", metavar="number of objects", type=int, \
                                    help="Number of objects to take into account in images when doing astrometry")
@@ -105,6 +110,10 @@ class ProgramArguments(object):
     @property     
     def data_directory(self):        
         return self.__data_directory
+    
+    @property     
+    def sextrator_cfg_path(self):        
+        return self.__sextractor_cfg_path    
          
     @property          
     def number_of_objects_for_astrometry(self):        
@@ -179,6 +188,9 @@ class ProgramArguments(object):
             
         if self.__args.d <> None:
             self.__data_directory = self.__args.d
+            
+        if self.__args.x <> None:
+            self.__sextractor_cfg_path = self.__args.x
             
         if self.__args.no <> None:
             self.__astrometry_num_of_objects = self.__args.no

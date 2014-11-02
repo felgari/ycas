@@ -370,7 +370,7 @@ def calculate_extinction_coefficient(mag_data):
     slope, intercept, r_value, p_value, std_err = \
         stats.linregress(airmass.astype(np.float), y)
     
-    logging.info("Lineal regression for day: " + str(a[0][DAY_CE_CALC_DATA]) +
+    logging.info("Linear regression for day: " + str(a[0][DAY_CE_CALC_DATA]) +
                  " slope: " + str(slope) + " intercept: " + str(intercept) + \
                  " r-value: " + str(r_value) + " p-value: " + str(p_value) + \
                  " std_err: " + str(std_err))
@@ -422,12 +422,13 @@ def extinction_coefficient(objects, standard_obj_index, \
                 
                         filters.add(im[FILTER_COL])
                         
-                        all_magnitudes.append([day, \
-                                               im[JD_TIME_COL], \
-                                               im[INST_MAG_COL], \
-                                               std_mag, \
-                                               im[AIRMASS_COL],
-                                               im[FILTER_COL]])
+                        all_magnitudes.append([day,
+                                              im[JD_TIME_COL],
+                                              im[INST_MAG_COL],
+                                              std_mag,
+                                              im[AIRMASS_COL],
+                                              im[FILTER_COL],
+                                              obj[OBJ_NAME_COL]])
                     else:
                         logging.info("Standard magnitude undefined for object " + \
                                      obj[OBJ_NAME_COL])
@@ -438,7 +439,7 @@ def extinction_coefficient(objects, standard_obj_index, \
     for d in days:
         for f in filters:
             mag = [m for m in all_magnitudes \
-                   if m[DAY_CE_CALC_DATA] == d and m[FILTER_CE_CALC_DATA] == f] 
+                   if m[DAY_CE_CALC_DATA] == d and m[FILTER_CE_CALC_DATA] == f]
             
             slope, intercept = calculate_extinction_coefficient(mag)
         
@@ -648,7 +649,7 @@ def get_transforming_coefficients(objects, \
 
         # The coefficients are calculated only if there is twice at least,
         # (any list could be used for this check).
-        if len(B_V_mags_of_day) > 1:
+        if len(V_mags_of_day) > 1:
             # Calculate the transforming coefficients of this day using the
             # magnitudes found for this day.   
             c1, c2, c3, c4 = \
@@ -657,7 +658,7 @@ def get_transforming_coefficients(objects, \
                                                     B_V_std_mags_of_objects, \
                                                     V_std_mags_of_objects)
                 
-            trans_coef.append([d, c1, c2, c3, c4])
+            trans_coef.append([d, c1, c2, c3, c4])          
         else:
             logging.info("No transforming coefficients could be calculated for day " + str(d))
             

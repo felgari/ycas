@@ -134,7 +134,7 @@ def main():
     # This step calculates the photometry of the objects detected doing the astrometry.
     if progargs.photometry_requested:
         logging.info("* Step 5 * Performing photometry.")     
-        photometry.calculate_photometry()
+        photometry.calculate_photometry(progargs)
     else:
         logging.info("* Step 5 * Skipping performing photometry. Not requested.")
         
