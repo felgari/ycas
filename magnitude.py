@@ -365,8 +365,8 @@ def calculate_extinction_coefficient(mag_data):
     y = inst_mag.astype(np.float) - std_mag.astype(np.float)
     
     # The calculation is:
-    # Minst = Mo + K * airmass
-    # Where K is the regression coeficcient 
+    # Minst = m + K * airmass
+    # Where K is the regression coefficient
     slope, intercept, r_value, p_value, std_err = \
         stats.linregress(airmass.astype(np.float), y)
     
@@ -376,6 +376,21 @@ def calculate_extinction_coefficient(mag_data):
                  " std_err: " + str(std_err))
     
     return slope, intercept
+
+def valid_data_to_calculate_ext_cof(obj_data_for_ext_coef):
+    """
+    This function examines the data from an object to ensure are coherent,
+    i.e., airmass and instrumental magnitude are proportional, greater airmass
+    is also a greater magnitude, otherwise these data is not considered valid. 
+    
+    """
+    
+    # To know if air mass and magnitude are proportional a linear regression is
+    # calculated and the slope inspected. 
+    slope, intercept = calculate_extinction_coefficient(obj_data_for_ext_coef)
+    
+    return slope > 0.0
+    
     
 def extinction_coefficient(objects, standard_obj_index, \
                            instrumental_magnitudes):
@@ -387,8 +402,8 @@ def extinction_coefficient(objects, standard_obj_index, \
     
     ext_coef = []
     
-    # To store all the magnitudes
-    all_magnitudes = []
+    # To store all the data necessary to calculate extinction coefficients.
+    calc_data_for_ext_coef = []
     
     # To store the different days and filters.
     days = set()
@@ -400,6 +415,9 @@ def extinction_coefficient(objects, standard_obj_index, \
         # Retrieve the object data and the instrumental magnitudes measured.
         obj = objects[i]   
         object_inst_mags = instrumental_magnitudes[i]
+        
+        # Data of an object necessary to calculate extinction coefficients.
+        obj_data_for_ext_coef = []
         
         # Process the instrumental magnitudes measured for this object.
         for inst_mag in object_inst_mags:
@@ -422,28 +440,47 @@ def extinction_coefficient(objects, standard_obj_index, \
                 
                         filters.add(im[FILTER_COL])
                         
-                        all_magnitudes.append([day,
-                                              im[JD_TIME_COL],
-                                              im[INST_MAG_COL],
-                                              std_mag,
-                                              im[AIRMASS_COL],
-                                              im[FILTER_COL],
-                                              obj[OBJ_NAME_COL]])
+                        obj_data_for_ext_coef.append([day,
+                                                      im[JD_TIME_COL],
+                                                      im[INST_MAG_COL],
+                                                      std_mag,
+                                                      im[AIRMASS_COL],
+                                                      im[FILTER_COL],
+                                                      obj[OBJ_NAME_COL]])
                     else:
                         logging.info("Standard magnitude undefined for object " + \
                                      obj[OBJ_NAME_COL])
                 else:
                     logging.info("Standard magnitude not found for object " + \
                                  obj[OBJ_NAME_COL] + " in filter " + im[FILTER_COL])
-    
-    for d in days:
-        for f in filters:
-            mag = [m for m in all_magnitudes \
-                   if m[DAY_CE_CALC_DATA] == d and m[FILTER_CE_CALC_DATA] == f]
-            
-            slope, intercept = calculate_extinction_coefficient(mag)
         
-            ext_coef.append([d, f, slope, intercept])
+        # The data for this object is analyzed to check its validity to 
+        # calculate the extinction coefficients.
+        for d in days:            
+            data_subset = [m for m in obj_data_for_ext_coef \
+                           if m[DAY_CE_CALC_DATA] == d]
+            
+            # Check if there is data of this object for this day.
+            if len(data_subset) > 0:            
+                if valid_data_to_calculate_ext_cof(data_subset) == True:
+                    calc_data_for_ext_coef.append(data_subset)
+                else:
+                    logging.warning("Data to calculate extinction coefficient discarded from object " +
+                                    obj[OBJ_NAME_COL] + " for day " + str(d))
+    
+    if len(calc_data_for_ext_coef) > 0:
+        for d in days:
+            for f in filters:
+                mag = [m for m in calc_data_for_ext_coef \
+                       if m[DAY_CE_CALC_DATA] == d and m[FILTER_CE_CALC_DATA] == f]
+                
+                # Check if there is data of this object for this day.
+                if len(mag) > 0:
+                    slope, intercept = calculate_extinction_coefficient(mag)
+            
+                    ext_coef.append([d, f, slope, intercept])
+    else:
+        logging.warning("There is not enough data to calculate extinction coefficients")
         
     return ext_coef, days, filters
 
@@ -660,7 +697,9 @@ def get_transforming_coefficients(objects, \
                 
             trans_coef.append([d, c1, c2, c3, c4])          
         else:
-            logging.info("No transforming coefficients could be calculated for day " + str(d))
+            logging.warning("No transforming coefficients could be " + 
+                            "calculated for day (there is only one " +
+                            "standard object) " + str(d))
             
     return trans_coef
     
@@ -814,7 +853,6 @@ def process_instrumental_magnitudes(objects, instrumental_magnitudes):
                              no_standard_obj_index, \
                              instrumental_magnitudes, \
                              ext_coef, days, filters) 
-  
                                        
 def calculate_magnitudes(progargs):
     """ 
