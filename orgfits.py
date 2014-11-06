@@ -34,26 +34,65 @@ import os
 import logging
 import yargparser
 import shutil
+import pyfits
 from constants import *
 
-def get_image_filter(filename):
+FILTER_FIELD_NAME = "FILTER"
+IMAGE_TYPE_FIELD_NAME = "IMAGETYP"
+
+BIAS_TYPE = "BIAS"
+FLAT_TYPE = "FLAT"
+
+ORG_FIT_HEADER_FIELDS = ["DATE-OBS", IMAGE_TYPE_FIELD_NAME, FILTER_FIELD_NAME]
+
+def get_image_filter(header_fields, filename):
     """ Returns the filter indicated in the filename if any. 
     
-    This function extracts from a file name the name of the filter.
+    This function returns the filter used for this image.
+    At first, the filter is searched in header file, if it is not found there,
+    the filter is extracted from the file name.
     The filter name is part of the file name and is located in a
     particular position.
     
-    """
+    """    
 
     filtername = ''
+    field_processed = False
+    
+    
+    # Check if any header field has been found.
+    if header_fields != None and len(header_fields) > 0:
+        
+        # The header field could not have found.
+        try:    
+            # Retrieve the filter from the header field.
+            field_value = header_fields[FILTER_FIELD_NAME]
+            
+            if field_value != None and field_value != "":
+                field_processed = True
+                
+                filtername = field_value
+        except KeyError as ke:
+            logging.warning("Header field '" + FILTER_FIELD_NAME + \
+                            "' not found in file " + filename)
+            
+    # If the header field has not been processed.
+    if not field_processed:
+        # Get the filter from the file name.
+        filename_no_ext = filename[:-len('.' + FIT_FILE_EXT)]    
 
-    filename_no_ext = filename[:-len('.' + FIT_FILE_EXT)]    
-
-    for f in FILTERS:
-        index = filename_no_ext.rfind(f)
-
-        if index > 0:
-            filtername = f
+        for f in FILTERS:
+            index = filename_no_ext.rfind(f)
+    
+            if index > 0:
+                filtername = f
+        
+    # If the filter has been identified, show the method used.
+    if len(filtername) > 0:      
+        if field_processed:
+            logging.info(filename + " filter read from file headers.")
+        else:
+            logging.warning(filename + " filter read from file name.") 
     
     return filtername    
 
@@ -75,51 +114,168 @@ def create_directory(path, dirname):
         except OSError:
             if not os.path.isdir(complete_dirname):
                 raise
-
-def analyze_and_organize_dir(filename, path, progargs):
-    """ 
+            
+def get_fit_fields(fit_file_name):
+    """
     
+    This function retrieves some fields of the fit header
+    corresponding to the file name received.
+    
+    """
+    
+    logging.debug("Extracting header fields for: " + fit_file_name)
+    
+    # Create a dictionary to retrieve easily the appropriate list
+    # using the name of the object.
+    header_fields = {}        
+    
+    try:
+        # Open FIT file.
+        hdulist = pyfits.open(fit_file_name)
+        
+        # Get header of first hdu, only one hdu is used.
+        header = hdulist[0].header
+        
+        # For all the header fields of interest.
+        for i in range(len(ORG_FIT_HEADER_FIELDS)):
+            
+            field = ORG_FIT_HEADER_FIELDS[i]
+            
+            # Retrieve and store the value of this field.
+            header_fields[field] = header[field]
+        
+        hdulist.close() 
+    except IOError as ioe:
+        logging.error("Error reading fit file '" + fit_file_name + \
+                      "'. Error is: " + str(ioe))
+    except KeyError as ke:
+        logging.warning("Header field '" + ORG_FIT_HEADER_FIELDS[i] + \
+                        "' not found in file " + fit_file_name)        
+        
+    return header_fields  
+
+def file_is_type(header_fields, filename, field_type, type_string):
+    """
+    
+    This function determine if the data received are
+    related to a specific type of file. 
+    First the header fields are evaluated and if the 
+    result is not conclusive the file name is analyzed.
     The file name has the the form type-orderfilter.fit'.
     Where 'type' could be 'flat', 'bias' or a proper name.
     A '-' character separates the 'orderfilter' part that
     indicates the ordinal number of the image and optionally
-    a filter, only bias has no filter. 
+    a filter, only bias has no filter.     
+    
+    """  
+    
+    is_type = False
+    field_processed = False
+    
+    # Check if any header field has been found.
+    if header_fields != None and len(header_fields) > 0:
+        
+        # The header field could not have found.
+        try:    
+            # Retrieve the image type from the header field.
+            field_value = header_fields[IMAGE_TYPE_FIELD_NAME]
+            
+            if field_value != None and field_value != "":
+                field_processed = True
+                
+                if field_value == field_type:
+                    is_type = True
+        except KeyError as ke:
+            logging.warning("Header field '" + IMAGE_TYPE_FIELD_NAME + \
+                            "' not found in file " + filename)       
+        
+    # If the header field has not been processed.
+    if not field_processed:
+        # Get the type from the file name.
+        is_type = filename.startswith(type_string)
+        
+    # If the type has been identified, show the method used.
+    if is_type:      
+        if field_processed:
+            logging.info(filename + " organized using file headers.")
+        else:
+            logging.warning(filename + " organized using file name.")        
+    
+    return is_type       
+
+def file_is_bias(header_fields, filename):    
+    """
+    
+    This function determine if the data received are
+    related to a bias file. 
+    
+    """
+    
+    return file_is_type(header_fields, filename, \
+                        BIAS_TYPE, BIAS_STRING)
+    
+def file_is_flat(header_fields, filename):    
+    """
+    
+    This function determine if the data received are
+    related to a flat file. 
+    
+    """
+    
+    return file_is_type(header_fields, filename, \
+                        FLAT_TYPE, FLAT_STRING)    
+
+def analyze_and_organize_dir(filename, path, progargs):
+    """ 
+    
+    This function determines the file type and moves the
+    files to the proper directory created for that type of file.
     	
     """
 
-    file_source = os.path.join(path, filename)
+    full_file_name = os.path.join(path, filename)
+    
+    # Get some fit header fields that can be used to organize
+    # the image.
+    header_fields = get_fit_fields(full_file_name)
 
     # If the file is a bias.
-    if filename.startswith(BIAS_STRING):
+    if file_is_bias(header_fields, full_file_name):
         create_directory(path, progargs.bias_directory)
 
         file_destination = os.path.join(path, progargs.bias_directory, filename)
+        
+        logging.debug(full_file_name + " identified as bias.")
 
     # If the file is a flat.
-    elif filename.startswith(FLAT_STRING):
+    elif file_is_flat(header_fields, full_file_name):
         create_directory(path, progargs.flat_directory)
 
-        filtername = get_image_filter(filename)
+        filtername = get_image_filter(header_fields, filename)
 
         if len(filtername) > 0:
             create_directory(path, os.path.join(progargs.flat_directory, filtername))
 
         file_destination = os.path.join(path, progargs.flat_directory, filtername, filename)
+        
+        logging.debug(full_file_name + " identified as flat.")
 
-    # Else the file is a data image.
+    # Otherwise the file is considered a data image.
     else:
         create_directory(path, progargs.data_directory)
 
-        filtername = get_image_filter(filename)
+        filtername = get_image_filter(header_fields, filename)
 
         if len(filtername) > 0:
             create_directory(path, os.path.join(progargs.data_directory, filtername))
 
         file_destination = os.path.join(path, progargs.data_directory, filtername, filename)
+        
+        logging.debug(full_file_name + " identified as data image.")
 
-    logging.info("Moving '" + file_source + "' to '" + file_destination + "'")
+    logging.info("Moving '" + full_file_name + "' to '" + file_destination + "'")
 
-    shutil.move(os.path.abspath(file_source),
+    shutil.move(os.path.abspath(full_file_name),
                 os.path.abspath(file_destination))
     
 def ignore_current_directory(dir, progargs):
