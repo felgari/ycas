@@ -45,9 +45,9 @@ def write_xy_catalog(table_file_name, catalogue_file_name):
     # Check if the file containing x,y coordinates exists.
     if os.path.exists(table_file_name):
 
-        logging.info("X,Y coordinates file exists")
-        logging.info("Table file name: " + table_file_name)
-        logging.info("Catalog file name: " + catalogue_file_name)
+        logging.debug("X,Y coordinates file exists")
+        logging.debug("Table file name: " + table_file_name)
+        logging.debug("Catalog file name: " + catalogue_file_name)
 
         # Open the FITS file received.
         fits_file = pyfits.open(table_file_name) 
@@ -66,7 +66,7 @@ def write_xy_catalog(table_file_name, catalogue_file_name):
         fits_file.close()
 
     else:
-        logging.info("X,Y coordinates file does not exists so no catalog file is created.")
+        logging.debug("X,Y coordinates file does not exists so no catalog file is created.")
         
 def do_astrometry(progargs):
     """
@@ -95,14 +95,14 @@ def do_astrometry(progargs):
             if split_path[-2] == DATA_DIRECTORY:
                 # Get the full path of the directory.                
                 full_dir = path
-                logging.info("Found a directory for data: " + full_dir)
+                logging.debug("Found a directory for data: " + full_dir)
 
                 # Get the list of files ignoring hidden files.
                 files_full_path = \
                     [fn for fn in glob.glob(os.path.join(full_dir, "*" + DATA_FINAL_PATTERN)) \
                     if not os.path.basename(fn).startswith('.')]
                     
-                logging.info("Found " + str(len(files)) + " data files")
+                logging.debug("Found " + str(len(files)) + " data files")
 
                 # Get the list of unique data names.
                 data_names = [ os.path.basename(f[0:f.find(DATANAME_CHAR_SEP)]) \
@@ -121,7 +121,7 @@ def do_astrometry(progargs):
                         filter_name + DATA_FINAL_PATTERN) \
                         for udn in unique_data_names ]
 
-                logging.info("Files to catalog: " + str(files_to_catalog))
+                logging.debug("Files to catalog: " + str(files_to_catalog))
 
                 # Get the astrometry for each file.
                 for fl in files_to_catalog:
@@ -133,13 +133,13 @@ def do_astrometry(progargs):
 
                         command = ASTROMETRY_COMMAND + " " + ASTROMETRY_PARAMS + \
                         str(progargs.number_of_objects_for_astrometry) + " " + fl
-                        logging.info("Executing: " + command)
+                        logging.debug("Executing: " + command)
 
                         # Executes astrometry.net to get the astrometry of the image.
                         return_code = subprocess.call(command, \
                             shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-                        logging.info("Astrometry execution return code: " + str(return_code))
+                        logging.debug("Astrometry execution return code: " + str(return_code))
 
                         number_of_images += 1
 
@@ -151,7 +151,7 @@ def do_astrometry(progargs):
                                 fl.replace("." + FIT_FILE_EXT, INDEX_FILE_PATTERN), \
                                 catalog_name)
                     else:
-                        logging.info("Catalog file already exists: " + catalog_name)
+                        logging.debug("Catalog file already exists: " + catalog_name)
 
     logging.info("Astrometry results:")
     logging.info("- Number of images processed: " + str(number_of_images))

@@ -51,10 +51,10 @@ def show_files_statistics(list_of_files):
     	mean_strings = [str(m).translate(None, ",\ ") for m in means]
     	mean_values = [float(m) for m in mean_strings]
     	
-    	logging.info("Bias images - Max. mean: " + str(max(mean_values)) + \
-    			" Min. mean: " + str(min(mean_values)))
+    	logging.debug("Bias images - Max. mean: " + str(max(mean_values)) + \
+    			      " Min. mean: " + str(min(mean_values)))
     			
-    	logging.info("Creating bias file: " + MASTERBIAS_FILENAME)	
+    	logging.debug("Creating bias file: " + MASTERBIAS_FILENAME)	
     except iraf.IrafError as exc:
     	logging.error("Error executing imstat: Stats for bias images: " + list_of_files)
     	logging.error("Iraf error is: " + str(exc))   		
@@ -82,19 +82,19 @@ def do_masterbias():
     				
                 # Get the full path of the directory.                
                 full_dir = os.path.join(path, dr)
-                logging.info("Found a directory for 'bias': " + full_dir)
+                logging.debug("Found a directory for 'bias': " + full_dir)
                 
                 # Get the list of files.
                 files = glob.glob(os.path.join(full_dir, "*." + FIT_FILE_EXT))
-                logging.info("Found " + str(len(files)) + " bias files")
+                logging.debug("Found " + str(len(files)) + " bias files")
                 
                 # Build the masterbias file name.
                 masterbias_name = os.path.join(full_dir, MASTERBIAS_FILENAME) 
                 
                 # Check if masterbias already exists.
                 if os.path.exists(masterbias_name) == True:
-                    logging.info("Masterbias file exists, " + masterbias_name + \
-                        " so resume to next directory.")
+                    logging.debug("Masterbias file exists, " + masterbias_name + \
+                                  " so resume to next directory.")
                 else:
                     # Put the files list in a string.
                     list_of_files = str(files).translate(None, "[]\'")
@@ -107,7 +107,7 @@ def do_masterbias():
                     except iraf.IrafError as exc:
                         logging.error("Error executing imcombine: Combining bias with: " + 
                                       list_of_files)  
-                        logging.info("Iraf error is: " + str(exc))    
+                        logging.error("Iraf error is: " + str(exc))    
                         
 def normalize_flats(files):
     """ Normalize a set of flat files. 
@@ -183,19 +183,19 @@ def do_masterflat():
             if split_path[-2] == FLAT_DIRECTORY:
                 # Get the full path of the directory.                
                 full_dir = path
-                logging.info("Found a directory for 'flat': " + full_dir)
+                logging.debug("Found a directory for 'flat': " + full_dir)
 
                 # Get the list of files.
                 files = glob.glob(os.path.join(full_dir, "*." + FIT_FILE_EXT))
-                logging.info("Found " + str(len(files)) + " flat files")
+                logging.debug("Found " + str(len(files)) + " flat files")
                 
                 # Buid the masterflat file name.
                 masterflat_name = os.path.join(full_dir, MASTERFLAT_FILENAME) 
                 
                 # Check if masterflat already exists.
                 if os.path.exists(masterflat_name) == True:
-                    logging.info("Masterflat file exists, " + masterflat_name + \
-                                 " so resume to next directory.")
+                    logging.debug("Masterflat file exists, " + masterflat_name + \
+                                  " so resume to next directory.")
                 else:
                     # Put the files list in a string.
                     list_of_flat_files = str(files).translate(None, "[]\'")
@@ -212,11 +212,11 @@ def do_masterflat():
                         # Create the work files subtracting bias from flat.
                         iraf.imarith(list_of_flat_files, '-', masterbias_name, list_of_work_flat_files)
                         
-                        logging.info("Normalizing flat files for: " + masterflat_name)    
+                        logging.debug("Normalizing flat files for: " + masterflat_name)    
                         
                         norm_flat_files = normalize_flats(files)
 
-                        logging.info("Creating flat files for: " + masterflat_name)  
+                        logging.debug("Creating flat files for: " + masterflat_name)  
                         
                         # Create list of names of the normalized flat files.
                         list_of_norm_flat_files = str(norm_flat_files).translate(None, "[]\'")                    
@@ -263,11 +263,11 @@ def reduce_data():
             if split_path[-2] == DATA_DIRECTORY:
                 # Get the full path of the directory.                
                 full_dir = path
-                logging.info("Found a directory for data: " + full_dir)
+                logging.debug("Found a directory for data: " + full_dir)
 
                 # Get the list of files.
                 data_files = glob.glob(os.path.join(full_dir, "*." + FIT_FILE_EXT))
-                logging.info("Found " + str(len(data_files)) + " data files")
+                logging.debug("Found " + str(len(data_files)) + " data files")
                 
                 # The masterbias file name.
                 masterbias_name = \
@@ -288,7 +288,7 @@ def reduce_data():
                                                FIT_FILE_EXT)   
                      
                     if os.path.exists(final_file):           
-                        logging.info("Ignoring file for reduction, already exists: " + final_file)
+                        logging.debug("Ignoring file for reduction, already exists: " + final_file)
                     else:
                         # Get the work file between bias and flat result.
                         work_file = dfile.replace("." + FIT_FILE_EXT, \

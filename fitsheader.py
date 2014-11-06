@@ -60,11 +60,11 @@ def summarize_fit_headers():
             if split_path[-2] == DATA_DIRECTORY:
                 # Get the full path of the directory.                
                 full_dir = path
-                logging.info("Found a directory for data: " + full_dir)
+                logging.debug("Found a directory for data: " + full_dir)
 
                 # Get the list of files.
                 files = glob.glob(os.path.join(full_dir, "*" + DATA_FINAL_PATTERN))
-                logging.info("Found " + str(len(files)) + " data files")
+                logging.debug("Found " + str(len(files)) + " data files")
                 
                 for fl in files:
 

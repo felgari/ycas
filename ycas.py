@@ -78,7 +78,7 @@ def init_log(progargs):
                         format="%(asctime)s:%(levelname)s:%(message)s", \
                         level=logging_level)
     
-    logging.info("Logging initialized.")
+    logging.debug("Logging initialized.")
 
 def main():
     """ Main function.

@@ -79,19 +79,19 @@ def align_images():
             if split_path[-2] == DATA_DIRECTORY:
                 # Get the full path of the directory.                
                 full_dir = path
-                logging.info("Found a directory for data: " + full_dir)
+                logging.debug("Found a directory for data: " + full_dir)
 
                 # Get the list of catalog files ignoring hidden files.
                 files_full_path = \
                     [f for f in glob.glob(os.path.join(full_dir, "*." + CATALOG_FILE_EXT)) \
                     if not os.path.basename(f).startswith('.')]
-                logging.info("Found " + str(len(files_full_path)) + " catalog files")
+                logging.debug("Found " + str(len(files_full_path)) + " catalog files")
                 
                 # Get the list of unique catalog names.
                 catalog_names = [ os.path.basename(f[0:f.find(DATANAME_CHAR_SEP)]) \
                                     for f in files_full_path ]
 
-                logging.info("Catalogs: " + str(catalog_names))
+                logging.debug("Catalogs: " + str(catalog_names))
 
                 # Align the images corresponding to each catalog.
                 for cn in catalog_names:
@@ -129,4 +129,4 @@ def align_images():
                                 logging.error("Error executing imalign on image: " + image)
                                 logging.error("Iraf error is: " + str(exc))   
                     else:
-                        logging.info("Only 1 data image, alignment is not necessary.")
+                        logging.debug("Only 1 data image, alignment is not necessary.")

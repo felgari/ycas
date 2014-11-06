@@ -79,7 +79,7 @@ def read_objects_of_interest(progargs):
         for row in reader:    
             objects.append(row)   
             
-    logging.info("Read the following objects: " +  str(objects))            
+    logging.debug("Read the following objects: " +  str(objects))            
             
     return objects     
 
@@ -153,7 +153,7 @@ def get_object_references(rdls_file, objects):
     
         i += 1
         
-    logging.info("Found index for object " + object_name + " at " + str(index))
+    logging.debug("Found index for object " + object_name + " at " + str(index))
         
     return index, object_name    
 
@@ -175,7 +175,7 @@ def get_inst_magnitudes_for_object(rdls_file, path, objects):
     # The name of the directory that contains the file is the name of the filter
     path_head, filter_name = os.path.split(path)
     
-    logging.info("Found " + str(len(csv_files)) + " csv files for object " \
+    logging.debug("Found " + str(len(csv_files)) + " csv files for object " \
                  + object_name)
     
     # Sort the list of csv files to ensure a right processing.
@@ -263,14 +263,14 @@ def compile_instrumental_magnitudes(objects):
             # Check if current directory is for data.
             if split_path[-2] == DATA_DIRECTORY:
                
-                logging.info("Found a directory with data images: " + path)
+                logging.debug("Found a directory with data images: " + path)
 
                 # Get the list of RDLS files ignoring hidden files.
                 rdls_files_full_path = \
                     [f for f in glob.glob(os.path.join(path, "*." + RDLS_FILE_EXT)) \
                     if not os.path.basename(f).startswith('.')]
                     
-                logging.info("Found " + str(len(rdls_files_full_path)) + \
+                logging.debug("Found " + str(len(rdls_files_full_path)) + \
                              " RDLS files")        
 
                 # Process the images of each object that has a RDLS file.
@@ -370,10 +370,10 @@ def calculate_extinction_coefficient(mag_data):
     slope, intercept, r_value, p_value, std_err = \
         stats.linregress(airmass.astype(np.float), y)
     
-    logging.info("Linear regression for day: " + str(a[0][DAY_CE_CALC_DATA]) +
-                 " slope: " + str(slope) + " intercept: " + str(intercept) + \
-                 " r-value: " + str(r_value) + " p-value: " + str(p_value) + \
-                 " std_err: " + str(std_err))
+    logging.debug("Linear regression for day: " + str(a[0][DAY_CE_CALC_DATA]) +
+                  " slope: " + str(slope) + " intercept: " + str(intercept) + \
+                  " r-value: " + str(r_value) + " p-value: " + str(p_value) + \
+                  " std_err: " + str(std_err))
     
     return slope, intercept
 
@@ -448,11 +448,11 @@ def extinction_coefficient(objects, standard_obj_index, \
                                                       im[FILTER_COL],
                                                       obj[OBJ_NAME_COL]])
                     else:
-                        logging.info("Standard magnitude undefined for object " + \
-                                     obj[OBJ_NAME_COL])
+                        logging.warning("Standard magnitude undefined for object " + \
+                                        obj[OBJ_NAME_COL])
                 else:
-                    logging.info("Standard magnitude not found for object " + \
-                                 obj[OBJ_NAME_COL] + " in filter " + im[FILTER_COL])
+                    logging.warning("Standard magnitude not found for object " + \
+                                    obj[OBJ_NAME_COL] + " in filter " + im[FILTER_COL])
         
         # The data for this object is analyzed to check its validity to 
         # calculate the extinction coefficients.
@@ -574,8 +574,8 @@ def get_extinction_corrected_mag(obj, \
                 magnitudes.append([im[JD_TIME_COL], day, calc_mag, \
                                    im[INST_MAG_COL], filter])
             else:
-                logging.info("Found an instrumental magnitude undefined for object " + \
-                             obj[OBJ_NAME_COL])
+                logging.debug("Found an instrumental magnitude undefined for object " + \
+                              obj[OBJ_NAME_COL])
             
     # Save extinction corrected magnitude for current object.
     save_magnitudes(obj[OBJ_NAME_COL], CORR_MAG_SUFFIX, [magnitudes])  
@@ -681,8 +681,8 @@ def get_transforming_coefficients(objects, \
                 B_V_std_mags_of_objects.extend([B_std_mag_object - V_std_mag_object])
                 V_std_mags_of_objects.extend([V_std_mag_object])
             else:
-                logging.info("There is not measurements in all filters for object: " + \
-                             objects[object_index][OBJ_NAME_COL] + " at day " + str(d))
+                logging.warning("There is not measurements in all filters for object: " + \
+                                objects[object_index][OBJ_NAME_COL] + " at day " + str(d))
 
         # The coefficients are calculated only if there is twice at least,
         # (any list could be used for this check).
@@ -783,9 +783,9 @@ def calibrated_magnitudes(objects, obj_indexes, ext_corr_mags, trans_coef):
                 # Save the calibrated magnitudes to a file.
                 save_magnitudes(obj[OBJ_NAME_COL], CAL_MAG_SUFFIX, [cal_magnitudes])
             else:
-                logging.info("Calibrated magnitudes are not calculated for object: " + \
-                             obj[OBJ_NAME_COL] + " at day " + str(day) + \
-                             ", object magnitudes not available for all the filters.")                
+                logging.warning("Calibrated magnitudes are not calculated for object: " + \
+                                obj[OBJ_NAME_COL] + " at day " + str(day) + \
+                                ", object magnitudes not available for all the filters.")                
 
 def calculate_calibrated_mag(objects, \
                              standard_obj_index, \

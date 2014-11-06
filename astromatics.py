@@ -75,7 +75,7 @@ def get_fwhm(progargs, img_filename):
         os.path.join(progargs.sextrator_cfg_path, SEXTRACTOR_CFG_FILENAME) \
         + " " + os.path.join(os.getcwd(), img_filename)
         
-    logging.info("Executing: " + command)
+    logging.debug("Executing: " + command)
     
     # Execute command.
     command_out = check_output(command, shell=True)
@@ -83,6 +83,6 @@ def get_fwhm(progargs, img_filename):
     # Process the output.
     fwhm = process_sextractor_output(command_out)
     
-    logging.info("FWHM calculated is: " + str(fwhm))
+    logging.debug("FWHM calculated is: " + str(fwhm))
 
     return fwhm

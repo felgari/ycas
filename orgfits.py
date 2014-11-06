@@ -90,7 +90,7 @@ def get_image_filter(header_fields, filename):
     # If the filter has been identified, show the method used.
     if len(filtername) > 0:      
         if field_processed:
-            logging.info(filename + " filter read from file headers.")
+            logging.debug(filename + " filter read from file headers.")
         else:
             logging.warning(filename + " filter read from file name.") 
     
@@ -109,7 +109,7 @@ def create_directory(path, dirname):
     # Check if the directory exists.
     if not os.path.exists(complete_dirname):
         try: 
-            logging.info("Creating directory: " + complete_dirname)
+            logging.debug("Creating directory: " + complete_dirname)
             os.makedirs(complete_dirname)
         except OSError:
             if not os.path.isdir(complete_dirname):
@@ -197,7 +197,7 @@ def file_is_type(header_fields, filename, field_type, type_string):
     # If the type has been identified, show the method used.
     if is_type:      
         if field_processed:
-            logging.info(filename + " organized using file headers.")
+            logging.debug(filename + " organized using file headers.")
         else:
             logging.warning(filename + " organized using file name.")        
     
@@ -273,7 +273,7 @@ def analyze_and_organize_dir(filename, path, progargs):
         
         logging.debug(full_file_name + " identified as data image.")
 
-    logging.info("Moving '" + full_file_name + "' to '" + file_destination + "'")
+    logging.debug("Moving '" + full_file_name + "' to '" + file_destination + "'")
 
     shutil.move(os.path.abspath(full_file_name),
                 os.path.abspath(file_destination))
@@ -316,7 +316,7 @@ def organize_files(progargs):
         # Check if current directory could be created previously
         # to contain bias or flat,  in that case the directory is ignored.        
         if ignore_current_directory(path, progargs):
-            logging.info("Ignoring directory: " + path)
+            logging.debug("Ignoring directory: " + path)
         else:
             # For each file move it to he proper directory.
             for fn in files:
@@ -326,7 +326,7 @@ def organize_files(progargs):
     
                 if filext == FIT_FILE_EXT:
                     # Analyze name.
-                    logging.info("Analyzing: " + os.path.join(path, fn))
+                    logging.debug("Analyzing: " + os.path.join(path, fn))
                     analyze_and_organize_dir(fn, path, progargs)
                 else:
-                    logging.info("Ignoring file: " + fn)
+                    logging.debug("Ignoring file: " + fn)

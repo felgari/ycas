@@ -147,8 +147,8 @@ def do_phot(image_file_name, catalog_file_name, output_mag_file_name, progargs):
     if os.path.exists(output_mag_file_name):
         os.remove(output_mag_file_name)
 
-    logging.info("Calculating magnitudes for: " + image_file_name + \
-                 " in " + output_mag_file_name)
+    logging.debug("Calculating magnitudes for: " + image_file_name + \
+                  " in " + output_mag_file_name)
     
     # Calculate datamin for this image.   
     datamin = calculate_datamin(image_file_name)                         
@@ -190,14 +190,14 @@ def do_photometry(progargs):
             if split_path[-2] == DATA_DIRECTORY:
                 # Get the full path of the directory.                
                 full_dir = path
-                logging.info("Found a directory for data: " + full_dir)
+                logging.debug("Found a directory for data: " + full_dir)
 
                 # Get the list of catalog files.
                 catalog_files = glob.glob(os.path.join(full_dir, "*." + \
                                                        CATALOG_FILE_EXT))
                 
-                logging.info("Found " + str(len(catalog_files)) + \
-                             " catalog files")
+                logging.debug("Found " + str(len(catalog_files)) + \
+                              " catalog files")
                 
                 # Each catalog indicates one or more images.
                 for cat_file in catalog_files:
@@ -211,8 +211,8 @@ def do_photometry(progargs):
                     
                     images_of_catalog = glob.glob(image_file_pattern)
                         
-                    logging.info("Found " + str(len(images_of_catalog)) + \
-                                 " images for this catalog.")
+                    logging.debug("Found " + str(len(images_of_catalog)) + \
+                                  " images for this catalog.")
                         
                     # Calculate the magnitudes for each image related to the catalog.
                     for image in images_of_catalog:
@@ -243,11 +243,11 @@ def txdump_photometry_info():
             if split_path[-2] == DATA_DIRECTORY:
                 # Get the full path of the directory.                
                 full_dir = path
-                logging.info("Found a directory for data: " + full_dir)
+                logging.debug("Found a directory for data: " + full_dir)
 
                 # Get the list of magnitude files.
                 mag_files = glob.glob(os.path.join(full_dir, "*." + MAGNITUDE_FILE_EXT))
-                logging.info("Found " + str(len(mag_files)) + " magnitude files")    
+                logging.debug("Found " + str(len(mag_files)) + " magnitude files")    
                 
                 # Reduce each data file one by one.
                 for mfile in mag_files:                  
