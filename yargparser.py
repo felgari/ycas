@@ -41,7 +41,7 @@ class ProgramArguments(object):
 
         """   
         
-        # Initializes variables  with default values.        
+        # Initializes variables with default values.        
         self.__bias_directory = BIAS_DIRECTORY
         self.__flat_directory = FLAT_DIRECTORY
         self.__data_directory = DATA_DIRECTORY      

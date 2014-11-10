@@ -78,6 +78,8 @@ ASTROMETRY_COMMAND = "solve-field"
 ASTROMETRY_NUM_OBJS = 20
 # Overwrite previous files and limit the number of objects to look at"
 ASTROMETRY_PARAMS = "--overwrite -d "
+# Radius of the field to solve.
+SOLVE_FIELD_RADIUS = 1.0
 
 ASTROMETRY_WCS_TABLE_INDEX = 1
 

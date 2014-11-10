@@ -22,9 +22,13 @@ import sys
 import os
 import logging
 import glob
-from subprocess32 import check_output
 from scipy.stats import mode
 from constants import *
+
+if sys.version_info < (3, 3):
+    from subprocess32 import check_output
+else:
+    from subprocess import check_output
 
 def process_sextractor_output(command_out):
     """

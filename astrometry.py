@@ -30,8 +30,76 @@ import logging
 import yargparser
 import glob
 import pyfits
-import subprocess32 as subprocess
+import csv
 from constants import *
+
+if sys.version_info < (3, 3):
+    import subprocess32 as subprocess
+else:
+    import subprocess
+    
+class RaDecNotFound(StandardError):
+    """ Raised if RA and DEC are not found for an object. """
+    
+    def __init__(self, filename):
+        self.filename = filename
+
+def read_objects_of_interest(progargs):
+    """
+        
+    Read the list of objects of interest from the file indicated.
+    This file contains the name of the object and the AR, DEC 
+    coordinates of each object.
+    
+    """
+    
+    objects = list()
+    
+    # Read the file that contains the objects of interest.
+    with open(progargs.interest_object_file_name, 'rb') as fr:
+        reader = csv.reader(fr, delimiter='\t')        
+        
+        for row in reader:    
+            objects.append(row)   
+            
+    logging.debug("Read the following objects: " +  str(objects))            
+            
+    return objects  
+
+def get_object_ra_dec(objects, filename):
+    """
+    
+    Returns the RA and DEC values of the object indicated 
+    by the file name received.
+    
+    """
+    
+    found = False
+    ra = 0.0
+    dec = 0.0
+    
+    # Split file name from path.
+    path, file = os.path.split(filename)
+    
+    # Get the object name from the filename, the name is at the beginning
+    # and separated by a special character.
+    obj_name = file.split(DATANAME_CHAR_SEP)[0]
+    
+    logging.debug("In astrometry, searching coordinates for object: " + obj_name)
+    
+    for obj in objects:
+        if obj[OBJ_NAME_COL] == obj_name:
+            ra = str(obj[OBJ_RA_COL])
+            dec = str(obj[OBJ_DEC_COL])
+            found = True
+    
+    if found:
+        logging.debug("Coordinates for object " + obj_name + " found: " + \
+                      "RA: " + ra + " DEC: " +  dec)
+    else:
+        raise RaDecNotFound(filename)
+    
+    return ra, dec
 
 def write_xy_catalog(table_file_name, catalogue_file_name):
     """
@@ -83,6 +151,9 @@ def do_astrometry(progargs):
 
     number_of_images = 0
     number_of_successfull_images = 0
+    
+    # Read the list of objects of interest.
+    objects = read_objects_of_interest(progargs)
 
     # Walk from current directory.
     for path,dirs,files in os.walk('.'):
@@ -125,6 +196,17 @@ def do_astrometry(progargs):
 
                 # Get the astrometry for each file.
                 for fl in files_to_catalog:
+                    
+                    # Try to get RA and DEC for the object to solve the field only around
+                    # these coordinates.
+                    ra_dec_param = ""
+                    
+                    try:
+                        ra, dec = get_object_ra_dec(objects, fl)
+                        
+                        ra_dec_param =" --ra " + ra + " --dec " + dec + " --radius " + str(SOLVE_FIELD_RADIUS) 
+                    except RaDecNotFound as rdnf:
+                        logging.debug("RA, DEC not found for object related to file: " + rdnf.filename)
 
                     catalog_name = fl.replace(DATA_FINAL_PATTERN, "." + CATALOG_FILE_EXT)
 
@@ -132,7 +214,8 @@ def do_astrometry(progargs):
                     if os.path.exists(catalog_name) == False :
 
                         command = ASTROMETRY_COMMAND + " " + ASTROMETRY_PARAMS + \
-                        str(progargs.number_of_objects_for_astrometry) + " " + fl
+                        str(progargs.number_of_objects_for_astrometry) + " " + \
+                        ra_dec_param + " " + fl
                         logging.debug("Executing: " + command)
 
                         # Executes astrometry.net to get the astrometry of the image.
