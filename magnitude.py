@@ -76,8 +76,10 @@ def read_objects_of_interest(progargs):
     with open(progargs.interest_object_file_name, 'rb') as fr:
         reader = csv.reader(fr, delimiter='\t')        
         
-        for row in reader:    
-            objects.append(row)   
+        for row in reader:  
+            # If row is not empty. 
+            if len(row) > 0: 
+                objects.append(row)   
             
     logging.debug("Read the following objects: " +  str(objects))            
             
