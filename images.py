@@ -32,6 +32,7 @@ import logging
 import glob
 import shutil
 import csv
+import argparse
 from fitfiles import *
 from constants import *
 
@@ -41,6 +42,100 @@ MIN_NUM_ARGS = 3
 DEST_DIR_PAR = 0
 SRC_DIR_PAR = 1
 OBJ_FILE_PAR = 2
+
+class ImagesArguments(object):
+    """ Encapsulates the definition and processing of program arguments.
+        
+    """
+    
+    def __init__(self):
+        """ Initializes parser. 
+        
+        Initialization of variables and the object ImagesArguments 
+        with the definition of arguments to use.
+
+        """   
+        
+        self.__objects_of_interest_file = INT_OBJECTS_FILE_NAME          
+            
+        # Initiate arguments of the parser.
+        self.__parser = argparse.ArgumentParser()
+        
+        self.__parser.add_argument("-e", dest="e", action="store_true", \
+                                   help='Extract images')
+        
+        self.__parser.add_argument("-l", dest="l", action="store_true", \
+                                   help="List objects found in images")
+        
+        self.__parser.add_argument("-d", metavar="destiny directory", dest="d", \
+                                   help="Destiny directory for images") 
+        
+        self.__parser.add_argument("-s", metavar="source directory", dest="s", \
+                                   help="Source directory for images") 
+        
+        self.__parser.add_argument("-o", metavar="objects", dest="o", \
+                                   help="File containing the objects of interest")
+        
+    @property    
+    def is_extraction(self):        
+        return self.__args.e
+    
+    @property     
+    def is_object_list(self):        
+        return self.__args.l      
+    
+    @property    
+    def destiny_dir_provided(self): 
+        return self.__args.d <> None     
+    
+    @property
+    def destiny_dir(self):
+        return self.__args.d        
+    
+    @property    
+    def source_dir_provided(self): 
+        return self.__args.s <> None     
+    
+    @property
+    def source_dir(self):
+        return self.__args.s       
+    
+    @property
+    def interest_object_file_name(self):
+        return self.__objects_of_interest_file      
+    
+    def parse(self):
+        """ 
+        
+        Initialize properties and performs the parsing 
+        of program arguments.
+        
+        """
+        
+        # Parse program arguments.
+        self.__args = self.__parser.parse_args()
+            
+        if self.__args.o <> None:
+            self.__objects_of_interest_file = self.__args.o    
+            
+def get_filename_start(path_file):
+    """
+    
+    This function returns the first part of the name of a file,
+    this word indicated the file type or the name of the object
+    related to this image.
+    
+    """
+    
+    # Discard the path and get only the filename.
+    filename = os.path.split(path_file)[-1]
+    
+    # Get only the part of the name until the delimiter.
+    filename_start = filename.split(DATANAME_CHAR_SEP)[0]    
+    
+    # Some file names have suffixes delimited by dots
+    # that should be suppressed.    
+    return filename_start.split(".")[-1]                
 
 def get_files_of_interest(obj_names, files):
     """
@@ -64,11 +159,6 @@ def get_files_of_interest(obj_names, files):
         # Get some fit header fields that can be used to organize
         # the image.
         header_fields = get_fit_fields(f)   
-                
-        # Get the file name.
-        filename = os.path.split(f)[-1] 
-        
-        file_start_name = filename.split(DATANAME_CHAR_SEP)[0]
         
         # Determine the file type and add it to the appropriate list,
         # also save the filter for flats and images.
@@ -79,7 +169,7 @@ def get_files_of_interest(obj_names, files):
             flat_list.extend([f])
             flat_filter_list.extend([header_fields[FILTER_FIELD_NAME]])
             
-        elif file_start_name in obj_names:
+        elif get_filename_start(f) in obj_names:
             file_list.extend([f])
             file_filter_list.extend([header_fields[FILTER_FIELD_NAME]])
         
@@ -127,7 +217,7 @@ def copy_files_of_interest(destiny_path, files_of_interest):
         
         shutil.copyfile(f, os.path.join(destiny_path, filename))
 
-def search_images(destiny_path, source_path, obj_names):
+def search_images(destiny_path, source_path, objects_file):
     """
     
     This function search for file images related to the
@@ -135,6 +225,9 @@ def search_images(destiny_path, source_path, obj_names):
     directory in the path indicated.
     
     """
+    
+    # Read the objects from the file received.
+    obj_names = read_objects_of_interest(objects_file)    
     
     # Walk from current directory.
     for path,dirs,files in os.walk(source_path):
@@ -182,9 +275,52 @@ def read_objects_of_interest(objects_file):
             
     logging.debug("Read the following objects: " +  str(objects))            
             
-    return objects             
+    return objects   
+
+def list_objects_in_files(source_dir):
+    """
+    This function walks the directory and create a list of the
+    objects with images.
+    
+    """
+    
+    objects = []
+    
+    logging.debug("Creating a list of objects with images from: " + source_dir)
+    
+    # Walk from current directory.
+    for path,dirs,files in os.walk(source_dir):
+    
+        # Inspect only directories without subdirectories.
+        if len(dirs) == 0:           
+            logging.debug("Found a directory for images: " + path)
             
-def main(argv):
+            split_path = os.path.split(path)
+
+            # Get the list of files.
+            files = glob.glob(os.path.join(path, "*" + FIT_FILE_EXT))
+            
+            logging.debug("Found " + str(len(files)) + " image files")
+            
+            # Process all the files found.
+            for f in files:
+                header_fields = get_fit_fields(f)
+                
+                # Determine the file type to exclude bias and flat.
+                if ( not file_is_bias(header_fields, f) ) and \
+                    ( not file_is_flat(header_fields, f) ):
+                         
+                    # Get only the name of the file.
+                    filename_start = get_filename_start(f)  
+            
+                    objects.extend([filename_start])
+                    
+    # Get a set with the names of the objects only once.
+    objects_set = set(objects)
+                    
+    print "Objects: " +  str(objects_set)               
+            
+def main():
     """ 
 
     Main function. Configure logging, check a correct number of program arguments,
@@ -195,20 +331,32 @@ def main(argv):
     # Set the file, format and level of logging output.
     logging.basicConfig(filename=DEFAULT_LOG_FILE_NAME, \
                         format="%(asctime)s:%(levelname)s:%(message)s", \
-                        level=logging.DEBUG)    
+                        level=logging.DEBUG) 
     
-    if len(argv) < MIN_NUM_ARGS:
-        print str(MIN_NUM_ARGS) + " arguments are needed: " + \
-                      "destiny_directory source_directory objects_file"           
-    else:
-        # Read the objects from the file received.
-        obj_names = read_objects_of_interest(argv[OBJ_FILE_PAR])
-        
-        # Search images for the list of objects into the path indicated.
-        search_images(argv[DEST_DIR_PAR], argv[SRC_DIR_PAR], obj_names)
+    # Create object to process program arguments.
+    progargs = ImagesArguments()    
+    
+    progargs.parse()    
+    
+    if progargs.is_extraction:
+        if progargs.destiny_dir_provided and \
+            progargs.source_dir_provided:
+            
+            logging.debug("Copying images for the objects indicated to the destiny directory.")            
+            
+            # Search images for the list of objects into the path indicated.
+            search_images(progargs.destiny_dir, \
+                          progargs.source_dir, \
+                          progargs.source_dir)      
+        else:
+            print "The following arguments are needed: " + \
+                          "destiny_directory source_directory objects_file" 
+                          
+    elif progargs.is_object_list:
+        list_objects_in_files(progargs.source_dir)
        
             
 # Where all begins ...
 if __name__ == "__main__":
 
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(main())
