@@ -32,6 +32,7 @@ import glob
 import pyfits
 import csv
 from constants import *
+from textfiles import *
 import numpy as np
 from scipy import stats
 
@@ -59,31 +60,7 @@ def get_ra_dec_for_object(objects, object_name):
             ra = float(obj[OBJ_RA_COL])
             dec = float(obj[OBJ_DEC_COL])
     
-    return ra, dec
-
-def read_objects_of_interest(progargs):
-    """
-        
-    Read the list of objects of interest from the file indicated.
-    This file contains the name of the object and the AR, DEC 
-    coordinates of each object.
-    
-    """
-    
-    objects = list()
-    
-    # Read the file that contains the objects of interest.
-    with open(progargs.interest_object_file_name, 'rb') as fr:
-        reader = csv.reader(fr, delimiter='\t')        
-        
-        for row in reader:  
-            # If row is not empty. 
-            if len(row) > 0: 
-                objects.append(row)   
-            
-    logging.debug("Read the following objects: " +  str(objects))            
-            
-    return objects     
+    return ra, dec  
 
 def get_rdls_data(rdls_file):
     """

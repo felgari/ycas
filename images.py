@@ -33,6 +33,7 @@ import glob
 import shutil
 import csv
 import argparse
+from textfiles import *
 from fitfiles import *
 from constants import *
 
@@ -249,33 +250,7 @@ def search_images(destiny_path, source_path, objects_file):
                 # is joined. 
                 full_destiny_path = os.path.join(destiny_path, split_path[-1])
                 
-                copy_files_of_interest(full_destiny_path, files_of_interest)
-            
-def read_objects_of_interest(objects_file):
-    """
-        
-    Read the list of objects of interest from the file indicated.
-    This file contains the name of the object and the AR, DEC 
-    coordinates of each object.
-    
-    """
-    
-    objects = list()
-    
-    logging.debug("Reading object from file: " + objects_file)
-    
-    # Read the file that contains the objects of interest.
-    with open(objects_file, 'rb') as fr:
-        reader = csv.reader(fr, delimiter='\t')        
-        
-        for row in reader:    
-            if len(row) > 0:
-                # Only the column with name of the object.
-                objects.append(row[OBJ_NAME_COL])   
-            
-    logging.debug("Read the following objects: " +  str(objects))            
-            
-    return objects   
+                copy_files_of_interest(full_destiny_path, files_of_interest) 
 
 def list_objects_in_files(source_dir):
     """

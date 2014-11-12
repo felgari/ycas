@@ -32,6 +32,7 @@ import glob
 import pyfits
 import csv
 from constants import *
+from textfiles import *
 
 if sys.version_info < (3, 3):
     import subprocess32 as subprocess
@@ -43,28 +44,6 @@ class RaDecNotFound(StandardError):
     
     def __init__(self, filename):
         self.filename = filename
-
-def read_objects_of_interest(progargs):
-    """
-        
-    Read the list of objects of interest from the file indicated.
-    This file contains the name of the object and the AR, DEC 
-    coordinates of each object.
-    
-    """
-    
-    objects = list()
-    
-    # Read the file that contains the objects of interest.
-    with open(progargs.interest_object_file_name, 'rb') as fr:
-        reader = csv.reader(fr, delimiter='\t')        
-        
-        for row in reader:    
-            objects.append(row)   
-            
-    logging.debug("Read the following objects: " +  str(objects))            
-            
-    return objects  
 
 def get_object_ra_dec(objects, filename):
     """
