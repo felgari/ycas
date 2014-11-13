@@ -92,7 +92,10 @@ class ProgramArguments(object):
                                    help="Align the images")   
         
         self.__parser.add_argument("-p", dest="p", action="store_true", 
-                                   help="Calculate the photometry of the images")       
+                                   help="Calculate the photometry of the images")   
+        
+        self.__parser.add_argument("-dp", dest="dp", action="store_true", 
+                                   help="Calculate diferential photometry of the images")
         
         self.__parser.add_argument("-m", dest="m", action="store_true", 
                                    help="Calculate the magnitudes of the images")                 
@@ -164,6 +167,10 @@ class ProgramArguments(object):
         return self.__args.p  
     
     @property
+    def diff_photometry_requested(self):
+        return self.__args.dp      
+    
+    @property
     def magnitudes_requested(self):
         return self.__args.m      
     
@@ -196,5 +203,10 @@ class ProgramArguments(object):
             self.__astrometry_num_of_objects = self.__args.no
             
         if self.__args.i <> None:
-            self.__objects_of_interest_file = self.__args.i            
+            self.__objects_of_interest_file = self.__args.i       
+            
+    def print_usage(self):
+        """ Print arguments options """
+                
+        self.__parser.print_usage()     
      

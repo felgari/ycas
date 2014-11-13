@@ -112,6 +112,11 @@ class ImagesArguments(object):
         if self.__args.o <> None:
             self.__objects_of_interest_file = self.__args.o    
             
+    def print_usage(self):
+        """ Print arguments options """
+        
+        self.__parser.print_usage()              
+            
 def get_filename_start(path_file):
     """
     
@@ -331,7 +336,7 @@ if __name__ == "__main__":
     progargs = ImagesArguments()      
     
     if len(sys.argv) <= 1:
-        parser.print_usage()
+        progargs.print_usage()
         sys.exit(1)
     else: 
         sys.exit(main(progargs))
