@@ -218,7 +218,7 @@ def copy_files_of_interest(destiny_path, files_of_interest):
         
         shutil.copyfile(f, os.path.join(destiny_path, filename))
 
-def search_images(destiny_path, source_path, objects_file):
+def copy_images(destiny_path, source_path, objects_file):
     """
     
     This function search for file images related to the
@@ -319,10 +319,10 @@ def main():
             
             logging.debug("Copying images for the objects indicated to the destiny directory.")            
             
-            # Search images for the list of objects into the path indicated.
-            search_images(progargs.destiny_dir, \
-                          progargs.source_dir, \
-                          progargs.source_dir)      
+            # Copy images for the list of objects into the path indicated.
+            copy_images(progargs.destiny_dir, \
+                        progargs.source_dir, \
+                        progargs.source_dir)      
         else:
             print "The following arguments are needed: " + \
                           "destiny_directory source_directory objects_file" 
