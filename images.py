@@ -37,13 +37,6 @@ from textfiles import *
 from fitfiles import *
 from constants import *
 
-# Constants for arguments.
-MIN_NUM_ARGS = 3
-
-DEST_DIR_PAR = 0
-SRC_DIR_PAR = 1
-OBJ_FILE_PAR = 2
-
 class ImagesArguments(object):
     """ Encapsulates the definition and processing of program arguments.
         
@@ -228,7 +221,10 @@ def copy_images(destiny_path, source_path, objects_file):
     """
     
     # Read the objects from the file received.
-    obj_names = read_objects_of_interest(objects_file)    
+    objects = read_objects_of_interest(objects_file)
+    
+    # Get the names of the objects.
+    obj_names = [ o[OBJ_NAME_COL] for o in objects]    
     
     # Walk from current directory.
     for path,dirs,files in os.walk(source_path):
@@ -295,7 +291,7 @@ def list_objects_in_files(source_dir):
                     
     print "Objects: " +  str(objects_set)               
             
-def main():
+def main(progargs):
     """ 
 
     Main function. Configure logging, check a correct number of program arguments,
@@ -306,10 +302,7 @@ def main():
     # Set the file, format and level of logging output.
     logging.basicConfig(filename=DEFAULT_LOG_FILE_NAME, \
                         format="%(asctime)s:%(levelname)s:%(message)s", \
-                        level=logging.DEBUG) 
-    
-    # Create object to process program arguments.
-    progargs = ImagesArguments()    
+                        level=logging.DEBUG)   
     
     progargs.parse()    
     
@@ -322,7 +315,7 @@ def main():
             # Copy images for the list of objects into the path indicated.
             copy_images(progargs.destiny_dir, \
                         progargs.source_dir, \
-                        progargs.source_dir)      
+                        progargs.interest_object_file_name)      
         else:
             print "The following arguments are needed: " + \
                           "destiny_directory source_directory objects_file" 
@@ -333,5 +326,12 @@ def main():
             
 # Where all begins ...
 if __name__ == "__main__":
-
-    sys.exit(main())
+    
+    # Create object to process program arguments.
+    progargs = ImagesArguments()      
+    
+    if len(sys.argv) <= 1:
+        parser.print_usage()
+        sys.exit(1)
+    else: 
+        sys.exit(main(progargs))
