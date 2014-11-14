@@ -162,8 +162,13 @@ def file_is_type(header_fields, filename, field_type, type_string):
         
     # If the header field has not been processed.
     if not field_processed:
+        
+        # Some files have prefixes with numbers delimited by dots
+        # that is necessary to remove to identify the file type.
+        clean_filename = filename.split(".")[-1]
+         
         # Get the type from the file name.
-        is_type = filename.startswith(type_string)
+        is_type = clean_filename.startswith(type_string)
         
     # If the type has been identified, show the method used.
     if is_type:      
