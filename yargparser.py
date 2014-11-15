@@ -98,7 +98,10 @@ class ProgramArguments(object):
                                    help="Calculate diferential photometry of the images")
         
         self.__parser.add_argument("-m", dest="m", action="store_true", 
-                                   help="Calculate the magnitudes of the images")                 
+                                   help="Calculate the magnitudes of the images")      
+        
+        self.__parser.add_argument("-t", dest="t", action="store_true", 
+                                   help="Use header information to get the type of the image")                     
         
         self.__args = None    
         
@@ -172,7 +175,11 @@ class ProgramArguments(object):
     
     @property
     def magnitudes_requested(self):
-        return self.__args.m      
+        return self.__args.m    
+    
+    @property    
+    def use_headers_to_get_image_type(self):
+        return self.__args.t        
     
     def parse(self):
         """ Parse program arguments.
@@ -209,4 +216,9 @@ class ProgramArguments(object):
         """ Print arguments options """
                 
         self.__parser.print_usage()     
+        
+    def print_help(self):
+        """ Print help for arguments options """
+                
+        self.__parser.print_help()           
      
