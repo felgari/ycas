@@ -272,15 +272,27 @@ def reduce_data():
                 data_files = glob.glob(os.path.join(full_dir, "*." + FIT_FILE_EXT))
                 logging.debug("Found " + str(len(data_files)) + " data files")
                 
-                # The masterbias file name.
+                # The masterbias file name. The path where it should exists
+                # after organizing the files.
                 masterbias_name = \
                     os.path.join(full_dir, PATH_FROM_DATA_TO_BIAS, \
-                                 MASTERBIAS_FILENAME)      
+                                 MASTERBIAS_FILENAME)    
+                    
+                # Check if bias really exists.
+                if not os.path.exists(masterbias_name):
+                    logging.warning("Masterbias does not exists: " + masterbias_name)  
+                    masterbias_name = ""
                 
-                # The masterflat file name.
+                # The masterflat file name. The path where it should exists
+                # after organizing the files.
                 masterflat_name = \
                     os.path.join(full_dir, PATH_FROM_DATA_TO_FLAT, \
                                  split_path[-1], MASTERFLAT_FILENAME)
+                                        
+                # Check if bias really exists.
+                if not os.path.exists(masterflat_name):
+                    logging.warning("Masterflat does not exists: " + masterflat_name)  
+                    masterflat_name = ""                    
 
                 # Reduce each data file one by one.
                 for dfile in data_files:     
@@ -298,15 +310,29 @@ def reduce_data():
                                                   WORK_FILE_SUFFIX + "." + FIT_FILE_EXT)
                            
                         try: 
-                            # Create the work files subtracting bias from flat.
-                            iraf.imarith(dfile, '-', masterbias_name, work_file)     
-    
-                            try:
-                                # Create the final data dividing by master flat.
-                                iraf.imarith(work_file, "/", masterflat_name, final_file)
+                            
+                            # If masterbias exists.
+                            if len(masterbias_name) > 0:
                                 
-                                # Remove work file to save storage space.
-                                os.remove(work_file)
+                                # Create the work files subtracting bias from flat.
+                                iraf.imarith(dfile, '-', masterbias_name, work_file)
+                            else:     
+                                # Use as work file (input for flat step), the original file.
+                                work_file = dfile
+                            try:
+                                # If masterflat exists.
+                                if len(masterbias_name) > 0:
+                                    # Create the final data dividing by master flat.
+                                    iraf.imarith(work_file, "/", masterflat_name, final_file)
+                                else:
+                                    # The final file is the file resulting from bias step.
+                                    final_file = work_file
+                                
+                                # If the work file is not the original file, and it is
+                                # really a temporal file.
+                                if len(masterbias_name) > 0:
+                                    # Remove work file to save storage space.
+                                    os.remove(work_file)
                                                                     
                             except iraf.IrafError as exc:
                                 logging.error("Error executing imarith: " + work_file + \
