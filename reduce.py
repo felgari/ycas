@@ -57,7 +57,10 @@ def show_files_statistics(list_of_files):
     	logging.debug("Creating bias file: " + MASTERBIAS_FILENAME)	
     except iraf.IrafError as exc:
     	logging.error("Error executing imstat: Stats for bias images: " + list_of_files)
-    	logging.error("Iraf error is: " + str(exc))   		
+    	logging.error("Iraf error is: " + str(exc))  
+    except ValueError as ve: 	
+        logging.error("Error calculating mean values: " + str(mean_strings))
+        logging.error("Error is: " + str(ve))          	
 
 def do_masterbias():
     """ Calculation of all the masterbias files.
