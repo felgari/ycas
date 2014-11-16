@@ -39,23 +39,21 @@ if sys.version_info < (3, 3):
 else:
     import subprocess
     
-class RaDecNotFound(StandardError):
-    """ Raised if RA and DEC are not found for an object. """
+class ObjectNotFound(StandardError):
+    """ Raised if object is not found from file name. """
     
     def __init__(self, filename):
         self.filename = filename
 
-def get_object_ra_dec(objects, filename):
+def get_object(objects, filename):
     """
     
-    Returns the RA and DEC values of the object indicated 
-    by the file name received.
+    Returns the object indicated by the file name received.
     
     """
     
-    found = False
-    ra = 0.0
-    dec = 0.0
+    object = None
+    index = -1
     
     # Split file name from path.
     path, file = os.path.split(filename)
@@ -66,54 +64,195 @@ def get_object_ra_dec(objects, filename):
     
     logging.debug("In astrometry, searching coordinates for object: " + obj_name)
     
-    for obj in objects:
+    for i in range(len(objects)):
+        obj = objects[i]
         if obj[OBJ_NAME_COL] == obj_name:
-            ra = str(obj[OBJ_RA_COL])
-            dec = str(obj[OBJ_DEC_COL])
-            found = True
+            object = obj
+            index = i
     
-    if found:
-        logging.debug("Coordinates for object " + obj_name + " found: " + \
-                      "RA: " + ra + " DEC: " +  dec)
-    else:
-        raise RaDecNotFound(filename)
+    if object is None:
+        raise ObjectNotFound(filename)
     
-    return ra, dec
+    return object, index
 
-def write_xy_catalog(table_file_name, catalogue_file_name):
+def get_fit_table_data(fit_table_file_name):
+    """
+    
+    This function returns the data of a the first table contained
+    in the fit whose name has been received as parameter.
+    
+    """
+    
+    # Open the FITS file received.
+    fit_table_file = pyfits.open(fit_table_file_name) 
+
+    # Assume the first extension is a table.
+    table_data = fit_table_file[FIT_FIRST_TABLE_INDEX].data    
+    
+    fit_table_file.close()
+    
+    # Convert data from fits table to a list.
+    ldata = list()
+    
+    # To add an index to the rows.
+    n = 1
+    
+    for row in table_data:
+        ldata.append([row[0], row[1]])
+        n += 1
+    
+    return ldata  
+
+def get_rd_index(rd_data, ra, dec): 
+    """
+    
+    Return the index of the ra,dec data whose values are more
+    close to those received.
+    
+    """
+    
+    index = -1
+    
+    ra_diff = 1000.0
+    dec_diff = 1000.0 
+    
+    i = 0
+    for rd in rd_data:
+        # Compute the difference between the coordinates of the
+        # object in this row and the object received.  
+        temp_ra_diff = abs(float(rd[0]) - ra)
+        temp_dec_diff = abs(float(rd[1]) - dec)   
+        
+        # If current row coordinates are smaller than previous this
+        # row is chosen as candidate for the object.
+        if temp_ra_diff < ra_diff and temp_dec_diff < dec_diff:
+            ra_diff = temp_ra_diff
+            dec_diff = temp_dec_diff
+            index = i        
+    
+        i += 1
+        
+    return index
+
+def get_indexes_for_obj_cood(rd_data, object, object_references):
+    """
+    
+    Get the indexes of the ra,dec coordinates received more close to
+    those of the objects received.
+    
+    """
+    
+    indexes = []
+    
+    # Get the index for the object.
+    new_index = get_rd_index(rd_data, float(object[OBJ_RA_COL]), \
+                             float(object[OBJ_DEC_COL]))
+    
+    if new_index >= 0:
+        logging.debug("Index for object '" + object[OBJ_NAME_COL] + \
+                      "' is " +  str(new_index))
+        
+        indexes.extend([new_index])
+        
+        # Get the indexes for the objects references (the first is the
+        # object of interest).
+        for obj_ref in object_references:
+            new_index = get_rd_index(rd_data, float(obj_ref[0]), \
+                                     float(obj_ref[1]))
+            
+            if new_index >= 0:
+                logging.debug("Index for references " + str(obj_ref[0]) + \
+                              "," + str(obj_ref[1]) + " is " + str(new_index))        
+                                         
+                indexes.extend([new_index])      
+            else:
+                logging.debug("Index for references " + str(obj_ref[0]) + \
+                              "," + str(obj_ref[1]) + " not found")
+    else:
+        logging.debug("Index for object " + object[OBJ_NAME_COL] + \
+                      " not found")
+
+    return indexes
+
+
+def write_catalog_file(catalog_file_name, indexes, xy_data):
+    """
+    
+    Write text files with the x,y and ra,dec coordinates of the data
+    received corresponding to the indexes set.
+    
+    """
+    
+    logging.debug("Writing catalog file: " + catalog_file_name)
+    
+    # Write x,y coordinates to a text file.
+    catalog_file = open(catalog_file_name, "w")
+        
+    for i in indexes:
+        catalog_file.write(str(xy_data[i][0]) + " " + str(xy_data[i][1]) + "\n")
+    
+    catalog_file.close()
+
+def write_coord_catalogues(image_file_name, catalog_file_name, \
+                           object, object_references):
     """
     This function opens the FITS file that contains the table of x,y 
     coordinates and write these coordinates to a text file that only
-    contains this x,y values. this text file will be used later for
+    contains this x,y values. This text file will be used later for
     photometry.
+    Also generates a text file with the ra, dec coordinates related to
+    the x,y coordinates.
     
     """
+    
+    # Get the names for xyls and rdla files from image file name.
+    xyls_file_name = image_file_name.replace("." + FIT_FILE_EXT, INDEX_FILE_PATTERN)
+    rdls_file_name = image_file_name.replace("." + FIT_FILE_EXT, "." + RDLS_FILE_EXT)
 
     # Check if the file containing x,y coordinates exists.
-    if os.path.exists(table_file_name):
+    if os.path.exists(xyls_file_name):
 
         logging.debug("X,Y coordinates file exists")
-        logging.debug("Table file name: " + table_file_name)
-        logging.debug("Catalog file name: " + catalogue_file_name)
-
-        # Open the FITS file received.
-        fits_file = pyfits.open(table_file_name) 
-
-        # Assume the first extension is a table.
-        tbdata = fits_file[ASTROMETRY_WCS_TABLE_INDEX].data  
-
-        # Write x,y coordinates to a text file.
-        text_file = open(catalogue_file_name, "w")
-
-        for i in range(len(tbdata)):
-            text_file.write(str(tbdata[i][0]) + " " + str(tbdata[i][1]) + "\n")
-
-        text_file.close()
+        logging.debug("xyls file name: " + xyls_file_name)
+        logging.debug("rdls file name: " + rdls_file_name)        
+        logging.debug("Catalog file name: " + catalog_file_name)
         
-        fits_file.close()
+        # Get only the file name.
+        catalog_only_file_name = os.path.split(catalog_file_name)[-1]
+        object_name = catalog_only_file_name[:catalog_only_file_name.find(DATANAME_CHAR_SEP)]
+        
+        logging.debug("Object name: " + object_name)
+
+        # Read x,y and ra,dec data from fit table.
+        xy_data = get_fit_table_data(xyls_file_name)
+        rd_data = get_fit_table_data(rdls_file_name)
+        
+        # Get the indexes for x,y and ra,dec data related to the
+        # objects received.
+        indexes = get_indexes_for_obj_cood(rd_data, object, object_references)
+
+        # Write catalog file with the x,y coordinate to do the
+        # photometry.
+        write_catalog_file(catalog_file_name, indexes, xy_data)
 
     else:
-        logging.debug("X,Y coordinates file does not exists so no catalog file is created.")
+        logging.debug("X,Y coordinates file '" + xyls_file_name + \
+                      "' does not exists so catalog file could not be created.")
+        
+def read_objects_references(objects):
+    """
+    
+    Read the ra, dec coordinates of the object references for
+    the objects received.
+    
+    """        
+    
+    objects_references = []
+    
+    for obj in objects:
+        objects_references.append(read_references_for_object(obj[OBJ_NAME_COL]))
+    
+    return objects_references    
         
 def do_astrometry(progargs):
     """
@@ -132,7 +271,9 @@ def do_astrometry(progargs):
     number_of_successfull_images = 0
     
     # Read the list of objects of interest.
-    objects = read_objects_of_interest(progargs)
+    objects = read_objects_of_interest(progargs.interest_object_file_name)
+    
+    objects_references = read_objects_references(objects)
 
     # Walk from current directory.
     for path,dirs,files in os.walk('.'):
@@ -148,30 +289,12 @@ def do_astrometry(progargs):
                 logging.debug("Found a directory for data: " + full_dir)
 
                 # Get the list of files ignoring hidden files.
-                files_full_path = \
+                files_to_catalog = \
                     [fn for fn in glob.glob(os.path.join(full_dir, "*" + DATA_FINAL_PATTERN)) \
                     if not os.path.basename(fn).startswith('.')]
                     
-                logging.debug("Found " + str(len(files)) + " data files")
-
-                # Get the list of unique data names.
-                data_names = [ os.path.basename(f[0:f.find(DATANAME_CHAR_SEP)]) \
-                                for f in files_full_path ]
-
-                # Remove duplicates.
-                unique_data_names = list(set(data_names))
-
-                # The name of the directory that contains the image matches
-                # the name of the filter.
-                filter_name = split_path[-1]
-
-                # Complete the name of all files.
-                files_to_catalog = \
-                    [ os.path.join(full_dir, udn + DATANAME_CHAR_SEP + FIRST_DATA_IMG + \
-                        filter_name + DATA_FINAL_PATTERN) \
-                        for udn in unique_data_names ]
-
-                logging.debug("Files to catalog: " + str(files_to_catalog))
+                logging.debug("Found " + str(len(files_to_catalog)) + \
+                              " files to catalog: " + str(files_to_catalog))
 
                 # Get the astrometry for each file.
                 for fl in files_to_catalog:
@@ -181,39 +304,42 @@ def do_astrometry(progargs):
                     ra_dec_param = ""
                     
                     try:
-                        ra, dec = get_object_ra_dec(objects, fl)
+                        obj, obj_idx = get_object(objects, fl)
                         
-                        ra_dec_param =" --ra " + ra + " --dec " + dec + " --radius " + str(SOLVE_FIELD_RADIUS) 
-                    except RaDecNotFound as rdnf:
-                        logging.debug("RA, DEC not found for object related to file: " + rdnf.filename)
+                        ra = str(obj[OBJ_RA_COL])
+                        dec = str(obj[OBJ_DEC_COL])
+                        
+                        ra_dec_param =" --ra " + ra + " --dec " + dec + " --radius " + str(SOLVE_FIELD_RADIUS)
+                        
+                        catalog_file_name = fl.replace(DATA_FINAL_PATTERN, "." + CATALOG_FILE_EXT)
 
-                    catalog_name = fl.replace(DATA_FINAL_PATTERN, "." + CATALOG_FILE_EXT)
-
-                    # Check if the catalog file already exists.
-                    if os.path.exists(catalog_name) == False :
-
-                        command = ASTROMETRY_COMMAND + " " + ASTROMETRY_PARAMS + \
-                        str(progargs.number_of_objects_for_astrometry) + " " + \
-                        ra_dec_param + " " + fl
-                        logging.debug("Executing: " + command)
-
-                        # Executes astrometry.net to get the astrometry of the image.
-                        return_code = subprocess.call(command, \
-                            shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-                        logging.debug("Astrometry execution return code: " + str(return_code))
-
-                        number_of_images += 1
-
-                        if return_code == 0:
-                            number_of_successfull_images = number_of_successfull_images + 1
-
-                            # From wcs file generates a text file with x,y values.
-                            write_xy_catalog( \
-                                fl.replace("." + FIT_FILE_EXT, INDEX_FILE_PATTERN), \
-                                catalog_name)
-                    else:
-                        logging.debug("Catalog file already exists: " + catalog_name)
+                        # Check if the catalog file already exists.
+                        if os.path.exists(catalog_file_name) == False :
+    
+                            command = ASTROMETRY_COMMAND + " " + ASTROMETRY_PARAMS + \
+                            str(progargs.number_of_objects_for_astrometry) + " " + \
+                            ra_dec_param + " " + fl
+                            logging.debug("Executing: " + command)
+    
+                            # Executes astrometry.net to get the astrometry of the image.
+                            return_code = subprocess.call(command, \
+                                shell=True, stdout=subprocess.PIPE, \
+                                stderr=subprocess.PIPE)
+    
+                            logging.debug("Astrometry execution return code: " + str(return_code))
+    
+                            number_of_images += 1
+    
+                            if return_code == 0:
+                                number_of_successfull_images = number_of_successfull_images + 1
+    
+                                # Generates catalog files with x,y and ra,dec values.
+                                write_coord_catalogues(fl, catalog_file_name, \
+                                                       obj, objects_references[obj_idx])
+                        else:
+                            logging.debug("Catalog file already exists: " + catalog_file_name)
+                    except ObjectNotFound as onf:
+                        logging.debug("Object not found related to file: " + onf.filename)
 
     logging.info("Astrometry results:")
     logging.info("- Number of images processed: " + str(number_of_images))
