@@ -313,24 +313,66 @@ def get_object_final_name(object_name, int_objects):
     
     return object_final_name
     
+    
+def write_manitudes_diff_file(diff_mags, file_name):
+    """
+    
+    Write all the differences of magnitudes in a text file with
+    the name indicated.
+    
+    """
+    
+    logging.info("Saving differences of magnitudes to file: " + file_name)    
 
-def save_manitudes_diff(all_magnitudes):
-    """
-    
-    Write all the differences of magnitudes in a text file.
-    
-    """
-    
-    loggin.info("Saving differences of magnitudes to: " + \
-                DEFAULT_DIFF_PHOT_FILE_NAME)
-                
-    with open(DEFAULT_DIFF_PHOT_FILE_NAME, 'w') as fw:
+    with open(file_name, 'w') as fw:
         
         writer = csv.writer(fw, delimiter=',')
 
-        for row in all_magnitudes:
+        for row in diff_mags:
             # Write each magnitude in a row.
-            writer.writerow(row)
+            writer.writerow(row)     
+      
+def save_manitudes_diff(all_magnitudes, objects, filters, max_index):
+    """
+    
+    Write all the differences of magnitudes in several text files
+    according to the object, the filter and the index.
+    
+    """
+    
+    logging.debug("Objects to save diff. mag.: " + str(objects))
+    logging.debug("Filters to save diff. mag.: " + str(filters))
+    logging.debug("Indexes to save diff. mag.: " + str(max_index))
+    
+    # Select magnitudes for each object and filter.
+    for o in objects:
+        for f in filters:
+            lof = [ i for i in all_magnitudes \
+                 if i[OBJ_NAME_COL_DF] == o and i[FILTER_COL_DF] == f ]
+            
+            # Select also by index.
+            if len(lof) > 0:
+                for n in range(max_index):
+                    lofi = [ i for i in lof if i[INDEX_COL_DF] == n and
+                                i[JD_COL_DF] != 0.0 and i[MAG_COL_DF] != 0.0 ]
+            
+                    # If the list has elements write to a file with a
+                    # file name that indicates the selection made.
+                    if len(lofi) > 0:
+                        
+                        file_name = DEFAULT_DIFF_PHOT_FILE_NAME_PREFIX + \
+                            FILE_NAME_PARTS_DELIM + o + \
+                            FILE_NAME_PARTS_DELIM + f + \
+                            FILE_NAME_PARTS_DELIM + str(n) + \
+                            "." + CSV_FILE_EXT
+                            
+                        write_manitudes_diff_file(lofi, file_name)  
+                        
+                    else:
+                        logging.debug("Dif. mag. not found for " + o + ", " + f + \
+                                      " and " + str(n))
+            else:
+                logging.debug("Not found for " + o + " and " + f)
 
 def differential_photometry(progargs):
     """
@@ -345,6 +387,12 @@ def differential_photometry(progargs):
     
     # To store all the magnitudes.
     all_magnitudes = []    
+    
+    objects = set()
+    
+    filters = set()
+    
+    max_index = 0
     
     num_data_dirs_found = 0
     num_magnitude_files = 0
@@ -428,6 +476,14 @@ def differential_photometry(progargs):
                             
                             file_rows.append(final_row)
                             
+                            # Add object and filter to the sets.
+                            objects.add(final_object_name)
+                            filters.add(final_row[FILTER_COL_DF])   
+                            
+                            # Also get the maximum index.
+                            if final_row[INDEX_COL_DF] > max_index:
+                                max_index = final_row[INDEX_COL_DF]                                                     
+                            
                     first_row = file_rows[0]
                             
                     # Calculate the differences between the first row and the rest.
@@ -452,5 +508,5 @@ def differential_photometry(progargs):
     logging.debug("Found " + str(num_magnitude_files) + " magnitude files.") 
     logging.debug("Compiled " + str(len(all_magnitudes)) + " magnitudes.")
     
-    save_manitudes_diff(all_magnitudes) 
+    save_manitudes_diff(all_magnitudes, objects, filters, max_index) 
                     

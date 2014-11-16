@@ -32,7 +32,7 @@ DEFAULT_LOG_LEVEL_NAME = "WARNING"
 
 DEFAULT_LOG_FILE_NAME = "ycas_log.txt"
 
-DEFAULT_DIFF_PHOT_FILE_NAME = "diff_mag_result.csv"
+DEFAULT_DIFF_PHOT_FILE_NAME_PREFIX = "diff_mag"
 
 # Directories.
 BIAS_DIRECTORY = 'bias'
@@ -201,3 +201,6 @@ INDEX_COL_DF = 2
 JD_COL_DF = 3
 MAG_COL_DF = 4
 ERR_COL_DF = 5
+
+# File name parts delimited.
+FILE_NAME_PARTS_DELIM = "_"
