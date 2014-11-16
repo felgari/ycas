@@ -70,6 +70,9 @@ class ImagesArguments(object):
         self.__parser.add_argument("-o", metavar="objects", dest="o", \
                                    help="File containing the objects of interest")
         
+        self.__parser.add_argument("-t", dest="t", action="store_true", 
+                                   help="Use header information to get the type of the image")           
+        
     @property    
     def is_extraction(self):        
         return self.__args.e
@@ -96,7 +99,11 @@ class ImagesArguments(object):
     
     @property
     def interest_object_file_name(self):
-        return self.__objects_of_interest_file      
+        return self.__objects_of_interest_file  
+    
+    @property    
+    def use_headers_to_get_image_type(self):
+        return self.__args.t            
     
     def parse(self):
         """ 
@@ -115,7 +122,12 @@ class ImagesArguments(object):
     def print_usage(self):
         """ Print arguments options """
         
-        self.__parser.print_usage()              
+        self.__parser.print_usage()    
+        
+    def print_help(self):
+        """ Print help for arguments options """
+                
+        self.__parser.print_help()                     
             
 def get_filename_start(path_file):
     """
@@ -155,9 +167,23 @@ def get_files_of_interest(obj_names, files):
     # Add to the list the files whose name corresponds to a
     # object of interest.
     for f in files:
-        # Get some fit header fields that can be used to organize
-        # the image.
-        header_fields = get_fit_fields(f)   
+        
+        header_fields = None
+        filter = None
+        # If the use of header fields has been indicated, use them.
+        if progargs.use_headers_to_get_image_type:
+            # Get some fit header fields that can be used to organize
+            # the image.
+            header_fields = get_fit_fields(f)   
+        
+            # Check if the filter field has been found for the image.
+            try:
+                filter = header_fields[FILTER_FIELD_NAME]
+            except KeyError as ke:
+                # If not, get the image filter from the file name.
+                filter = get_filter_from_file_name(f)
+        else:
+            filter = get_filter_from_file_name(f)
         
         # Determine the file type and add it to the appropriate list,
         # also save the filter for flats and images.
@@ -166,11 +192,11 @@ def get_files_of_interest(obj_names, files):
             
         elif file_is_flat(header_fields, f):
             flat_list.extend([f])
-            flat_filter_list.extend([header_fields[FILTER_FIELD_NAME]])
+            flat_filter_list.extend([filter])
             
         elif get_filename_start(f) in obj_names:
             file_list.extend([f])
-            file_filter_list.extend([header_fields[FILTER_FIELD_NAME]])
+            file_filter_list.extend([filter])
         
     # If any image file related to any object has been found.
     if len(file_list) > 0:
@@ -192,7 +218,7 @@ def get_files_of_interest(obj_names, files):
                 file_list.extend([flat_list[i]])            
 
     else:
-        logging.debug("No image files found for objects.")
+        logging.debug("No image files found for objects of interest.")
             
     return file_list
     
@@ -211,10 +237,11 @@ def copy_files_of_interest(destiny_path, files_of_interest):
     
     # Copy the files in destiny directory.
     for f in files_of_interest:
-        # Get the name of the file.
-        filename = os.path.split(f)[-1]
         
-        shutil.copyfile(f, os.path.join(destiny_path, filename))
+        # Get the name of the file and remove prefixes.
+        destiny_filename = remove_prefixes(os.path.split(f)[-1])
+        
+        shutil.copyfile(f, os.path.join(destiny_path, destiny_filename))
 
 def copy_images(destiny_path, source_path, objects_file):
     """
@@ -335,8 +362,9 @@ if __name__ == "__main__":
     # Create object to process program arguments.
     progargs = ImagesArguments()      
     
+    # If no arguments are provided, show help and exit.
     if len(sys.argv) <= 1:
-        progargs.print_usage()
+        progargs.print_help()
         sys.exit(1)
     else: 
         sys.exit(main(progargs))

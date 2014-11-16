@@ -117,7 +117,7 @@ def read_references_for_object(object_name):
     logging.debug("Reading coordinates from: " + file_name)
     
     # Read the coordinates from the file.
-    with open(args[0], 'rb') as fr:
+    with open(file_name, 'rb') as fr:
         reader = csv.reader(fr, delimiter=' ')        
         
         included_cols = [2, 5]

@@ -44,6 +44,7 @@ MAGNITUDE_FILE_EXT = "mag"
 CSV_FILE_EXT = "csv"
 TSV_FILE_EXT = "tsv"
 RDLS_FILE_EXT = "rdls"
+COORD_FILE_EXT = "coo"
 INDEX_FILE_PATTERN = '-indx.xyls'
 DATA_FINAL_PATTERN = "_final.fit"
 DATA_ALIGN_PATTERN = "_align.fit"
@@ -81,7 +82,7 @@ ASTROMETRY_PARAMS = "--overwrite -d "
 # Radius of the field to solve.
 SOLVE_FIELD_RADIUS = 1.0
 
-ASTROMETRY_WCS_TABLE_INDEX = 1
+FIT_FIRST_TABLE_INDEX = 1
 
 # sextractor parameters.
 SEXTACTOR_COMMENT = "#"
