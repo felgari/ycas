@@ -283,14 +283,12 @@ def do_astrometry(progargs):
             split_path = path.split(os.sep)
 
             # Check if current directory is for data.
-            if split_path[-2] == DATA_DIRECTORY:
-                # Get the full path of the directory.                
-                full_dir = path
-                logging.debug("Found a directory for data: " + full_dir)
+            if split_path[-2] == DATA_DIRECTORY:             
+                logging.debug("Found a directory for data: " + path)
 
                 # Get the list of files ignoring hidden files.
                 files_to_catalog = \
-                    [fn for fn in glob.glob(os.path.join(full_dir, "*" + DATA_FINAL_PATTERN)) \
+                    [fn for fn in glob.glob(os.path.join(path, "*" + DATA_FINAL_PATTERN)) \
                     if not os.path.basename(fn).startswith('.')]
                     
                 logging.debug("Found " + str(len(files_to_catalog)) + \

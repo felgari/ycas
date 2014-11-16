@@ -32,6 +32,9 @@ import astromatics
 from pyraf import iraf
 from pyraf.iraf import noao, digiphot, apphot
 from constants import *
+from textfiles import *
+from fitfiles import *
+from images import *
 
 phot_progargs = None
 
@@ -188,12 +191,10 @@ def do_photometry(progargs):
             
             # Check if current directory is for data images.
             if split_path[-2] == DATA_DIRECTORY:
-                # Get the full path of the directory.                
-                full_dir = path
-                logging.debug("Found a directory for data: " + full_dir)
+                logging.debug("Found a directory for data: " + path)
 
                 # Get the list of catalog files.
-                catalog_files = glob.glob(os.path.join(full_dir, "*." + \
+                catalog_files = glob.glob(os.path.join(path, "*." + \
                                                        CATALOG_FILE_EXT))
                 
                 logging.debug("Found " + str(len(catalog_files)) + \
@@ -221,7 +222,13 @@ def do_photometry(progargs):
                             image.replace(DATA_FINAL_PATTERN, 
                                                 "." + MAGNITUDE_FILE_EXT)
                      
-                        do_phot(image, cat_file, output_mag_file_name, progargs)    
+                        # If magnitude file exists, skip.
+                        if not os.path.exists(output_mag_file_name):
+                            do_phot(image, cat_file, output_mag_file_name, progargs)  
+                        else:
+                            logging.debug("Skipping phot for: " + \
+                                          output_mag_file_name + \
+                                          " already done.")
                     
 def txdump_photometry_info():
     """
@@ -241,12 +248,10 @@ def txdump_photometry_info():
             
             # Check if current directory is for data images.
             if split_path[-2] == DATA_DIRECTORY:
-                # Get the full path of the directory.                
-                full_dir = path
-                logging.debug("Found a directory for data: " + full_dir)
+                logging.debug("Found a directory for data: " + path)
 
                 # Get the list of magnitude files.
-                mag_files = glob.glob(os.path.join(full_dir, "*." + MAGNITUDE_FILE_EXT))
+                mag_files = glob.glob(os.path.join(path, "*." + MAGNITUDE_FILE_EXT))
                 logging.debug("Found " + str(len(mag_files)) + " magnitude files")    
                 
                 # Reduce each data file one by one.
@@ -290,3 +295,162 @@ def calculate_photometry(progargs):
     
     # Export photometry info to a text file with only the columns needed.
     txdump_photometry_info()
+    
+def get_object_final_name(object_name, int_objects):
+    """
+    
+    This function receives the name of an object and returns
+    the final name given to that object according to the final
+    name indicated in the objects file.
+    
+    """
+    
+    object_final_name = object_name
+    
+    for o in int_objects:
+        if o[OBJ_NAME_COL] == object_name:
+            object_final_name = o[OBJ_FINAL_NAME_COL]
+    
+    return object_final_name
+    
+
+def save_manitudes_diff(all_magnitudes):
+    """
+    
+    Write all the differences of magnitudes in a text file.
+    
+    """
+    
+    loggin.info("Saving differences of magnitudes to: " + \
+                DEFAULT_DIFF_PHOT_FILE_NAME)
+                
+    with open(DEFAULT_DIFF_PHOT_FILE_NAME, 'w') as fw:
+        
+        writer = csv.writer(fw, delimiter=',')
+
+        for row in all_magnitudes:
+            # Write each magnitude in a row.
+            writer.writerow(row)
+
+def differential_photometry(progargs):
+    """
+    
+    This function calculates the differential photometry between the
+    object of interest and one or more objects in the same image.    
+
+    """
+    
+    # Read the object of interest.
+    int_objects = read_objects_of_interest(progargs.interest_object_file_name)
+    
+    # To store all the magnitudes.
+    all_magnitudes = []    
+    
+    num_data_dirs_found = 0
+    num_magnitude_files = 0
+    
+    # Walk from current directory.
+    for path,dirs,files in os.walk('.'):
+
+        # Inspect only directories without subdirectories.
+        if len(dirs) == 0:
+            split_path = path.split(os.sep)
+
+            # Check if current directory is for data.
+            if split_path[-2] == DATA_DIRECTORY:
+                # Get the full path of the directory.                
+                logging.debug("Found a directory for data: " + path)   
+                
+                num_data_dirs_found += 1         
+
+                # Get the list of files ignoring hidden files.
+                files_full_path = \
+                    [fn for fn in \
+                     glob.glob(os.path.join(path, \
+                                            "*" + MAGNITUDE_FILE_EXT + \
+                                            "." + CSV_FILE_EXT)) \
+                     if not os.path.basename(fn).startswith('.')]
+                    
+                logging.debug("Found " + str(len(files_full_path)) + " magnitude files")
+                
+                # Process the magnitude files to get all the data.
+                for fl in files_full_path:
+                    
+                    num_magnitude_files += 1
+    
+                    # Identify the object of this file, the filter and save.
+                    object_name = get_filename_start(fl)
+                    
+                    filter = get_filter_from_file_name(fl)
+                    
+                    # To store the magnitudes of current file.
+                    file_rows = []                      
+
+                    # Read the magnitudes from the file.
+                    with open(fl, 'rb') as fr:
+                        reader = csv.reader(fr)      
+                            
+                        # Add to the magnitudes data, the position of this 
+                        # magnitude in the file, the name of the filter and
+                        # object name.
+                        for row in reader:      
+                            # Process the row, only one string element.
+                            split_row = row[0].split(' ')
+                            
+                            new_row = []
+                            
+                            # Convert numeric strings to integer or float
+                            # taking into account possible INDEF values.
+                            for i in split_row:
+                                value = 0
+                                
+                                if len(i) > 0:
+                                    if i != INDEF_VALUE:
+                                        if i.find(".") < 0:
+                                            value = int(i)
+                                        else:
+                                            value = float(i)
+                                
+                                    new_row.extend([value])
+                                    
+                            # Only use the columns necessary to calculate
+                            # the differential magnitudes.
+                            final_row = [ new_row[i] for i in COLS_MAG]
+                                                  
+                            # Add the filter.
+                            final_row.insert(0, filter)
+                            
+                            # Get the final name to used for this object.
+                            final_object_name = \
+                                get_object_final_name(object_name, int_objects)
+                            
+                            final_row.insert(0, final_object_name)
+                            
+                            file_rows.append(final_row)
+                            
+                    first_row = file_rows[0]
+                            
+                    # Calculate the differences between the first row and the rest.
+                    for i in range(1,len(file_rows),1):
+                        current_row = file_rows[i]
+                        
+                        # Calculate the values for the row with the differences.
+                        diff_row = [first_row[OBJ_NAME_COL_DF], \
+                                    first_row[FILTER_COL_DF], \
+                                    current_row[INDEX_COL_DF] - 1, \
+                                    first_row[JD_COL_DF], \
+                                    first_row[MAG_COL_DF] - \
+                                        current_row[MAG_COL_DF], \
+                                    abs(first_row[ERR_COL_DF]) + \
+                                        abs(current_row[ERR_COL_DF])]
+                        
+                        # Add the difference calculated to the list that 
+                        # contains all the differences.                        
+                        all_magnitudes.append(diff_row)
+             
+    logging.debug("Found " + str(num_data_dirs_found) + " data directories.")
+    logging.debug("Found " + str(num_magnitude_files) + " magnitude files.") 
+    logging.debug("Compiled " + str(len(all_magnitudes)) + " magnitudes.")
+    
+    save_manitudes_diff(all_magnitudes) 
+                    

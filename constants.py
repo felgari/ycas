@@ -32,6 +32,8 @@ DEFAULT_LOG_LEVEL_NAME = "WARNING"
 
 DEFAULT_LOG_FILE_NAME = "ycas_log.txt"
 
+DEFAULT_DIFF_PHOT_FILE_NAME = "diff_mag_result.csv"
+
 # Directories.
 BIAS_DIRECTORY = 'bias'
 FLAT_DIRECTORY = 'flat'
@@ -107,6 +109,9 @@ SKY_VALUE = 0
 
 TXDUMP_FIELDS = "id,xc,yc,otime,mag,xairmass,merr"
 
+# Columns from txdump that are used to calculate magnitudes.
+COLS_MAG = [0,3,4,6]
+
 # Columns of the data that contains the instrumental measures.
 JD_TIME_COL = 0
 INST_MAG_COL = 1
@@ -149,6 +154,7 @@ OBJ_STANDARD_COL = 3
 OBJ_B_MAG_COL = 4
 OBJ_V_MAG_COL = 5
 OBJ_R_MAG_COL = 6
+OBJ_FINAL_NAME_COL = 7
 
 STANDARD_VALUE = "YES"
 NO_STANDARD_VALUE = "NO"
@@ -187,3 +193,11 @@ C1_TRANS_COEF_COL = 1
 C2_TRANS_COEF_COL = 2
 C3_TRANS_COEF_COL = 3
 C4_TRANS_COEF_COL = 4
+
+# Columns of data in differential magnitude.
+OBJ_NAME_COL_DF = 0
+FILTER_COL_DF = 1
+INDEX_COL_DF = 2
+JD_COL_DF = 3
+MAG_COL_DF = 4
+ERR_COL_DF = 5

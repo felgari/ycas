@@ -108,7 +108,7 @@ def get_object_references(rdls_file, objects):
     object_name = get_object_name_from_rdls(rdls_file)
     
     # Get coordinates for the object related to the RDLS file.
-    ar, dec = get_ra_dec_for_object(objects, object_name)    
+    ra, dec = get_ra_dec_for_object(objects, object_name)    
     
     # Get RDLS data.
     rdls_data = get_rdls_data(rdls_file) 
@@ -120,7 +120,7 @@ def get_object_references(rdls_file, objects):
     for rd in rdls_data:
         # Compute the difference between the coordinates of the
         # object in this row and the object received.  
-        temp_ra_diff = abs(float(rd[RDLS_RA_COL_NUMBER]) - ar)
+        temp_ra_diff = abs(float(rd[RDLS_RA_COL_NUMBER]) - ra)
         temp_dec_diff = abs(float(rd[RDLS_DEC_COL_NUMBER]) - dec)   
         
         # If current row coordinates are smaller than previous this

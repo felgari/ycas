@@ -80,7 +80,7 @@ def init_log(progargs):
     
     logging.debug("Logging initialized.")
 
-def main():
+def main(progargs):
     """ Main function.
 
     A main function allows the easy calling from other modules and also from the
@@ -89,10 +89,10 @@ def main():
     This function performs all the steps needed to process the images.
     Each step is a calling to a function that implements a concrete task.
 
-    """
-        
-    # Create object to process program arguments.
-    progargs = yargparser.ProgramArguments()
+    """    
+    
+    # To check if the arguments received corresponds to any task.
+    something_done = False    
     
     # Process program arguments.
     progargs.parse()           
@@ -105,6 +105,7 @@ def main():
     if progargs.organization_requested:
         logging.info("* Step 1 * Organizing image files in directories.")
         orgfits.organize_files(progargs)
+        something_done = True
     else:
         logging.info("* Step 1 * Skipping organizing image files in directories. Not requested.")
     
@@ -112,6 +113,7 @@ def main():
     if progargs.reduction_requested:
         logging.info("* Step 2 * Reducing images.") 
         reduce.reduce_images()
+        something_done = True        
     else:
         logging.info("* Step 2 * Skipping reducing images. Not requested.")
     
@@ -120,6 +122,7 @@ def main():
     if progargs.astrometry_requested:
         logging.info("* Step 3 * Performing astrometry.")
         astrometry.do_astrometry(progargs)
+        something_done = True        
     else:
         logging.info("* Step 3 * Skipping performing astrometry. Not requested.")
     
@@ -128,6 +131,7 @@ def main():
     if progargs.align_requested:
         logging.info("* Step 4 * Performing alignment.")    
         align.align_images()
+        something_done = True        
     else:
         logging.info("* Step 4 * Skipping performing alignment. Not requested.")
         
@@ -135,18 +139,40 @@ def main():
     if progargs.photometry_requested:
         logging.info("* Step 5 * Performing photometry.")     
         photometry.calculate_photometry(progargs)
+        something_done = True        
     else:
         logging.info("* Step 5 * Skipping performing photometry. Not requested.")
         
+    # This step calculates the differental photometry of the objects detected 
+    # doing the astrometry.        
+    if progargs.diff_photometry_requested:
+        logging.info("* Step 6 * Performing differential photometry.")     
+        photometry.differential_photometry(progargs)
+        something_done = True        
+    else:
+        logging.info("* Step 6 * Skipping differential magnitudes of each object. Not requested.")          
+                
     # This step process the magnitudes calculated for each object and generates a file
     # that associate to each object all its measures.
     if progargs.magnitudes_requested:
-        logging.info("* Step 6 * Processing magnitudes of each object.")     
+        logging.info("* Step 7 * Processing magnitudes of each object.")     
         magnitude.calculate_magnitudes(progargs)
+        something_done = True        
     else:
-        logging.info("* Step 6 * Skipping processing magnitudes of each object. Not requested.")        
+        logging.info("* Step 7 * Skipping processing magnitudes of each object. Not requested.")     
+        
+    if not something_done:
+        progargs.print_help()   
 
 # Where all begins ...
 if __name__ == "__main__":
 
-    sys.exit(main())
+    # Create object to process program arguments.
+    progargs = yargparser.ProgramArguments()    
+    
+    # If no arguments are provided, show help and exit.
+    if len(sys.argv) <= 1:
+        progargs.print_help()
+        sys.exit(1)
+    else: 
+        sys.exit(main(progargs))
