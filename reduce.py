@@ -315,20 +315,26 @@ def reduce_data():
                 # Check if bias really exists.
                 if not os.path.exists(masterflat_name):
                     logging.warning("Masterflat does not exists: " + masterflat_name)  
-                    masterflat_name = ""                    
+                    masterflat_name = ""       
 
                 # Reduce each data file one by one.
                 for dfile in data_files:     
                     
-                    # Get the name of the final file.
-                    final_file = dfile.replace("." + FIT_FILE_EXT, \
-                                               DATA_FINAL_SUFFIX + "." + \
-                                               FIT_FILE_EXT)   
-                     
-                    if os.path.exists(final_file):           
+                    # If current file is not final.
+                    if dfile.find(DATA_FINAL_SUFFIX + "." + FIT_FILE_EXT) < 0:
+                        # Get the name of the final file.
+                        final_file = dfile.replace("." + FIT_FILE_EXT, \
+                                                   DATA_FINAL_SUFFIX + "." + \
+                                                   FIT_FILE_EXT) 
+                    else:
+                        # The following 'if' will ignore this file for reduction.
+                        final_file = dfile
+                    
+                    # Maybe some files can be final already, ignore them.
+                    if  os.path.exists(final_file):           
                         logging.debug("Ignoring file for reduction, already exists: " + final_file)
                     else:
-                        # Get the work file between bias and flat result.
+                        # Get the work file, a temporary one between bias and flat result.
                         work_file = dfile.replace("." + FIT_FILE_EXT, \
                                                   WORK_FILE_SUFFIX + "." + FIT_FILE_EXT)
                            
