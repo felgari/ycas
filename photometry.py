@@ -260,6 +260,7 @@ def txdump_photometry_info():
                     # Get the name of the file where the magnitude data will be saved.
                     mag_dest_file_name = \
                         mfile.replace("." + MAGNITUDE_FILE_EXT, \
+                                      FILE_NAME_PARTS_DELIM + \
                                       MAGNITUDE_FILE_EXT + "." + CSV_FILE_EXT)
                     
                     # Remove the destiny file if exists.
@@ -339,6 +340,11 @@ def save_manitudes_diff(all_magnitudes, objects, filters, max_index):
     according to the object, the filter and the index.
     
     """
+    
+    # First save a file with all the magnitudes.
+    write_manitudes_diff_file(all_magnitudes, \
+                              DEFAULT_DIFF_PHOT_FILE_NAME_PREFIX + \
+                              "_all." + CSV_FILE_EXT)
     
     logging.debug("Objects to save diff. mag.: " + str(objects))
     logging.debug("Filters to save diff. mag.: " + str(filters))
