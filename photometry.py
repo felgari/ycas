@@ -448,38 +448,54 @@ def differential_photometry(progargs):
                         # magnitude in the file, the name of the filter and
                         # object name.
                         for row in reader:      
-                            # Process the row, only one string element.
+                            # Process the row, it only has one string element.
+                            # So, split the first item.
                             split_row = row[0].split(' ')
                             
                             new_row = []
                             
+                            # By default, there is not INDEF value. 
+                            is_indef = False
+                            
                             # Convert numeric strings to integer or float
                             # taking into account possible INDEF values.
                             for i in split_row:
-                                value = 0
+                                value = INDEF_VALUE
                                 
+                                # The split contains empty items, this
+                                # condition ignores them.
                                 if len(i) > 0:
-                                    if i != INDEF_VALUE:
+                                    if i != INDEF_VALUE:                                                                                
                                         if i.find(".") < 0:
                                             value = int(i)
                                         else:
                                             value = float(i)
+                                    else:
+                                        is_indef = True
                                 
                                     new_row.extend([value])
                                     
                             # Only use the columns necessary to calculate
                             # the differential magnitudes.
-                            final_row = [ new_row[i] for i in COLS_MAG]
+                            final_row = [ new_row[i] for i in COLS_MAG ]
+                            
+                            # Add a value to the end indicating 
+                            # if it has any INDEF value.
+                            final_row.extend([is_indef])
                                                   
-                            # Add the filter.
+                            # Add the filter, the filter will occupy the 
+                            # second column as there is another insert.
                             final_row.insert(0, filter)
                             
                             # Get the final name to used for this object.
                             final_object_name = \
                                 get_object_final_name(object_name, int_objects)
                             
+                            # The first column is the name of the object.
                             final_row.insert(0, final_object_name)
                             
+                            # After the name of the object and the filter 
+                            # append the values.
                             file_rows.append(final_row)
                             
                             # Add object and filter to the sets.
@@ -489,26 +505,35 @@ def differential_photometry(progargs):
                             # Also get the maximum index.
                             if final_row[INDEX_COL_DF] > max_index:
                                 max_index = final_row[INDEX_COL_DF]                                                     
+                       
+                    # The first row contains the data for the object
+                    # of interest.
+                    obj_int_row = file_rows[0]
+                    
+                    # Check if the object of interest has INDEF values.
+                    if obj_int_row[INDEF_COL_DF] == False:
                             
-                    first_row = file_rows[0]
+                        # Calculate the differences between the first row and the rest.
+                        for i in range(1,len(file_rows),1):
+                            current_row = file_rows[i]
                             
-                    # Calculate the differences between the first row and the rest.
-                    for i in range(1,len(file_rows),1):
-                        current_row = file_rows[i]
-                        
-                        # Calculate the values for the row with the differences.
-                        diff_row = [first_row[OBJ_NAME_COL_DF], \
-                                    first_row[FILTER_COL_DF], \
-                                    current_row[INDEX_COL_DF] - 1, \
-                                    first_row[JD_COL_DF], \
-                                    first_row[MAG_COL_DF] - \
-                                        current_row[MAG_COL_DF], \
-                                    abs(first_row[ERR_COL_DF]) + \
-                                        abs(current_row[ERR_COL_DF])]
-                        
-                        # Add the difference calculated to the list that 
-                        # contains all the differences.                        
-                        all_magnitudes.append(diff_row)
+                            # Check if current row has INDEF values.
+                            # In that case is ignored.
+                            if current_row[INDEF_COL_DF] == False:
+                            
+                                # Calculate the values for the row with the differences.
+                                diff_row = [obj_int_row[OBJ_NAME_COL_DF], \
+                                            obj_int_row[FILTER_COL_DF], \
+                                            current_row[INDEX_COL_DF] - 1, \
+                                            obj_int_row[JD_COL_DF], \
+                                            obj_int_row[MAG_COL_DF] - \
+                                                current_row[MAG_COL_DF], \
+                                            abs(obj_int_row[ERR_COL_DF]) + \
+                                                abs(current_row[ERR_COL_DF])]
+                                
+                                # Add the difference calculated to the list that 
+                                # contains all the differences.                        
+                                all_magnitudes.append(diff_row)
              
     logging.debug("Found " + str(num_data_dirs_found) + " data directories.")
     logging.debug("Found " + str(num_magnitude_files) + " magnitude files.") 
