@@ -201,6 +201,7 @@ INDEX_COL_DF = 2
 JD_COL_DF = 3
 MAG_COL_DF = 4
 ERR_COL_DF = 5
+INDEF_COL_DF = 6
 
 # File name parts delimited.
 FILE_NAME_PARTS_DELIM = "_"
