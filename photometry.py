@@ -218,9 +218,10 @@ def do_photometry(progargs):
                     # Calculate the magnitudes for each image related to the catalog.
                     for image in images_of_catalog:
                             
+                        # Get the name of the file for the magnitudes from 
+                        # the FITS file.
                         output_mag_file_name = \
-                            image.replace(DATA_FINAL_PATTERN, 
-                                                "." + MAGNITUDE_FILE_EXT)
+                            image.replace(FIT_FILE_EXT, MAGNITUDE_FILE_EXT)
                      
                         # If magnitude file exists, skip.
                         if not os.path.exists(output_mag_file_name):
