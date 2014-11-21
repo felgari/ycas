@@ -314,8 +314,14 @@ def do_astrometry(progargs):
                         # Check if the catalog file already exists.
                         if os.path.exists(catalog_file_name) == False :
     
+                            use_sextractor = ""
+                            
+                            if progargs.use_sextractor_for_astrometry:
+                                use_sextractor = ASTROMETRY_OPT_USE_SEXTRACTOR
+    
                             command = ASTROMETRY_COMMAND + " " + ASTROMETRY_PARAMS + \
                             str(progargs.number_of_objects_for_astrometry) + " " + \
+                            use_sextractor + \
                             ra_dec_param + " " + fl
                             logging.debug("Executing: " + command)
     

@@ -86,7 +86,10 @@ class ProgramArguments(object):
                                    help="Reduce the images")       
         
         self.__parser.add_argument("-s", dest="s", action="store_true",  
-                                   help="Calculate the astrometry")  
+                                   help="Calculate the astrometry")
+        
+        self.__parser.add_argument("-us", dest="us", action="store_true",  
+                                   help="Use sextrator to calculate the astrometry")            
         
         self.__parser.add_argument("-a", dest="a", action="store_true", \
                                    help="Align the images")   
@@ -160,6 +163,10 @@ class ProgramArguments(object):
     @property
     def astrometry_requested(self):
         return self.__args.s  
+        
+    @property
+    def use_sextractor_for_astrometry(self):
+        return self.__args.us      
     
     @property
     def align_requested(self):

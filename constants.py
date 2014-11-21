@@ -77,6 +77,9 @@ IMSTAT_FIRST_VALUE = 1
 # External commands
 ASTROMETRY_COMMAND = "solve-field"
 
+# Astrometry option to use sextractor.
+ASTROMETRY_OPT_USE_SEXTRACTOR = " --use-sextractor "
+
 # Default number of objects to look at when doing astrometry.
 ASTROMETRY_NUM_OBJS = 20
 # Overwrite previous files and limit the number of objects to look at"
