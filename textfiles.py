@@ -126,6 +126,8 @@ def read_references_for_object(object_name):
             content = list(row[i] for i in included_cols)
             ra, dec = get_coordinates(content)
             
-            references.append([ra, dec])
+            references.append([ra, dec])    
+
+    logging.debug("Coordinates read: " + str(references))
 
     return references   
