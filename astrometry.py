@@ -121,11 +121,19 @@ def get_rd_index(rd_data, ra, dec):
         # Compute the difference between the coordinates of the
         # object in this row and the object received.  
         temp_ra_diff = abs(float(rd[0]) - ra)
-        temp_dec_diff = abs(float(rd[1]) - dec)   
+        
+        # If RA is close to 360 or 0, the differences could be close
+        # to 360 but actually should be considered close to 0. 
+        if temp_ra_diff > 355.0:
+            temp_ra_diff = abs(360.0 - temp_ra_diff)
+        
+        # DEC (up to 90 difference is multiplied by 4 to equate 
+        # the differences with RA (up to 360).
+        temp_dec_diff = abs(float(rd[1]) - dec) * 4.0   
         
         # If current row coordinates are smaller than previous this
         # row is chosen as candidate for the object.
-        if temp_ra_diff < ra_diff and temp_dec_diff < dec_diff:
+        if temp_ra_diff + temp_dec_diff < ra_diff + dec_diff:
             ra_diff = temp_ra_diff
             dec_diff = temp_dec_diff
             index = i        
@@ -331,17 +339,19 @@ def do_astrometry(progargs):
                                 stderr=subprocess.PIPE)
     
                             logging.debug("Astrometry execution return code: " + str(return_code))
-    
+                            
                             number_of_images += 1
-    
-                            if return_code == 0:
-                                number_of_successfull_images = number_of_successfull_images + 1
-    
-                                # Generates catalog files with x,y and ra,dec values.
-                                write_coord_catalogues(fl, catalog_file_name, \
-                                                       obj, objects_references[obj_idx])
                         else:
                             logging.debug("Catalog file already exists: " + catalog_file_name)
+                            return_code = 0
+                            
+                        if return_code == 0:
+                            number_of_successfull_images = number_of_successfull_images + 1
+
+                            # Generates catalog files with x,y and ra,dec values.
+                            write_coord_catalogues(fl, catalog_file_name, \
+                                                   obj, objects_references[obj_idx])
+                            
                     except ObjectNotFound as onf:
                         logging.debug("Object not found related to file: " + onf.filename)
 
