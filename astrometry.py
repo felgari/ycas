@@ -33,11 +33,14 @@ import pyfits
 import csv
 from constants import *
 from textfiles import *
+from fitfiles import *
 
 if sys.version_info < (3, 3):
     import subprocess32 as subprocess
 else:
     import subprocess
+    
+XY_PERCENT_DEV_FROM_CENTER = 0.7
     
 class ObjectNotFound(StandardError):
     """ Raised if object is not found from file name. """
@@ -120,7 +123,7 @@ def get_rd_index(rd_data, ra, dec):
     for rd in rd_data:
         # Compute the difference between the coordinates of the
         # object in this row and the object received.  
-        temp_ra_diff = abs(float(rd[0]) - ra)
+        temp_ra_diff = abs(float(rd[RD_DATA_RA_COL]) - ra)
         
         # If RA is close to 360 or 0, the differences could be close
         # to 360 but actually should be considered close to 0. 
@@ -129,7 +132,7 @@ def get_rd_index(rd_data, ra, dec):
         
         # DEC (up to 90 difference is multiplied by 4 to equate 
         # the differences with RA (up to 360).
-        temp_dec_diff = abs(float(rd[1]) - dec) * 4.0   
+        temp_dec_diff = abs(float(rd[RD_DATA_DEC_COL]) - dec) * 4.0   
         
         # If current row coordinates are smaller than previous this
         # row is chosen as candidate for the object.
@@ -197,9 +200,87 @@ def write_catalog_file(catalog_file_name, indexes, xy_data):
     catalog_file = open(catalog_file_name, "w")
         
     for i in indexes:
-        catalog_file.write(str(xy_data[i][0]) + " " + str(xy_data[i][1]) + "\n")
+        catalog_file.write(str(xy_data[i][XY_DATA_X_COL]) + " " + \
+                           str(xy_data[i][XY_DATA_Y_COL]) + "\n")
     
     catalog_file.close()
+    
+def check_celestial_coordinates(image_file_name, object, indexes, \
+                                rd_data, xy_data):
+    """
+    
+    Check if ra,dec coordinates complies the validation criteria to
+    ensure the astrometry is valid.
+    
+    """
+    
+    success = True
+    
+    min_ra = 1000.0
+    max_ra = -1000.0
+    min_dec = 1000.0
+    max_dec = -1000.0
+    
+    for rd in rd_data:
+        ra = float(rd[RD_DATA_RA_COL])
+        dec = float(rd[RD_DATA_DEC_COL])
+        
+        if ra < min_ra:
+            min_ra = ra
+            
+        if ra > max_ra:
+            max_ra = ra   
+            
+        if dec < min_dec:
+            min_dec = dec
+            
+        if dec > max_dec:
+            max_dec = dec       
+            
+    obj_ra = float(object[OBJ_RA_COL])
+    obj_dec = float(object[OBJ_DEC_COL])
+            
+    # Check that the RA,DEC coordinates for the object of interest
+    # are contained in the field recognized by the astrometry.
+    if (obj_ra > min_ra) & (obj_ra < max_ra) & \
+         (obj_dec > min_dec) & (obj_dec < max_dec):
+        
+        header_fields = get_fit_fields(image_file_name, XY_CENTER_FIT_HEADER_FIELDS)
+        
+        try:
+            x_center = int(header_fields[CRPIX1])
+            y_center = int(header_fields[CRPIX2])
+            
+            # Retrieve the index in the astrometry list saved as first index.
+            # This index corresponds to the object of interest.
+            first_object = xy_data[indexes[0]] 
+            
+            obj_x = int(first_object[XY_DATA_X_COL])
+            obj_y = int(first_object[XY_DATA_Y_COL])
+            
+            # Check that the X,Y coordianted for the object of interest are
+            # into a distance from the center od the image.
+            if (obj_x < x_center - x_center * XY_PERCENT_DEV_FROM_CENTER) | \
+                (obj_x > x_center + x_center * XY_PERCENT_DEV_FROM_CENTER) | \
+                (obj_y < y_center - y_center * XY_PERCENT_DEV_FROM_CENTER) | \
+                (obj_y > y_center + y_center * XY_PERCENT_DEV_FROM_CENTER):
+            
+                success = False             
+                
+                logging.error("X,Y coordinates for object to far from center in " + \
+                              image_file_name)
+        except KeyError as ke:
+            logging.warning("Header field 'for XY center not found in file " + \
+                            image_file_name)  
+        
+    else:
+        looging.error("RA DEC coordinates given by astrometry does not " + \
+                      "contain object in image: " + \
+                      image_file_name)
+        
+        success = False
+    
+    return success    
 
 def write_coord_catalogues(image_file_name, catalog_file_name, \
                            object, object_references):
@@ -212,6 +293,8 @@ def write_coord_catalogues(image_file_name, catalog_file_name, \
     the x,y coordinates.
     
     """
+    
+    success = False
     
     # Get the names for xyls and rdla files from image file name.
     xyls_file_name = image_file_name.replace("." + FIT_FILE_EXT, INDEX_FILE_PATTERN)
@@ -238,14 +321,22 @@ def write_coord_catalogues(image_file_name, catalog_file_name, \
         # Get the indexes for x,y and ra,dec data related to the
         # objects received.
         indexes = get_indexes_for_obj_cood(rd_data, object, object_references)
+        
+        # Check if the coordinates complies with the 
+        # coordinates validation criteria.
+        if check_celestial_coordinates(image_file_name, object, indexes, \
+                                       rd_data, xy_data):
 
-        # Write catalog file with the x,y coordinate to do the
-        # photometry.
-        write_catalog_file(catalog_file_name, indexes, xy_data)
-
+            # Write catalog file with the x,y coordinate to do the
+            # photometry.
+            write_catalog_file(catalog_file_name, indexes, xy_data)        
+            
+            success = True
     else:
         logging.debug("X,Y coordinates file '" + xyls_file_name + \
                       "' does not exists so catalog file could not be created.")
+        
+    return success
         
 def read_objects_references(objects):
     """
@@ -346,11 +437,11 @@ def do_astrometry(progargs):
                             return_code = 0
                             
                         if return_code == 0:
-                            number_of_successfull_images = number_of_successfull_images + 1
-
-                            # Generates catalog files with x,y and ra,dec values.
-                            write_coord_catalogues(fl, catalog_file_name, \
-                                                   obj, objects_references[obj_idx])
+                            # Generates catalog files with x,y and ra,dec values 
+                            # and if it successfully count it. 
+                            if write_coord_catalogues(fl, catalog_file_name, \
+                                                   obj, objects_references[obj_idx]):
+                                number_of_successfull_images = number_of_successfull_images + 1
                             
                     except ObjectNotFound as onf:
                         logging.debug("Object not found related to file: " + onf.filename)

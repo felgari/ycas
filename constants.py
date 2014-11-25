@@ -146,6 +146,14 @@ RDLS_RA_IDX_NUMBER = 0
 RDLS_RA_COL_NUMBER = 1
 RDLS_DEC_COL_NUMBER = 2
 
+# Columns in celestial coordinates table.
+RD_DATA_RA_COL = 0
+RD_DATA_DEC_COL = 1
+
+# Columns in XY coordinates table.
+XY_DATA_X_COL = 0
+XY_DATA_Y_COL = 1
+
 # Name of the file that contains information about the objects of interest.
 INT_OBJECTS_FILE_NAME = "objects.tsv"
 

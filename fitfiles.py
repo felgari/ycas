@@ -31,12 +31,14 @@ FILTER_FIELD_NAME = "FILTER"
 IMAGE_TYPE_FIELD_NAME = "IMAGETYP"
 XBINNING_FIELD_NAME = "XBINNING"
 YBINNING_FIELD_NAME = "YBINNING"
+CRPIX1 = "CRPIX1"
+CRPIX2 = "CRPIX2"
 
 BIAS_TYPE = "BIAS"
 FLAT_TYPE = "FLAT"
 
 ORG_FIT_HEADER_FIELDS = [DATE_FIELD_NAME, IMAGE_TYPE_FIELD_NAME, FILTER_FIELD_NAME]
-
+XY_CENTER_FIT_HEADER_FIELDS = [CRPIX1, CRPIX2]
 
 def get_filter_from_file_name(filename):
     """ Get the filter from the file name. """
@@ -116,7 +118,7 @@ def get_image_filter_from_file(filename):
     # if the filter can not be read from header fields.
     return get_image_filter(header_fields, filename)  
 
-def get_fit_fields(fit_file_name):
+def get_fit_fields(fit_file_name, fields = ORG_FIT_HEADER_FIELDS):
     """
     
     This function retrieves some fields of the fit header
@@ -138,9 +140,9 @@ def get_fit_fields(fit_file_name):
         header = hdulist[0].header
         
         # For all the header fields of interest.
-        for i in range(len(ORG_FIT_HEADER_FIELDS)):
+        for i in range(len(fields)):
             
-            field = ORG_FIT_HEADER_FIELDS[i]
+            field = fields[i]
             
             # Retrieve and store the value of this field.
             header_fields[field] = header[field]
@@ -150,7 +152,7 @@ def get_fit_fields(fit_file_name):
         logging.error("Error reading fit file '" + fit_file_name + \
                       "'. Error is: " + str(ioe))
     except KeyError as ke:
-        logging.warning("Header field '" + ORG_FIT_HEADER_FIELDS[i] + \
+        logging.warning("Header field '" + fields[i] + \
                         "' not found in file " + fit_file_name)   
     except:
         logging.error("Unknown error reading fit file: " + fit_file_name)             
