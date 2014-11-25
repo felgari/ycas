@@ -368,6 +368,7 @@ def do_astrometry(progargs):
 
     number_of_images = 0
     number_of_successfull_images = 0
+    images_without_astrometry = []
     
     # Read the list of objects of interest.
     objects = read_objects_of_interest(progargs.interest_object_file_name)
@@ -395,6 +396,8 @@ def do_astrometry(progargs):
 
                 # Get the astrometry for each file.
                 for fl in files_to_catalog:
+                    
+                    number_of_images += 1
                     
                     # Try to get RA and DEC for the object to solve the field only around
                     # these coordinates.
@@ -429,9 +432,7 @@ def do_astrometry(progargs):
                                 shell=True, stdout=subprocess.PIPE, \
                                 stderr=subprocess.PIPE)
     
-                            logging.debug("Astrometry execution return code: " + str(return_code))
-                            
-                            number_of_images += 1
+                            logging.debug("Astrometry execution return code: " + str(return_code))                            
                         else:
                             logging.debug("Catalog file already exists: " + catalog_file_name)
                             return_code = 0
@@ -442,6 +443,8 @@ def do_astrometry(progargs):
                             if write_coord_catalogues(fl, catalog_file_name, \
                                                    obj, objects_references[obj_idx]):
                                 number_of_successfull_images = number_of_successfull_images + 1
+                            else:
+                                images_without_astrometry.extend([fl])
                             
                     except ObjectNotFound as onf:
                         logging.debug("Object not found related to file: " + onf.filename)
@@ -449,3 +452,5 @@ def do_astrometry(progargs):
     logging.info("Astrometry results:")
     logging.info("- Number of images processed: " + str(number_of_images))
     logging.info("- Images processed successfully: " + str(number_of_successfull_images))
+    logging.info("- Number of images without astrometry: " + str(len(images_without_astrometry)))    
+    logging.info("- List of images without astrometry: " + str(images_without_astrometry))
