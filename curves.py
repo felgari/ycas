@@ -38,8 +38,8 @@ from constants import *
 MIN_NUM_ARGVS = 2
 CSV_FILE_DELIM = ','
 
-IND_VAR_COL = 3
-DEP_VAR_COL = 4
+MJD_COL = 3
+MAG_COL = 4
 ERR_COL = 5
 
 NO_VALUE = "NA"
@@ -70,11 +70,14 @@ class CurvesArguments(object):
                                    help="Name of the output file")
         
         self.__parser.add_argument("-i", metavar="names of the input files", dest="i", \
-                                   help="Name of the input files")        
+                                   nargs='+', help="Name of the input files")   
+        
+        self.__parser.add_argument("-m", dest="m", action="store_true", \
+                                   help="Calculate median for measures in the same day according to MJD.")   
            
     
     @property    
-    def output_files_names(self): 
+    def input_files_names(self): 
         return self.__args.i     
     
     @property
@@ -83,7 +86,11 @@ class CurvesArguments(object):
     
     @property
     def output_file_name(self):
-        return self.__o      
+        return self.__args.o   
+    
+    @property
+    def calculate_median(self):
+        return self.__args.m
     
     def parse(self):
         """ 
@@ -109,14 +116,14 @@ class CurvesArguments(object):
                 
         self.__parser.print_help() 
 
-def write_data(data):
+def write_data(data, output_file_name):
     """
     
     Write the data received to a file
     
     """
     
-    with open(OUTPUT_FILE, 'w') as fw:
+    with open(output_file_name, 'w') as fw:
     
         writer = csv.writer(fw, delimiter=CSV_FILE_DELIM)
 
@@ -141,7 +148,7 @@ def get_unique_ind_values_sorted(files_data):
     for fd in files_data:
         # Iterate over each data set.
         for d in fd:
-            ind_values.add(d[IND_VAR_COL])
+            ind_values.add(d[MJD_COL])
         
     # Make a list from the set.
     unique_ind_values = list(ind_values)
@@ -149,7 +156,59 @@ def get_unique_ind_values_sorted(files_data):
     # Return the list sorted.
     return sorted(unique_ind_values)
 
-def process_data(files_data):
+def avg(items):
+    
+    sum = 0.0
+    
+    for i in items:
+        sum += float(i)
+    
+    return sum / len(items)
+
+def calculate_data_median(files_data):
+    """
+    
+    """
+        
+    files_data_with_median = []
+    
+    for fd in files_data:
+    
+        # Get all the MJD values.
+        mjd = [ x[MJD_COL] for x in fd ] 
+        
+        # Unique MJD values.
+        mjd_set = set()
+        
+        for m in mjd:
+            mjd_set.add(m)
+            
+        data_with_median = []
+        
+        # For each MJD value calculate the median and add the results
+        # to the returned list.
+        for e in mjd_set:
+            same_mjd = [ x for x in fd if x[MJD_COL] == e]
+            
+            transposed = zip(*same_mjd)
+            
+            mag_mean = avg(transposed[MAG_COL])
+            
+            err_mean = avg(transposed[ERR_COL])
+            
+            first_item = same_mjd[0]
+            
+            new_row = [first_item[0], first_item[1], \
+                       first_item[2], first_item[3], \
+                       mag_mean, err_mean]
+            
+            data_with_median.append(new_row)
+            
+        files_data_with_median.append(data_with_median)   
+        
+    return files_data_with_median        
+
+def process_data(files_data, progargs):
     """
     
     Process the data read. It should be a set of lists with items 
@@ -161,7 +220,12 @@ def process_data(files_data):
     
     all_values = []
     
-    independent_values = get_unique_ind_values_sorted(files_data)
+    if progargs.calculate_median:
+        data_with_median = calculate_data_median(files_data)
+        
+        independent_values = get_unique_ind_values_sorted(data_with_median)
+    else:
+        independent_values = get_unique_ind_values_sorted(files_data)
     
     logging.debug("There are: " + str(len(independent_values)) + \
                   " independent values.")
@@ -175,7 +239,7 @@ def process_data(files_data):
         for fd in files_data:
             # Search in each data set a value that matches the
             # value of the independent variable column.
-            dv_list = [ row for row in fd if row[IND_VAR_COL] == iv ]
+            dv_list = [ row for row in fd if row[MJD_COL] == iv ]
                 
             # The element found, if any, is into a list, so check
             # the length of the list.                
@@ -184,7 +248,7 @@ def process_data(files_data):
                 # If any, add it to the new value.
                 item = dv_list[0]
                 
-                new_value.extend([item[DEP_VAR_COL], item[ERR_COL]])
+                new_value.extend([item[MAG_COL], item[ERR_COL]])
             else:
                 # If not found add a value indicating no value.
                 new_value.extend([NO_VALUE, NO_VALUE])     
@@ -192,9 +256,9 @@ def process_data(files_data):
         # Add the new value to the list of all values.
         all_values.append(new_value)            
     
-    write_data(all_values)
+    write_data(all_values, progargs.output_file_name)
 
-def read_input_files(file_names):
+def read_input_files(file_names, calculate_median):
     """
     
     Read a set of csv file whose names have been received as parameters.
@@ -216,9 +280,20 @@ def read_input_files(file_names):
             next(reader)      
         
             for row in reader:    
-                if len(row) > 0:
-                    # Only the column with name of the object.
-                    data.append(row)  
+                if len(row) > 0:                                        
+                    if calculate_median:
+                                    
+                        new_row = []
+                                                
+                        for i in range(len(row)):
+                            if i == MJD_COL:
+                                item = row[i]
+                                new_row.extend([item[:item.find('.')]])
+                            else:
+                                new_row.extend([row[i]])     
+                        data.append(new_row)
+                    else:
+                        data.append(row)  
                     
             files_data.append(data) 
             
@@ -244,16 +319,16 @@ def main(progargs):
             " arguments may be provided."
         
         exit_value = 1
-    else:
-        
-        files_data = read_input_files(sys.argv[1:])
+    else:        
+        files_data = read_input_files(progargs.input_files_names, \
+                                      progargs.calculate_median)
         
         # Check if enough data from files have been read.
         if len(files_data) < MIN_NUM_ARGVS:
             print "Only " + str(len(files_data)) + \
                 " set(s) of data were read from files, it is not enough."
         else:
-            process_data(files_data)
+            process_data(files_data, progargs)
             
     return exit_value
 
@@ -261,7 +336,10 @@ def main(progargs):
 if __name__ == "__main__":
     
     # Create object to process program arguments.
-    progargs = CurvesArguments()      
+    progargs = CurvesArguments()    
+    
+    # Process program arguments.
+    progargs.parse()         
     
     # If no enough arguments are provided, show help and exit.
     if len(sys.argv) <= MIN_NUM_ARGVS:
