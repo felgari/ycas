@@ -56,9 +56,7 @@ class CurvesArguments(object):
         Initialization of variables and the object ImagesArguments 
         with the definition of arguments to use.
 
-        """   
-        
-        self.__output_file = OUTPUT_FILE          
+        """         
             
         # Initiate arguments of the parser.
         self.__parser = argparse.ArgumentParser()
@@ -86,7 +84,7 @@ class CurvesArguments(object):
     
     @property
     def output_file_name(self):
-        return self.__args.o   
+        return self.__args.o
     
     @property
     def calculate_median(self):
@@ -103,8 +101,8 @@ class CurvesArguments(object):
         # Parse program arguments.
         self.__args = self.__parser.parse_args()
             
-        if self.__args.o <> None:
-            self.__objects_of_interest_file = self.__args.o    
+        if self.__args.o == None:
+            self.__args.o = OUTPUT_FILE    
             
     def print_usage(self):
         """ Print arguments options """
