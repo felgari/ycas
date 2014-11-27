@@ -842,7 +842,7 @@ def calculate_magnitudes(progargs):
     """
     
     # Read the list of objects whose magnitudes are needed.
-    objects = read_objects_of_interest(progargs)
+    objects = read_objects_of_interest(progargs.interest_object_file_name)
     
     instrumental_magnitudes = compile_instrumental_magnitudes(objects)
     
