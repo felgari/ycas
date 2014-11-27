@@ -274,7 +274,7 @@ def check_celestial_coordinates(image_file_name, object, indexes, \
                             image_file_name)  
         
     else:
-        looging.error("RA DEC coordinates given by astrometry does not " + \
+        logging.error("RA DEC coordinates given by astrometry does not " + \
                       "contain object in image: " + \
                       image_file_name)
         
