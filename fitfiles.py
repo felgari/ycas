@@ -244,7 +244,8 @@ def file_is_type(header_fields, filename_path, field_type, type_string):
         # Take only the part that indicates the type.
         type_part = clean_filename[:clean_filename.find(DATANAME_CHAR_SEP)]
         
-        print filename_path + " -> " + filename + " -> " + clean_filename + " -> " + type_part
+        logging.debug(filename_path + " -> " + filename + " -> " + \
+                      clean_filename + " -> " + type_part)
          
         # Check if the type is found in the appropriate part of the file name.
         is_type = type_part.lower() == type_string
