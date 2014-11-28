@@ -33,6 +33,8 @@ class ProgramArguments(object):
         
     """
     
+    MIN_NUM_ARGVS = 1
+    
     def __init__(self):
         """ Initializes parser. 
         

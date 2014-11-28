@@ -171,7 +171,8 @@ if __name__ == "__main__":
     progargs = yargparser.ProgramArguments()    
     
     # If no arguments are provided, show help and exit.
-    if len(sys.argv) <= 1:
+    if len(sys.argv) <= yargparser.ProgramArguments.MIN_NUM_ARGVS:
+        print "The number of program arguments are not enough."        
         progargs.print_help()
         sys.exit(1)
     else: 

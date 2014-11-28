@@ -35,7 +35,6 @@ import logging
 import argparse
 from constants import *
 
-MIN_NUM_ARGVS = 2
 CSV_FILE_DELIM = ','
 
 MJD_COL = 3
@@ -43,12 +42,14 @@ MAG_COL = 4
 ERR_COL = 5
 
 NO_VALUE = "NA"
-OUTPUT_FILE = "curves.csv"
 
 class CurvesArguments(object):
     """ Encapsulates the definition and processing of program arguments.
         
     """
+    
+    MIN_NUM_ARGVS = 2
+    OUTPUT_FILE = "curves.csv"    
     
     def __init__(self):
         """ Initializes parser. 
@@ -102,7 +103,7 @@ class CurvesArguments(object):
         self.__args = self.__parser.parse_args()
             
         if self.__args.o == None:
-            self.__args.o = OUTPUT_FILE    
+            self.__args.o = CurvesArguments.OUTPUT_FILE    
             
     def print_usage(self):
         """ Print arguments options """
@@ -312,8 +313,8 @@ def main(progargs):
                         level=logging.DEBUG)   
     
     # Check if enough arguments have been received.
-    if len(sys.argv) < MIN_NUM_ARGVS:
-        print "Al least " + str(MIN_NUM_ARGVS) + \
+    if len(sys.argv) < CurvesArguments.MIN_NUM_ARGVS:
+        print "Al least " + str(CurvesArguments.MIN_NUM_ARGVS) + \
             " arguments may be provided."
         
         exit_value = 1
@@ -322,7 +323,7 @@ def main(progargs):
                                       progargs.calculate_median)
         
         # Check if enough data from files have been read.
-        if len(files_data) < MIN_NUM_ARGVS:
+        if len(files_data) < CurvesArguments.MIN_NUM_ARGVS:
             print "Only " + str(len(files_data)) + \
                 " set(s) of data were read from files, it is not enough."
         else:
@@ -340,7 +341,8 @@ if __name__ == "__main__":
     progargs.parse()         
     
     # If no enough arguments are provided, show help and exit.
-    if len(sys.argv) <= MIN_NUM_ARGVS:
+    if len(sys.argv) <= CurvesArguments.MIN_NUM_ARGVS:
+        print "The number of program arguments are not enough."        
         progargs.print_help()
         sys.exit(1)
     else: 
