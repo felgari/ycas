@@ -18,6 +18,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+"""This module calculates a FWHM for an astronomical image.
+
+The calculation is performed using sextractor. sextractor identifies the objects
+in the images and calculates a FWHM for each one.
+
+A FWHM from all the FWHM returned by sextractor is calculated as the FWHM of 
+the image.
+
+"""
+
 import sys
 import os
 import logging
@@ -25,26 +35,33 @@ import glob
 from scipy.stats import mode
 from constants import *
 
+# Depending on Python version this module has a different name.
 if sys.version_info < (3, 3):
     from subprocess32 import check_output
 else:
     from subprocess import check_output
 
 def process_sextractor_output(command_out):
-    """
-    Process the output of sextractor to calculate the FWHM of the
-    image. Only values of fwhm greater than a minimun value near zero
+    """Process sextractor' output to calculate the FWHM of the image. 
+    
+    Only values of FWHM greater than a minimun value near zero
     are considered.
-    The return value is the mode of the values considered.
+    The value returned is the mode of all the FWHM values of the image.
     The mode is the statistics considered to get the best representation
-    of the fwhm of the image. 
+    of the FWHM of the image.
+    
+    Keyword arguments:
+    command_out -- The output of the sextractor execution.
+    
+    Returns:
+    The mode of the all the FWHM values received.
     
     """    
     
-    # Get output in lines.
+    # Get the output received in lines.
     lines = command_out.split("\n")
     
-    # To accumulate the valid fwhm.
+    # To accumulate the valid FWHM values.
     sum = []
     
     # Process the output lines.
@@ -65,12 +82,18 @@ def process_sextractor_output(command_out):
             if fwhm > SEXTACTOR_FWHM_MIN_VALUE:
                 sum.extend([fwhm])
     
-    # Return the mode of the fwhm values found.
+    # Return the mode of the FWHM values found.
     return mode(sum)[0][0]
 
 def get_fwhm(progargs, img_filename):
-    """
-    Execute sextractor on the image received to get its fwhm.
+    """Execute sextractor on the image received to get its fwhm. 
+    
+    Keyword arguments:
+    progargs -- Program arguments.
+    img_filename -- Name of the file with image whose FWHM is calculated.
+    
+    Returns:    
+    The FWHM value calculated for the image indicated.
     
     """
 
@@ -81,7 +104,8 @@ def get_fwhm(progargs, img_filename):
         
     logging.debug("Executing: " + command)
     
-    # Execute command.
+    # Execute sextractor command to calculate the FWHM of the objects detected
+    # in the image.
     command_out = check_output(command, shell=True)
 
     # Process the output.

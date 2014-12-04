@@ -21,7 +21,7 @@
 import os
 import logging
 
-# Log levels.
+# Log levels, taken from logging.
 LOG_LEVELS = { "CRITICAL" : logging.CRITICAL,
               "ERROR": logging.ERROR,
               "WARNING": logging.WARNING,

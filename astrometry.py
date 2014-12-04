@@ -18,10 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""
-This module calculates the astrometry for a set of data images that
-exists from a given directory.
-The astrometry is calculated with a external program from 'astrometry.net'.
+"""This module calculates the astrometry for a set of data images.
+
+The astrometry is calculated with a external program from 'astrometry.net', in
+turn, the objects in the images are identified using sextractor.
 """
 
 import sys
@@ -43,18 +43,33 @@ else:
 XY_PERCENT_DEV_FROM_CENTER = 0.7
     
 class ObjectNotFound(StandardError):
-    """ Raised if object is not found from file name. """
+    """Raised if object is not found from file name. """
     
     def __init__(self, filename):
         self.filename = filename
 
 def get_object(objects, filename):
+    """Returns the object indicated by the file name received.
+    
+    The filename should corresponds to an object and the name of this objects
+    should be part of the name. The name of the object is extracted from this
+    file name and searched in the list of objects received.
+    The object found and its position in the list are returned.
+    
+    Keyword arguments:
+    objects -- List of objects of interest.
+    filename -- Filename related to an object to search in the set of objects.
+    
+    Returns:
+    object -- The object found.
+    index -- The index of the object in the list.
+    
+    Raises:
+    ObjectNotFound -- If the object corresponding to the file name is nor found.
+    
     """
     
-    Returns the object indicated by the file name received.
-    
-    """
-    
+    # Default values for the variables returned.
     object = None
     index = -1
     
@@ -68,23 +83,30 @@ def get_object(objects, filename):
     logging.debug("In astrometry, searching coordinates for object: " + \
                   obj_name)
     
+    # Look for an object of the list whose name matches that of the filename.
     for i in range(len(objects)):
         obj = objects[i]
+        # If an object with the same name is found, assign the values to the
+        # returned variables. 
         if obj[OBJ_NAME_COL] == obj_name:
             object = obj
             index = i
     
+    # If the object is not found raise an exception,
     if object is None:
         raise ObjectNotFound(filename)
     
     return object, index
 
 def get_fit_table_data(fit_table_file_name):
-    """
+    """Get the data of a the first table contained in the fit file indicated.
     
-    This function returns the data of a the first table contained
-    in the fit whose name has been received as parameter.
+    Keyword arguments:
+    fit_table_file_name -- File name of the fit file that contains the table.
     
+    Returns:
+    The table contained in the fit file.
+        
     """
     
     # Open the FITS file received.
@@ -101,6 +123,7 @@ def get_fit_table_data(fit_table_file_name):
     # To add an index to the rows.
     n = 1
     
+    # Read the table data and save it in a list.
     for row in table_data:
         ldata.append([row[0], row[1]])
         n += 1
@@ -108,18 +131,28 @@ def get_fit_table_data(fit_table_file_name):
     return ldata  
 
 def get_rd_index(rd_data, ra, dec): 
-    """
-    
-    Return the index of the ra,dec data whose values are more
+    """ Get the index of the RA, DEC pair whose values are more
     close to those received.
     
+    Keyword arguments:
+    rd_data -- List of ra, dec values. The closest pair of this list to the
+    ra,dec values are returned.
+    ra -- RA value to search.
+    dec -- DEC value to search.
+    
+    Returns:
+    A pair RA,DEC of the list received with the nearest values to those
+    RA, DEC parameters received.
+        
     """
     
-    index = -1
-    
+    # Default values for the data to return.
+    index = -1    
     ra_diff = 1000.0
     dec_diff = 1000.0 
     
+    # Iterate over the whole list to search for the nearest values to those
+    # received.
     i = 0
     for rd in rd_data:
         # Compute the difference between the coordinates of the
@@ -147,10 +180,19 @@ def get_rd_index(rd_data, ra, dec):
     return index
 
 def get_indexes_for_obj_cood(rd_data, object, object_references):
-    """
+    """ Get the indexes of the ra,dec coordinates nearest to those of the 
+    objects received.
     
-    Get the indexes of the ra,dec coordinates received more close to
-    those of the objects received.
+    Keyword arguments:
+    rd_data --  List of ra, dec values. The closest pair of this list to the
+    ra,dec values are returned.
+    object -- Object of interest whose coordinates are searched.
+    object_references -- List of other object whose coordinates are also 
+    searched.
+    
+    Returns:
+    List of the indexes of coordinates of the list nearest to those of the
+    objects received. 
     
     """
     
@@ -172,6 +214,7 @@ def get_indexes_for_obj_cood(rd_data, object, object_references):
             new_index = get_rd_index(rd_data, float(obj_ref[0]), \
                                      float(obj_ref[1]))
             
+            # Check that an index has been found for this object.
             if new_index >= 0:
                 logging.debug("Index for references " + str(obj_ref[0]) + \
                               "," + str(obj_ref[1]) + " is " + str(new_index))        
@@ -186,21 +229,28 @@ def get_indexes_for_obj_cood(rd_data, object, object_references):
 
     return indexes
 
-
 def write_catalog_file(catalog_file_name, indexes, xy_data):
-    """
+    """Write text files with the x,y and ra,dec coordinates.
     
-    Write text files with the x,y and ra,dec coordinates of the data
-    received corresponding to the indexes set.
+    The coordinates written are related to the x,y data and indexes set 
+    received.
+    
+    Keyword arguments:
+    catalog_file_name -- File name o
+    indexes -- List of indexes corresponding to the coordinates to write.
+    xy_data -- List of the X, Y coordinates that are referenced by X, Y
+    coordinates.    
     
     """
     
     logging.debug("Writing catalog file: " + catalog_file_name)
     
-    # Write x,y coordinates to a text file.
+    # Open the destiny file.
     catalog_file = open(catalog_file_name, "w")
         
+    # Iterate over the indexes to write them to the file.
     for i in indexes:
+        # The indexes corresponds to items in the XY data list.
         catalog_file.write(str(xy_data[i][XY_DATA_X_COL]) + " " + \
                            str(xy_data[i][XY_DATA_Y_COL]) + "\n")
     
@@ -208,20 +258,39 @@ def write_catalog_file(catalog_file_name, indexes, xy_data):
     
 def check_celestial_coordinates(image_file_name, object, indexes, \
                                 rd_data, xy_data):
-    """
+    """Check if ra,dec coordinates complies the validation criteria.
     
-    Check if ra,dec coordinates complies the validation criteria to
-    ensure the astrometry is valid.
+    These validations are performed to ensure the astrometry coordinates are
+    consistent with the expected values.
+    - Checks that the RA,DEC coordinates for the object of interest are 
+    contained in the field recognized by the astrometry.
+    - Checks that the X,Y coordinates for the object of interest are into a 
+    distance from the center of the image.
+    
+    Keyword arguments:
+    image_file_name -- Name of the file to the image whose coordinates are 
+    checked.
+    object -- Data of the object whose image has been analyzed to get the 
+    astrometry.
+    indexes -- Indexes to the coordinates of the objects found in this image.
+    rd_data -- List of RA, DEC coordinates calculated by the astrometry.
+    xy_data -- list of X, Y coordinates calculated by the astrometry.
+    
+    Returns:    
+    True if checks are ok, False otherwise.
     
     """
     
     success = True
     
+    # Default values.
     min_ra = 1000.0
     max_ra = -1000.0
     min_dec = 1000.0
     max_dec = -1000.0
     
+    # Iterate over the RA, DEC list of coordinates to get the minimum and 
+    # maximum values of RA and DEC.
     for rd in rd_data:
         ra = float(rd[RD_DATA_RA_COL])
         dec = float(rd[RD_DATA_DEC_COL])
@@ -238,6 +307,7 @@ def check_celestial_coordinates(image_file_name, object, indexes, \
         if dec > max_dec:
             max_dec = dec       
             
+    # Get RA and DEC values of the object.
     obj_ra = float(object[OBJ_RA_COL])
     obj_dec = float(object[OBJ_DEC_COL])
             
@@ -260,8 +330,8 @@ def check_celestial_coordinates(image_file_name, object, indexes, \
             obj_x = int(first_object[XY_DATA_X_COL])
             obj_y = int(first_object[XY_DATA_Y_COL])
             
-            # Check that the X,Y coordianted for the object of interest are
-            # into a distance from the center od the image.
+            # Check that the X,Y coordinates for the object of interest are
+            # into a distance from the center of the image.
             if (obj_x < x_center - x_center * XY_PERCENT_DEV_FROM_CENTER) | \
                 (obj_x > x_center + x_center * XY_PERCENT_DEV_FROM_CENTER) | \
                 (obj_y < y_center - y_center * XY_PERCENT_DEV_FROM_CENTER) | \
@@ -286,19 +356,27 @@ def check_celestial_coordinates(image_file_name, object, indexes, \
 
 def write_coord_catalogues(image_file_name, catalog_full_file_name, \
                            object, object_references):
-    """
+    """Writes the x,y coordinates of a FITS file to a text file.    
+    
     This function opens the FITS file that contains the table of x,y 
     coordinates and write these coordinates to a text file that only
-    contains this x,y values. This text file will be used later for
-    photometry.
-    Also generates a text file with the ra, dec coordinates related to
-    the x,y coordinates.
+    contains this x,y values. This text file will be used later to calculate
+    the photometry of the objects on these coordinates.
+    
+    Keyword arguments:
+    image_file_name -- Name of the file of the image.
+    catalog_full_file_name -- Name of the catalog to write
+    object -- Data of the object corresponding to the image.
+    object_references -- 
+                           
+    Returns:    
+    True if the file is written successfully.
     
     """
     
     success = False
     
-    # Get the names for xyls and rdla files from image file name.
+    # Get the names for xyls and rdls files from the image file name.
     xyls_file_name = image_file_name.replace("." + FIT_FILE_EXT, \
                                              INDEX_FILE_PATTERN)
     
@@ -345,22 +423,33 @@ def write_coord_catalogues(image_file_name, catalog_full_file_name, \
     return success
         
 def read_objects_references(objects):
-    """
+    """Get RA, DEC coordinates for the reference objects of those received.
     
-    Read the ra, dec coordinates of the object references for
-    the objects received.
+    For each object of interest received there are several objects (reference
+    objects) in the field used to calculate differential photometry.
+    This function received a set of objects of interest and for each object 
+    returns the coordinates of all the reference objects it has.
     
+    Keyword arguments:
+    objects -- Objects for which the coordinates of its reference objects are
+    returned.
+    
+    Returns:    
+    List of sublists. Each sublist contains the coordinates of the reference 
+    objects for an object received. These sublists follow the same order that
+    the objects received.    
     """        
     
     objects_references = []
     
+    # For each object get the coordinates of its reference objects.
     for obj in objects:
         objects_references.append(read_references_for_object(obj[OBJ_NAME_COL]))
     
     return objects_references    
         
 def do_astrometry(progargs):
-    """
+    """ Get the astrometry for all the images found from the current directory.
         
     This function searches directories that contains files of data images.
     When a directory with data images is found the astrometry is calculated
@@ -368,17 +457,23 @@ def do_astrometry(progargs):
     The x,y positions calculated are stored to a file that contains only 
     those x and y position to be used later in photometry.
     
+    Keyword arguments:
+    progargs -- Program arguments. 
+        
     """
     
     logging.info("Doing astrometry ...")
 
+    # Initializes images that store summary information of the whole process.
     number_of_images = 0
-    number_of_successfull_images = 0
+    number_of_successfull_images = 0    
     images_without_astrometry = []
     
     # Read the list of objects of interest.
     objects = read_objects_of_interest(progargs.interest_object_file_name)
     
+    # Read the coordinates of the reference object that has each object of
+    # interest.
     objects_references = read_objects_references(objects)
 
     # Walk from current directory.
@@ -401,28 +496,33 @@ def do_astrometry(progargs):
                 logging.debug("Found " + str(len(files_to_catalog)) + \
                               " files to catalog: " + str(files_to_catalog))
 
-                # Get the astrometry for each file.
+                # Get the astrometry for each file found.
                 for fl in files_to_catalog:
                     
                     number_of_images += 1
                     
-                    # Try to get RA and DEC for the object to solve the \
+                    # Try to get RA and DEC for the object to solve the 
                     # field only around these coordinates.
                     ra_dec_param = ""
                     
                     try:
                         obj, obj_idx = get_object(objects, fl)
                         
+                        # Get the RA, DEC coordinates where to center the
+                        # astrometry.
                         ra = str(obj[OBJ_RA_COL])
                         dec = str(obj[OBJ_DEC_COL])
                         
                         ra_dec_param =" --ra " + ra + " --dec " + dec + \
                             " --radius " + str(SOLVE_FIELD_RADIUS)
                         
+                        # Get the catalog name where the coordinates are
+                        # written.
                         catalog_file_name = fl.replace(DATA_FINAL_PATTERN, \
                                                        "." + CATALOG_FILE_EXT)
 
                         # Check if the catalog file already exists.
+                        # If ir already exists the astrometry is not calculated.
                         if os.path.exists(catalog_file_name) == False :
     
                             use_sextractor = ""
@@ -432,14 +532,13 @@ def do_astrometry(progargs):
     
                             command = ASTROMETRY_COMMAND + " " + \
                                 ASTROMETRY_PARAMS + \
-                                
-                            str(progargs.number_of_objects_for_astrometry) + \
+                                str(progargs.number_of_objects_for_astrometry) + \
                                 " " + use_sextractor + ra_dec_param + " " + fl
                                 
                             logging.debug("Executing: " + command)
     
-                            # Executes astrometry.net to get the astrometry 
-                            # of the image.
+                            # Executes astrometry.net solver to get the 
+                            # astrometry of the image.
                             return_code = subprocess.call(command, \
                                 shell=True, stdout=subprocess.PIPE, \
                                 stderr=subprocess.PIPE)

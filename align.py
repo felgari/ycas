@@ -18,9 +18,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""
-This module aligns a set of data images related to the same part of
-the sky, usually images taken in a sequence, using pyraf imalin.
+"""This module aligns images related to a same object.
+
+The images are searched from a root directory and all the images that
+accomplish a criteria for name and directory, located in the same 
+directory, and related the same object are aligned.
+The set images of the same object are aligned one by one with respect to one 
+of the images of the set.
+
+The alignment is performed by the imalign function of pyraf, prior to the
+alignment, a set of imalign related parameters are initialized.
 """
 
 import sys
@@ -32,14 +39,8 @@ from pyraf.iraf import proto
 from constants import *
 
 def set_align_pars():
-    """
+    """Set the parameters used to perform the alignment with pyraf imalin. """
     
-    This function sets the parameters used to perform the alignment
-    with pyraf imalin.
-    
-    """
-    
-    # Set imalign parameters.
     iraf.imalign.boxsize = 11
     iraf.imalign.bigbox = 25
     iraf.imalign.niterate = 3
@@ -49,24 +50,23 @@ def set_align_pars():
     iraf.imalign.verbose = "no"
   
 def align_images():
-    """
+    """Search directories for data images and align them using pyraf imalin.
     
-    This function searches directories that contains data images and
-    align these images using pyraf imalin.
-    The images are processed in sets that contains images of the same
-    object.
-    One of the images along with the set of x,y coordinates of the
-    images are used to perform the alignment.
+    The images aligned correspond to the same object.
+    One of the images belonging to the set along with the set of x,y 
+    coordinates of the images are used to perform the alignment.
     The images aligned are stored in new files to keep the original ones.
     
     """
     
     logging.info("Aligning images ...")
     
+    # Set the parameters needed to perform imalign.
     set_align_pars()
 
+    # Variable to count the total number of images and the image aligned
     number_of_images = 0
-    number_of_successfull_images = 0
+    number_of_images_aligned = 0
 
     # Walk from current directory.
     for path,dirs,files in os.walk('.'):
@@ -75,21 +75,28 @@ def align_images():
         if len(dirs) == 0:
             split_path = path.split(os.sep)
 
-            # Check if current directory is for data.
+            # Check if current directory is for data images.
+            # Only files in these directories are processed.
             if split_path[-2] == DATA_DIRECTORY:
+                
                 # Get the full path of the directory.                
                 full_dir = path
-                logging.debug("Found a directory for data: " + full_dir)
+                
+                logging.debug("Found a directory for data images: " + full_dir)
 
                 # Get the list of catalog files ignoring hidden files.
                 files_full_path = \
                     [f for f in glob.glob(os.path.join(full_dir, "*." + \
                                                        CATALOG_FILE_EXT)) \
                     if not os.path.basename(f).startswith('.')]
+                    
                 logging.debug("Found " + str(len(files_full_path)) + 
                               " catalog files")
                 
                 # Get the list of unique catalog names.
+                # Each object could have several images, each one with a
+                # catalog file, only a catalog file is needed by object,
+                # so get a generic catalog name for each object.
                 catalog_names = \
                     [ os.path.basename(f[0:f.find(DATANAME_CHAR_SEP)]) \
                      for f in files_full_path ]
@@ -104,6 +111,9 @@ def align_images():
                         if not os.path.basename(f).startswith('.')]
 
                     if len(data_images) > 1:
+                        
+                        # Count all these images.
+                        number_of_images += len(data_images)
 
                         # Sort the images by name.
                         data_images.sort()
@@ -132,6 +142,10 @@ def align_images():
                             try:
                                 iraf.imalign(image, reference_image, catalog, \
                                              aligned_image, Stdout=1)
+                                
+                                # Count this image as successfully aligned.
+                                number_of_images_aligned += 1
+                                
                             except iraf.IrafError as exc:
                                 logging.error("Error executing imalign " + \
                                               "on image: " + image)
@@ -139,3 +153,7 @@ def align_images():
                     else:
                         logging.debug("Only 1 data image, alignment is not " + \
                                       "necessary.")
+
+    logging.info("Align - Total number of images: " + str(number_of_images))
+    logging.info("Align - Number of images successfully aligned: " + \
+                 str(number_of_images_aligned))

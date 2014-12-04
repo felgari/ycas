@@ -18,9 +18,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""
-This module calculates the magnitude of a group of objects performing
-a sequence of steps.
+"""Calculates the magnitude of a group of objects.
+
+The magnitudes are calculated performing a sequence of steps.
 
 The processing assumes certain values in the header of the fits images,
 even in the names of the files. Also a list of objects of interest, 
@@ -44,7 +44,7 @@ ERR_COL = 5
 NO_VALUE = "NA"
 
 class CurvesArguments(object):
-    """ Encapsulates the definition and processing of program arguments.
+    """Encapsulates the definition and processing of program arguments.
         
     """
     
@@ -52,7 +52,7 @@ class CurvesArguments(object):
     OUTPUT_FILE = "curves.csv"    
     
     def __init__(self):
-        """ Initializes parser. 
+        """Initializes parser. 
         
         Initialization of variables and the object ImagesArguments 
         with the definition of arguments to use.
@@ -95,10 +95,7 @@ class CurvesArguments(object):
         return self.__args.m
     
     def parse(self):
-        """ 
-        
-        Initialize properties and performs the parsing 
-        of program arguments.
+        """Initialize properties and performs the parsing of program arguments.
         
         """
         
@@ -109,22 +106,29 @@ class CurvesArguments(object):
             self.__args.o = CurvesArguments.OUTPUT_FILE    
             
     def print_usage(self):
-        """ Print arguments options """
+        """Print arguments options """
         
         self.__parser.print_usage()    
         
     def print_help(self):
-        """ Print help for arguments options """
+        """Print help for arguments options """
                 
         self.__parser.print_help() 
 
 def write_data(data, output_file_name):
+    """Write the data received to a file.
+    
+    The data to write is a list and each row is written in a line.
+    
+    Keyword arguments:
+    data -- Data to write.
+    output_file_name -- Name of the file where the data will be written.
+    
+    Returns:    
+        
     """
     
-    Write the data received to a file
-    
-    """
-    
+    # Open the file.
     with open(output_file_name, 'w') as fw:
     
         writer = csv.writer(fw, delimiter=CSV_FILE_DELIM)
@@ -136,10 +140,16 @@ def write_data(data, output_file_name):
             writer.writerow(d)      
 
 def get_unique_ind_values_sorted(files_data):
-    """
+    """Take list of values and return a list of unique values sorted.
     
-    Take the column of independent variable of all the data 
-    and returns a list of unique values sorted.
+    The values received may be duplicated. This function eliminates duplicates
+    and sort the result list.
+    
+    Keyword arguments:    
+    files_data -- List of data from files containing the values.
+    
+    Returns:
+    A sorted list with the values received without duplicates.
     
     """
     
@@ -159,6 +169,15 @@ def get_unique_ind_values_sorted(files_data):
     return sorted(unique_ind_values)
 
 def avg(items):
+    """Calculate the average of values received. 
+    
+    Keyword arguments:
+    items -- The items whose average is calculated.
+    
+    Returns:
+    The average of the values received.
+    
+    """
     
     sum = 0.0
     
@@ -168,7 +187,17 @@ def avg(items):
     return sum / len(items)
 
 def calculate_data_median(files_data):
-    """
+    """Calculate the median of the data received for those with the same MJD.
+    
+    The values are received in different lists. In each list some values may 
+    have the same MJD. For these values a median value is calculated and used
+    instead this set of values.
+    
+    Keyword arguments:
+    files_data - List of sublist with the values.
+    
+    Returns:    
+    List with the median values of the common values of each sublist.
     
     """
         
@@ -176,7 +205,7 @@ def calculate_data_median(files_data):
     
     for fd in files_data:
     
-        # Get all the MJD values.
+        # Get all the MJD values of current item.
         mjd = [ x[MJD_COL] for x in fd ] 
         
         # Unique MJD values.
@@ -190,20 +219,30 @@ def calculate_data_median(files_data):
         # For each MJD value calculate the median and add the results
         # to the returned list.
         for e in mjd_set:
+            # For current MJD value in the SET, get all the values in the LIST
+            # with this same MJD.
             same_mjd = [ x for x in fd if x[MJD_COL] == e]
             
+            # Transpose the values to get each column in a row.
             transposed = zip(*same_mjd)
             
+            # Calculate the mean for the magnitudes, now in a row.
             mag_mean = avg(transposed[MAG_COL])
             
+            # Calculate the mean for the errors, now in a row.
             err_mean = avg(transposed[ERR_COL])
             
+            # Get the first row, any row is valid as only the common values to
+            # all the files are used.
             first_item = same_mjd[0]
             
+            # Create a new row with the values calculated and the common values
+            # to all the files, at the beginning of the row.
             new_row = [first_item[0], first_item[1], \
                        first_item[2], first_item[3], \
                        mag_mean, err_mean]
             
+            # Add this row to the return variable.
             data_with_median.append(new_row)
             
         files_data_with_median.append(data_with_median)   
@@ -211,17 +250,21 @@ def calculate_data_median(files_data):
     return files_data_with_median        
 
 def process_data(files_data, progargs):
-    """
+    """ Process the data read depending on the program arguments indicated. 
     
-    Process the data read. It should be a set of lists with items 
-    containing a first field related to a common numeric domain,
-    i.e. MJD as the independent variable.
-    The following fields should be the dependent variable and error.
+    It should be a set of lists with items  containing a first field related 
+    to a common numeric domain, i.e. MJD as the independent variable.
+    The following fields should be the dependent variable and error.    
     
+    Keyword arguments:
+    files_data --
+    progargs -- Program arguments.
+        
     """
     
     all_values = []
     
+    # Check if it has been requested the use of median values.
     if progargs.calculate_median:
         data_with_median = calculate_data_median(files_data)
         
@@ -232,6 +275,7 @@ def process_data(files_data, progargs):
     logging.debug("There are: " + str(len(independent_values)) + \
                   " independent values.")
     
+    # Process each independent value.
     for iv in independent_values:
         
         # New value for each independent variable
@@ -258,41 +302,59 @@ def process_data(files_data, progargs):
         # Add the new value to the list of all values.
         all_values.append(new_value)            
     
+    # Write the data.
     write_data(all_values, progargs.output_file_name)
 
 def read_input_files(file_names, calculate_median):
-    """
+    """Read a set of csv file whose names have been received as parameters.
     
-    Read a set of csv file whose names have been received as parameters.
     All the data read from the files is returned as a list that contains
     lists, each of these lists with data read from a file.
+        
+    Keyword arguments:
+    file_names -- The names of the files to read.
+    calculate_median -- True if the median may be calculated.
     
+    Returns:  
+    The data read in the files.  
+        
     """
     
     files_data = []
     
+    # Iterate over the file names.
     for fn in file_names:
         
         data = []
         
+        # Open current file.
         with open(fn, 'rb') as fr:
             reader = csv.reader(fr, delimiter=CSV_FILE_DELIM)  
             
             # Skip header.
             next(reader)      
         
+            # Process each row.
             for row in reader:    
-                if len(row) > 0:                                        
+                # Check if the row is valid.
+                if len(row) > 0:            
+                    # Check if the median may be calculated.                            
                     if calculate_median:
                                     
                         new_row = []
-                                                
+                                               
+                        # For each data, each row, add all the items but for
+                        # the column that contains the MJD, take only the 
+                        # integer part of the MJD. All the data with the same 
+                        # value in this part will be used to calculate a median 
+                        # value.
                         for i in range(len(row)):
                             if i == MJD_COL:
                                 item = row[i]
                                 new_row.extend([item[:item.find('.')]])
                             else:
-                                new_row.extend([row[i]])     
+                                new_row.extend([row[i]])   
+                                  
                         data.append(new_row)
                     else:
                         data.append(row)  
@@ -304,7 +366,13 @@ def read_input_files(file_names, calculate_median):
     return files_data
 
 def main(progargs):
-    """
+    """Main function.
+    
+    Keyword arguments:
+    progargs -- Program arguments.
+        
+    Returns:    
+    Exit value.
     
     """
     
