@@ -246,7 +246,8 @@ def compile_instrumental_magnitudes(objects):
 
                 # Get the list of RDLS files ignoring hidden files.
                 rdls_files_full_path = \
-                    [f for f in glob.glob(os.path.join(path, "*." + RDLS_FILE_EXT)) \
+                    [f for f in glob.glob(os.path.join(path, "*." + \
+                                                       RDLS_FILE_EXT)) \
                     if not os.path.basename(f).startswith('.')]
                     
                 logging.debug("Found " + str(len(rdls_files_full_path)) + \
@@ -256,7 +257,8 @@ def compile_instrumental_magnitudes(objects):
                 for rdls_file in rdls_files_full_path:
                     
                     # Get the magnitudes for this object in current path.
-                    im = get_inst_magnitudes_for_object(rdls_file, path, objects)
+                    im = get_inst_magnitudes_for_object(rdls_file, path, \
+                                                        objects)
                     
                     # If any magnitude has been get.
                     if len(im) > 0:
@@ -268,13 +270,14 @@ def compile_instrumental_magnitudes(objects):
                             # for this object.
                             magnitudes_index = objects_index[object_name]
                         
-                            object_mea_list = instrumental_magnitudes[magnitudes_index]
+                            object_mea_list = \
+                                instrumental_magnitudes[magnitudes_index]
                         
                             # Add the magnitude to the object.
                             object_mea_list.append(im)
                         except KeyError as ke:
-                            logging.error("RDLS file with no object of interest: " + \
-                                          object_name)
+                            logging.error("RDLS file with no object of " + \
+                                          "interest: " + object_name)
                         
     return instrumental_magnitudes  
             
@@ -427,11 +430,12 @@ def extinction_coefficient(objects, standard_obj_index, \
                                                       im[FILTER_COL],
                                                       obj[OBJ_NAME_COL]])
                     else:
-                        logging.warning("Standard magnitude undefined for object " + \
-                                        obj[OBJ_NAME_COL])
+                        logging.warning("Standard magnitude undefined for " + \
+                                        "object " + obj[OBJ_NAME_COL])
                 else:
-                    logging.warning("Standard magnitude not found for object " + \
-                                    obj[OBJ_NAME_COL] + " in filter " + im[FILTER_COL])
+                    logging.warning("Standard magnitude not found for " + \
+                                    "object " + obj[OBJ_NAME_COL] + \
+                                    "in filter " + im[FILTER_COL])
         
         # The data for this object is analyzed to check its validity to 
         # calculate the extinction coefficients.
@@ -444,14 +448,16 @@ def extinction_coefficient(objects, standard_obj_index, \
                 if valid_data_to_calculate_ext_cof(data_subset) == True:
                     calc_data_for_ext_coef.append(data_subset)
                 else:
-                    logging.warning("Data to calculate extinction coefficient discarded from object " +
+                    logging.warning("Data to calculate extinction " + \
+                                    "coefficient discarded from object " +
                                     obj[OBJ_NAME_COL] + " for day " + str(d))
     
     if len(calc_data_for_ext_coef) > 0:
         for d in days:
             for f in filters:
                 mag = [m for m in calc_data_for_ext_coef \
-                       if m[DAY_CE_CALC_DATA] == d and m[FILTER_CE_CALC_DATA] == f]
+                       if m[DAY_CE_CALC_DATA] == d and \
+                       m[FILTER_CE_CALC_DATA] == f]
                 
                 # Check if there is data of this object for this day.
                 if len(mag) > 0:
@@ -459,7 +465,8 @@ def extinction_coefficient(objects, standard_obj_index, \
             
                     ext_coef.append([d, f, slope, intercept])
     else:
-        logging.warning("There is not enough data to calculate extinction coefficients")
+        logging.warning("There is not enough data to calculate extinction " + \
+                        "coefficients")
         
     return ext_coef, days, filters
 
@@ -504,7 +511,8 @@ def get_indexes_of_std_and_no_std(objects, instrumental_magnitudes):
     for i in range(len(objects)):
         
         # Save instrumental magnitudes to a file.
-        save_magnitudes(objects[i][OBJ_NAME_COL], INST_MAG_SUFFIX, instrumental_magnitudes[i])        
+        save_magnitudes(objects[i][OBJ_NAME_COL], INST_MAG_SUFFIX, \
+                        instrumental_magnitudes[i])        
         
         # Check if it is a standard object to put the object in
         # the right list.
@@ -553,8 +561,8 @@ def get_extinction_corrected_mag(obj, \
                 magnitudes.append([im[JD_TIME_COL], day, calc_mag, \
                                    im[INST_MAG_COL], filter])
             else:
-                logging.debug("Found an instrumental magnitude undefined for object " + \
-                              obj[OBJ_NAME_COL])
+                logging.debug("Found an instrumental magnitude undefined " + \
+                              "for object " + obj[OBJ_NAME_COL])
             
     # Save extinction corrected magnitude for current object.
     save_magnitudes(obj[OBJ_NAME_COL], CORR_MAG_SUFFIX, [magnitudes])  
@@ -657,11 +665,15 @@ def get_transforming_coefficients(objects, \
                 B_std_mag_object = float(objects[object_index][OBJ_B_MAG_COL])
                 V_std_mag_object = float(objects[object_index][OBJ_V_MAG_COL])
                 
-                B_V_std_mags_of_objects.extend([B_std_mag_object - V_std_mag_object])
+                B_V_std_mags_of_objects.extend([B_std_mag_object - \
+                                                V_std_mag_object])
+                
                 V_std_mags_of_objects.extend([V_std_mag_object])
             else:
-                logging.warning("There is not measurements in all filters for object: " + \
-                                objects[object_index][OBJ_NAME_COL] + " at day " + str(d))
+                logging.warning("There is not measurements in all filters " + \
+                                "for object: " + \
+                                objects[object_index][OBJ_NAME_COL] + \
+                                " at day " + str(d))
 
         # The coefficients are calculated only if there is twice at least,
         # (any list could be used for this check).
@@ -760,11 +772,14 @@ def calibrated_magnitudes(objects, obj_indexes, ext_corr_mags, trans_coef):
                                           om[FILTER_CEM_COL]])
                 
                 # Save the calibrated magnitudes to a file.
-                save_magnitudes(obj[OBJ_NAME_COL], CAL_MAG_SUFFIX, [cal_magnitudes])
+                save_magnitudes(obj[OBJ_NAME_COL], CAL_MAG_SUFFIX, \
+                                [cal_magnitudes])
             else:
-                logging.warning("Calibrated magnitudes are not calculated for object: " + \
-                                obj[OBJ_NAME_COL] + " at day " + str(day) + \
-                                ", object magnitudes not available for all the filters.")                
+                logging.warning("Calibrated magnitudes are not calculated " + \
+                                "for object: " + obj[OBJ_NAME_COL] + \
+                                " at day " + str(day) + \
+                                ", object magnitudes not available for " + \
+                                "all the filters.")                
 
 def calculate_calibrated_mag(objects, \
                              standard_obj_index, \

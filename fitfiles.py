@@ -37,7 +37,9 @@ CRPIX2 = "CRPIX2"
 BIAS_TYPE = "BIAS"
 FLAT_TYPE = "FLAT"
 
-ORG_FIT_HEADER_FIELDS = [DATE_FIELD_NAME, IMAGE_TYPE_FIELD_NAME, FILTER_FIELD_NAME]
+ORG_FIT_HEADER_FIELDS = [DATE_FIELD_NAME, IMAGE_TYPE_FIELD_NAME, \
+                         FILTER_FIELD_NAME]
+
 XY_CENTER_FIT_HEADER_FIELDS = [CRPIX1, CRPIX2]
 
 def get_filter_from_file_name(filename):
@@ -93,9 +95,11 @@ def get_image_filter(header_fields, filename):
     # If the filter has been identified, show the method used.
     if len(filtername) > 0:      
         if field_processed:
-            logging.debug(filename + " filter read from file headers: " + filtername)
+            logging.debug(filename + " filter read from file headers: " + \
+                          filtername)
         else:
-            logging.warning(filename + " filter read from file name: " + filtername) 
+            logging.warning(filename + " filter read from file name: " + \
+                            filtername) 
     
     return filtername
 

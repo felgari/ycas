@@ -58,22 +58,30 @@ class ProgramArguments(object):
         self.__parser = argparse.ArgumentParser()
         
         self.__parser.add_argument("-b", dest="b", metavar="bias", \
-                                   help='Name for the destiny directory name where the bias images are stored')
+                                   help='Name for the destiny directory " + \
+                                   "name where the bias images are stored')
         
         self.__parser.add_argument("-f", dest="f", metavar="flat", \
-                                   help="Name for the destiny directory name where the flat images are stored")
+                                   help="Name for the destiny directory " + \
+                                   "name where the flat images are stored")
         
         self.__parser.add_argument("-d", dest="d", metavar="data", \
-                                   help="Name for the destiny directory name where the data images are stored")
+                                   help="Name for the destiny directory " + \
+                                   "name where the data images are stored")
         
         self.__parser.add_argument("-x", dest="x", metavar="sex_cfg", \
-                                   help="Name for directory where the configuration files for sextrator are")        
+                                   help="Name for directory where the " + \
+                                   "configuration files for sextrator are")        
         
-        self.__parser.add_argument("-no", dest="no", metavar="number of objects", type=int, \
-                                   help="Number of objects to take into account in images when doing astrometry")
+        self.__parser.add_argument("-no", dest="no", \
+                                   metavar="number of objects", type=int, \
+                                   help="Number of objects to take into " + \
+                                   "account in images when doing astrometry")
         
-        self.__parser.add_argument("-i", metavar="Interest object file", dest="i", \
-                                   help="File that contains the names and coordinates of the objects of interest") 
+        self.__parser.add_argument("-i", metavar="Interest object file",
+                                   dest="i", \
+                                   help="File that contains the names and " + \
+                                   "coordinates of the objects of interest") 
                 
         self.__parser.add_argument("-l", metavar="log file name", dest="l", \
                                    help="File to save the log messages") 
@@ -91,22 +99,27 @@ class ProgramArguments(object):
                                    help="Calculate the astrometry")
         
         self.__parser.add_argument("-us", dest="us", action="store_true",  
-                                   help="Use sextrator to calculate the astrometry")            
+                                   help="Use sextrator to calculate the " + \
+                                   "astrometry")            
         
         self.__parser.add_argument("-a", dest="a", action="store_true", \
                                    help="Align the images")   
         
         self.__parser.add_argument("-p", dest="p", action="store_true", 
-                                   help="Calculate the photometry of the images")   
+                                   help="Calculate the photometry of the " + \
+                                   "images")   
         
         self.__parser.add_argument("-dp", dest="dp", action="store_true", 
-                                   help="Calculate diferential photometry of the images")
+                                   help="Calculate diferential photometry " + \
+                                   "of the images")
         
         self.__parser.add_argument("-m", dest="m", action="store_true", 
-                                   help="Calculate the magnitudes of the images")      
+                                   help="Calculate the magnitudes of " + \
+                                   "the images")      
         
         self.__parser.add_argument("-t", dest="t", action="store_true", 
-                                   help="Use header information to get the type of the image")                     
+                                   help="Use header information to get " + \
+                                   "the type of the image")                     
         
         self.__args = None    
         

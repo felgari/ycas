@@ -104,8 +104,8 @@ def read_references_for_object(object_name):
     
     Read a file with the name of the object that contains coordinates
     of reference objects for the first one to perform differential photometry.
-    Return a list of lists, each list contains the coordinates for the field of
-    an object
+    Return a list of lists, each list contains the coordinates for the field 
+    of an object
         
     """
     

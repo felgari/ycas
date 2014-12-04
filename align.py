@@ -83,13 +83,16 @@ def align_images():
 
                 # Get the list of catalog files ignoring hidden files.
                 files_full_path = \
-                    [f for f in glob.glob(os.path.join(full_dir, "*." + CATALOG_FILE_EXT)) \
+                    [f for f in glob.glob(os.path.join(full_dir, "*." + \
+                                                       CATALOG_FILE_EXT)) \
                     if not os.path.basename(f).startswith('.')]
-                logging.debug("Found " + str(len(files_full_path)) + " catalog files")
+                logging.debug("Found " + str(len(files_full_path)) + 
+                              " catalog files")
                 
                 # Get the list of unique catalog names.
-                catalog_names = [ os.path.basename(f[0:f.find(DATANAME_CHAR_SEP)]) \
-                                    for f in files_full_path ]
+                catalog_names = \
+                    [ os.path.basename(f[0:f.find(DATANAME_CHAR_SEP)]) \
+                     for f in files_full_path ]
 
                 logging.debug("Catalogs: " + str(catalog_names))
 
@@ -113,9 +116,12 @@ def align_images():
 
                         # Get the names of the aligned images.
                         align_images = \
-                            [s.replace(DATA_FINAL_PATTERN, DATA_ALIGN_PATTERN) for s in data_images ]
+                            [s.replace(DATA_FINAL_PATTERN, DATA_ALIGN_PATTERN) \
+                             for s in data_images ]
 
-                        catalog = reference_image.replace(DATA_FINAL_PATTERN, "." + CATALOG_FILE_EXT)
+                        catalog = reference_image.replace(DATA_FINAL_PATTERN, \
+                                                          "." + \
+                                                          CATALOG_FILE_EXT)
                         
                         # Perform imalign on images one by one.
                         for i in range(len(data_images)):
@@ -124,9 +130,12 @@ def align_images():
                             aligned_image = align_images[i]
 
                             try:
-                                iraf.imalign(image, reference_image, catalog, aligned_image, Stdout=1)
+                                iraf.imalign(image, reference_image, catalog, \
+                                             aligned_image, Stdout=1)
                             except iraf.IrafError as exc:
-                                logging.error("Error executing imalign on image: " + image)
+                                logging.error("Error executing imalign " + \
+                                              "on image: " + image)
                                 logging.error("Iraf error is: " + str(exc))   
                     else:
-                        logging.debug("Only 1 data image, alignment is not necessary.")
+                        logging.debug("Only 1 data image, alignment is not " + \
+                                      "necessary.")

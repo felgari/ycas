@@ -63,16 +63,19 @@ class CurvesArguments(object):
         self.__parser = argparse.ArgumentParser()
         
         self.__parser.add_argument("-r", metavar="reverse values", dest="r", \
-                                   help="Indicates if the values of the files should be reversed") 
+                                   help="Indicates if the values of the " + \
+                                   "files should be reversed") 
         
-        self.__parser.add_argument("-o", metavar="output file name", dest="o", \
-                                   help="Name of the output file")
+        self.__parser.add_argument("-o", metavar="output file name", \
+                                    dest="o", help="Name of the output file")
         
-        self.__parser.add_argument("-i", metavar="names of the input files", dest="i", \
-                                   nargs='+', help="Name of the input files")   
+        self.__parser.add_argument("-i", metavar="names of the input files", \
+                                   dest="i", nargs='+', \
+                                   help="Name of the input files")   
         
         self.__parser.add_argument("-m", dest="m", action="store_true", \
-                                   help="Calculate median for measures in the same day according to MJD.")   
+                                   help="Calculate median for measures in " + \
+                                   "the same day according to MJD.")   
            
     
     @property    

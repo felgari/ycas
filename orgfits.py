@@ -90,9 +90,11 @@ def analyze_and_organize_dir(filename, path, progargs):
         filtername = get_image_filter(header_fields, filename)
 
         if len(filtername) > 0:
-            create_directory(path, os.path.join(progargs.flat_directory, filtername))
+            create_directory(path, os.path.join(progargs.flat_directory, \
+                                                filtername))
 
-        file_destination = os.path.join(path, progargs.flat_directory, filtername, filename)
+        file_destination = os.path.join(path, progargs.flat_directory, \
+                                        filtername, filename)
         
         logging.debug(full_file_name + " identified as flat.")
 
@@ -103,7 +105,8 @@ def analyze_and_organize_dir(filename, path, progargs):
         filtername = get_image_filter(header_fields, filename)
 
         if len(filtername) > 0:
-            create_directory(path, os.path.join(progargs.data_directory, filtername))
+            create_directory(path, os.path.join(progargs.data_directory, \
+                                                filtername))
 
         # Prefixes are removed from file name.
         file_destination = os.path.join(path, progargs.data_directory, \
@@ -111,7 +114,8 @@ def analyze_and_organize_dir(filename, path, progargs):
         
         logging.debug(full_file_name + " identified as data image.")
 
-    logging.debug("Moving '" + full_file_name + "' to '" + file_destination + "'")
+    logging.debug("Moving '" + full_file_name + "' to '" + \
+                  file_destination + "'")
 
     shutil.move(os.path.abspath(full_file_name),
                 os.path.abspath(file_destination))
@@ -243,13 +247,14 @@ def remove_images_according_to_binning(path):
     # If current path has data directory, process bias and flats
     if os.path.exists(data_path):
     
-        logging.debug("Removing bias and flats with a binning not needed in: " + \
-                      path)
+        logging.debug("Removing bias and flats with a binning not needed " + \
+                      "in: " + path)
         
         # Get the binning of images in data directory.
         binnings = get_binnings_of_images(data_path)
         
-        # Remove images in bias directory with different binning of that of images.
+        # Remove images in bias directory with different binning of that of 
+        # images.
         bias_path = os.path.join(path, BIAS_DIRECTORY)
         
         if os.path.exists(bias_path):
@@ -258,7 +263,8 @@ def remove_images_according_to_binning(path):
             # If now bias directory is empty is removed.
             remove_dir_if_empty(bias_path)
                 
-        # Remove images in flat directory with different binning of that of images.
+        # Remove images in flat directory with different binning of that of 
+        # images.
         flat_path = os.path.join(path, FLAT_DIRECTORY)
         
         if os.path.exists(flat_path):

@@ -22,9 +22,10 @@
 This module performs the reduction of images. Walk the directories looking for
 bias, flat and data images.
 For bias images calculates the average bias.
-For flats images, subtract the bias and calculates the average flat for each filter.
-Finally, to each data image subtract bias and divide by the flat corresponding to
-its filter.
+For flats images, subtract the bias and calculates the average flat for each 
+filter.
+Finally, to each data image subtract bias and divide by the flat corresponding 
+to its filter.
 """
 
 import sys
@@ -53,7 +54,8 @@ def show_files_statistics(list_of_files):
     	logging.debug("Bias images - Max. mean: " + str(max(mean_values)) + \
     			      " Min. mean: " + str(min(mean_values)))	
     except iraf.IrafError as exc:
-    	logging.error("Error executing imstat: Stats for bias images: " + list_of_files)
+    	logging.error("Error executing imstat: Stats for bias images: " + \
+                      list_of_files)
     	logging.error("Iraf error is: " + str(exc))  
     except ValueError as ve: 	
         logging.error("Error calculating mean values: " + str(mean_strings))
@@ -93,7 +95,8 @@ def do_masterbias():
                 
                 # Check if masterbias already exists.
                 if os.path.exists(masterbias_name) == True:
-                    logging.debug("Masterbias file exists, " + masterbias_name + \
+                    logging.debug("Masterbias file exists, " + \
+                                  masterbias_name + \
                                   " so resume to next directory.")
                 else:
                     # Put the files list in a string.
@@ -103,11 +106,12 @@ def do_masterbias():
                         	
                     # Combine all the bias files.
                     try:
-                        logging.debug("Creating bias file: " + MASTERBIAS_FILENAME)
+                        logging.debug("Creating bias file: " + \
+                                      MASTERBIAS_FILENAME)
                         iraf.imcombine(list_of_files, masterbias_name, Stdout=1)
                     except iraf.IrafError as exc:
-                        logging.error("Error executing imcombine: Combining bias with: " + 
-                                      list_of_files)  
+                        logging.error("Error executing imcombine: " + \
+                                      "Combining bias with: " + list_of_files)  
                         logging.error("Iraf error is: " + str(exc))    
                         
 def normalize_flats(files):
@@ -147,14 +151,17 @@ def normalize_flats(files):
                 list_of_norm_flat_files.extend([norm_file])
     			
             except iraf.IrafError as exc:
-                logging.error("Error executing imarith: normalizing flat image: " + fl)
+                logging.error("Error executing imarith: normalizing flat " + \
+                              "image: " + fl)
                 logging.error("Iraf error is: " + str(exc))
             except ValueError as ve:     
-                logging.error("Error calculating mean value for: " + str(flat_stats))
+                logging.error("Error calculating mean value for: " + \
+                              str(flat_stats))
                 logging.error("Error is: " + str(ve))                      
     	
         except iraf.IrafError as exc:
-            logging.error("Error executing imstat: getting stats for flat image: " + fl)
+            logging.error("Error executing imstat: getting stats for flat " + \
+                          image: " + fl)
             logging.error("Iraf error is: " + str(exc))       
     
     return list_of_norm_flat_files
@@ -199,7 +206,8 @@ def do_masterflat():
                 
                 # Check if masterflat already exists.
                 if os.path.exists(masterflat_name) == True:
-                    logging.debug("Masterflat file exists, " + masterflat_name + \
+                    logging.debug("Masterflat file exists, " + \
+                                  masterflat_name + \
                                   " so resume to next directory.")
                 else:
                     # Put the files list in a string.
@@ -207,57 +215,73 @@ def do_masterflat():
 
                     # Create list of names of the work flat files.
                     work_files = \
-                        [s.replace("." + FIT_FILE_EXT, WORK_FILE_SUFFIX + "." + FIT_FILE_EXT) for s in files ]
+                        [s.replace("." + FIT_FILE_EXT, WORK_FILE_SUFFIX + \
+                                   "." + FIT_FILE_EXT) for s in files ]
 
-                    list_of_work_flat_files = str(work_files).translate(None, "[]\'")
+                    list_of_work_flat_files = str(work_files).translate(None, \
+                                                                        "[]\'")
 
-                    masterbias_name = os.path.join(full_dir, PATH_FROM_FLAT_TO_BIAS, MASTERBIAS_FILENAME)
+                    masterbias_name = os.path.join(full_dir, \
+                                                   PATH_FROM_FLAT_TO_BIAS, \
+                                                   MASTERBIAS_FILENAME)
 
                     try:
                         # Check if masterbias exists.
                         if os.path.exists(masterbias_name):
                             # Create the work files subtracting bias from flat.
-                            iraf.imarith(list_of_flat_files, '-', masterbias_name, list_of_work_flat_files)
+                            iraf.imarith(list_of_flat_files, '-', \
+                                         masterbias_name, \
+                                         list_of_work_flat_files)
                         else:
                             for i in range(len(files)):
-                                # Create the work files as a copy of original files.
+                                # Create the work files as a copy of original 
+                                # files.
                                 shutil.copyfile(files[i], work_files[i])
                         
-                        logging.debug("Normalizing flat files for: " + masterflat_name)    
+                        logging.debug("Normalizing flat files for: " + \
+                                      masterflat_name)    
                         
                         norm_flat_files = normalize_flats(files)
                         
-                        # After creating the normalized files, remove the work files
-                        # to save storage.
+                        # After creating the normalized files, remove the 
+                        # work files to save storage.
                         try:
                             for wf in work_files:
                                 os.remove(wf)
                         except OSError as oe:
-                            logging.error("OSError removing work flat is: " + str(oe))
+                            logging.error("OSError removing work flat is: " + \
+                                          str(oe))
                             
-                        logging.debug("Creating flat files for: " + masterflat_name)  
+                        logging.debug("Creating flat files for: " + \
+                                      masterflat_name)  
                         
                         # Create list of names of the normalized flat files.
-                        list_of_norm_flat_files = str(norm_flat_files).translate(None, "[]\'")                    
+                        list_of_norm_flat_files = \
+                            str(norm_flat_files).translate(None, "[]\'")                    
                             
                         try:
                             # Combine all the flat files.
-                            iraf.imcombine(list_of_norm_flat_files, masterflat_name, Stdout=1)
+                            iraf.imcombine(list_of_norm_flat_files, \
+                                           masterflat_name, Stdout=1)
                             
                             # After calculating the masterflat, remove the normalized files
                             # to save storage space.
                             for nff in norm_flat_files:
                                 os.remove(nff)
                         except iraf.IrafError as exc:
-                            logging.error("Error executing imcombine. Combining flats with: " + \
+                            logging.error("Error executing imcombine. " + \
+                                          "Combining flats with: " + \
                                           list_of_work_flat_files)    
                             logging.error("Iraf error is: " + str(exc)) 
                         except OSError as oe:
-                            logging.error("OSError removing normalized flat is: " + str(oe))           
+                            logging.error("OSError removing normalized " + \ 
+                                          "flat is: " + str(oe))           
                         
                     except iraf.IrafError as exc:
-                        logging.error("Error executing imarith. Subtracting masterbias " + \
-                                      masterbias_name + " to: " + list_of_flat_files)
+                        logging.error("Error executing imarith. " + \ 
+                                      "Subtracting masterbias " + \
+                                      masterbias_name + " to: " + \
+                                      list_of_flat_files)
                         logging.error("Iraf error is: " + str(exc))
                         
 def reduce_data():
@@ -292,7 +316,8 @@ def reduce_data():
                 logging.debug("Found a directory for data: " + full_dir)
 
                 # Get the list of files.
-                data_files = glob.glob(os.path.join(full_dir, "*." + FIT_FILE_EXT))
+                data_files = glob.glob(os.path.join(full_dir, "*." + \
+                                                    FIT_FILE_EXT))
                 logging.debug("Found " + str(len(data_files)) + " data files")
                 
                 # The masterbias file name. The path where it should exists
@@ -303,7 +328,8 @@ def reduce_data():
                     
                 # Check if bias really exists.
                 if not os.path.exists(masterbias_name):
-                    logging.warning("Masterbias does not exists: " + masterbias_name)  
+                    logging.warning("Masterbias does not exists: " + \
+                                    masterbias_name)  
                     masterbias_name = ""
                 
                 # The masterflat file name. The path where it should exists
@@ -314,7 +340,8 @@ def reduce_data():
                                         
                 # Check if bias really exists.
                 if not os.path.exists(masterflat_name):
-                    logging.warning("Masterflat does not exists: " + masterflat_name)  
+                    logging.warning("Masterflat does not exists: " + \
+                                    masterflat_name)  
                     masterflat_name = ""       
 
                 # Reduce each data file one by one.
@@ -327,52 +354,64 @@ def reduce_data():
                                                    DATA_FINAL_SUFFIX + "." + \
                                                    FIT_FILE_EXT) 
                     else:
-                        # The following 'if' will ignore this file for reduction.
+                        # The following 'if' will ignore this file for 
+                        # reduction.
                         final_file = dfile
                     
                     # Maybe some files can be final already, ignore them.
                     if  os.path.exists(final_file):           
-                        logging.debug("Ignoring file for reduction, already exists: " + final_file)
+                        logging.debug("Ignoring file for reduction, " + \
+                                      "already exists: " + final_file)
                     else:
-                        # Get the work file, a temporary one between bias and flat result.
+                        # Get the work file, a temporary one between bias and 
+                        #flat result.
                         work_file = dfile.replace("." + FIT_FILE_EXT, \
-                                                  WORK_FILE_SUFFIX + "." + FIT_FILE_EXT)
+                                                  WORK_FILE_SUFFIX + "." + \
+                                                  FIT_FILE_EXT)
                            
                         try: 
                             
                             # If masterbias exists.
                             if len(masterbias_name) > 0:
                                 
-                                # Create the work files subtracting bias from flat.
-                                iraf.imarith(dfile, '-', masterbias_name, work_file)
+                                # Create the work files subtracting bias 
+                                # from flat.
+                                iraf.imarith(dfile, '-', masterbias_name, \
+                                             work_file)
                             else:     
-                                # Use as work file (input for flat step), the original file.
+                                # Use as work file (input for flat step), 
+                                # the original file.
                                 work_file = dfile
                             try:
                                 # If masterflat exists.
                                 if len(masterflat_name) > 0:
-                                    # Create the final data dividing by master flat.
-                                    iraf.imarith(work_file, "/", masterflat_name, final_file)
+                                    # Create the final data dividing by 
+                                    #master flat.
+                                    iraf.imarith(work_file, "/", \
+                                                 masterflat_name, final_file)
                                 else:
-                                    # The final file is the file resulting from bias step.
-                                    # It could be even the original file if masterbias
-                                    # does not exist.
+                                    # The final file is the file resulting from 
+                                    # bias step. It could be even the original 
+                                    # file if masterbias does not exist.
                                     shutil.copyfile(work_file, final_file)                                    
                                 
-                                # If the work file is not the original file, and it is
-                                # really a temporal file.
+                                # If the work file is not the original file, 
+                                # and it is really a temporary file.
                                 if len(masterbias_name) > 0:
                                     # Remove work file to save storage space.
                                     os.remove(work_file)
                                                                     
                             except iraf.IrafError as exc:
-                                logging.error("Error executing imarith: " + work_file + \
-                                              " / " + masterflat_name + " to " + final_file)     
+                                logging.error("Error executing imarith: " + \
+                                              work_file + " / " + \
+                                              masterflat_name + " to " + \
+                                              final_file)     
                                 logging.error("Iraf error is: " + str(exc))                  
                             
                         except iraf.IrafError as exc:
-                            logging.error("Error executing imarith: " + dfile + \
-                                            " - " + masterbias_name + " to " + work_file)
+                            logging.error("Error executing imarith: " + \
+                                          dfile + " - " + masterbias_name + \
+                                          " to " + work_file)
                             logging.error("Iraf error is: " + str(exc))
                         
 def reduce_images():
@@ -388,7 +427,8 @@ def reduce_images():
     # Process bias files to obtain the average bias.
     do_masterbias()
 
-    # Process flat files to subtract bias from then and calculate the average flat.
+    # Process flat files to subtract bias from then and calculate the average 
+    # flat.
     do_masterflat()
 
     # Reduce data images applying bias and flats.

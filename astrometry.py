@@ -65,7 +65,8 @@ def get_object(objects, filename):
     # and separated by a special character.
     obj_name = file.split(DATANAME_CHAR_SEP)[0]
     
-    logging.debug("In astrometry, searching coordinates for object: " + obj_name)
+    logging.debug("In astrometry, searching coordinates for object: " + \
+                  obj_name)
     
     for i in range(len(objects)):
         obj = objects[i]
@@ -245,7 +246,8 @@ def check_celestial_coordinates(image_file_name, object, indexes, \
     if (obj_ra > min_ra) & (obj_ra < max_ra) & \
          (obj_dec > min_dec) & (obj_dec < max_dec):
         
-        header_fields = get_fit_fields(image_file_name, XY_CENTER_FIT_HEADER_FIELDS)
+        header_fields = get_fit_fields(image_file_name, \
+                                       XY_CENTER_FIT_HEADER_FIELDS)
         
         try:
             x_center = int(header_fields[CRPIX1])
@@ -267,8 +269,8 @@ def check_celestial_coordinates(image_file_name, object, indexes, \
             
                 success = False             
                 
-                logging.error("X,Y coordinates for object to far from center in " + \
-                              image_file_name)
+                logging.error("X,Y coordinates for object to far from " + \
+                              "center in " + image_file_name)
         except KeyError as ke:
             logging.warning("Header field 'for XY center not found in file " + \
                             image_file_name)  
@@ -282,7 +284,7 @@ def check_celestial_coordinates(image_file_name, object, indexes, \
     
     return success    
 
-def write_coord_catalogues(image_file_name, catalog_file_name, \
+def write_coord_catalogues(image_file_name, catalog_full_file_name, \
                            object, object_references):
     """
     This function opens the FITS file that contains the table of x,y 
@@ -297,8 +299,11 @@ def write_coord_catalogues(image_file_name, catalog_file_name, \
     success = False
     
     # Get the names for xyls and rdla files from image file name.
-    xyls_file_name = image_file_name.replace("." + FIT_FILE_EXT, INDEX_FILE_PATTERN)
-    rdls_file_name = image_file_name.replace("." + FIT_FILE_EXT, "." + RDLS_FILE_EXT)
+    xyls_file_name = image_file_name.replace("." + FIT_FILE_EXT, \
+                                             INDEX_FILE_PATTERN)
+    
+    rdls_file_name = image_file_name.replace("." + FIT_FILE_EXT, \
+                                             "." + RDLS_FILE_EXT)
 
     # Check if the file containing x,y coordinates exists.
     if os.path.exists(xyls_file_name):
@@ -306,11 +311,12 @@ def write_coord_catalogues(image_file_name, catalog_file_name, \
         logging.debug("X,Y coordinates file exists")
         logging.debug("xyls file name: " + xyls_file_name)
         logging.debug("rdls file name: " + rdls_file_name)        
-        logging.debug("Catalog file name: " + catalog_file_name)
+        logging.debug("Catalog file name: " + catalog_full_file_name)
         
         # Get only the file name.
-        catalog_only_file_name = os.path.split(catalog_file_name)[-1]
-        object_name = catalog_only_file_name[:catalog_only_file_name.find(DATANAME_CHAR_SEP)]
+        catalog_file_name = os.path.split(catalog_full_file_name)[-1]
+        object_name = \
+            catalog_file_name[:catalog_file_name.find(DATANAME_CHAR_SEP)]
         
         logging.debug("Object name: " + object_name)
 
@@ -329,7 +335,7 @@ def write_coord_catalogues(image_file_name, catalog_file_name, \
 
             # Write catalog file with the x,y coordinate to do the
             # photometry.
-            write_catalog_file(catalog_file_name, indexes, xy_data)        
+            write_catalog_file(catalog_full_file_name, indexes, xy_data)        
             
             success = True
     else:
@@ -388,7 +394,8 @@ def do_astrometry(progargs):
 
                 # Get the list of files ignoring hidden files.
                 files_to_catalog = \
-                    [fn for fn in glob.glob(os.path.join(path, "*" + DATA_FINAL_PATTERN)) \
+                    [fn for fn in glob.glob(os.path.join(path, "*" + \
+                                                         DATA_FINAL_PATTERN)) \
                     if not os.path.basename(fn).startswith('.')]
                     
                 logging.debug("Found " + str(len(files_to_catalog)) + \
@@ -399,8 +406,8 @@ def do_astrometry(progargs):
                     
                     number_of_images += 1
                     
-                    # Try to get RA and DEC for the object to solve the field only around
-                    # these coordinates.
+                    # Try to get RA and DEC for the object to solve the \
+                    # field only around these coordinates.
                     ra_dec_param = ""
                     
                     try:
@@ -409,9 +416,11 @@ def do_astrometry(progargs):
                         ra = str(obj[OBJ_RA_COL])
                         dec = str(obj[OBJ_DEC_COL])
                         
-                        ra_dec_param =" --ra " + ra + " --dec " + dec + " --radius " + str(SOLVE_FIELD_RADIUS)
+                        ra_dec_param =" --ra " + ra + " --dec " + dec + \
+                            " --radius " + str(SOLVE_FIELD_RADIUS)
                         
-                        catalog_file_name = fl.replace(DATA_FINAL_PATTERN, "." + CATALOG_FILE_EXT)
+                        catalog_file_name = fl.replace(DATA_FINAL_PATTERN, \
+                                                       "." + CATALOG_FILE_EXT)
 
                         # Check if the catalog file already exists.
                         if os.path.exists(catalog_file_name) == False :
@@ -421,36 +430,47 @@ def do_astrometry(progargs):
                             if progargs.use_sextractor_for_astrometry:
                                 use_sextractor = ASTROMETRY_OPT_USE_SEXTRACTOR
     
-                            command = ASTROMETRY_COMMAND + " " + ASTROMETRY_PARAMS + \
-                            str(progargs.number_of_objects_for_astrometry) + " " + \
-                            use_sextractor + \
-                            ra_dec_param + " " + fl
+                            command = ASTROMETRY_COMMAND + " " + \
+                                ASTROMETRY_PARAMS + \
+                                
+                            str(progargs.number_of_objects_for_astrometry) + \
+                                " " + use_sextractor + ra_dec_param + " " + fl
+                                
                             logging.debug("Executing: " + command)
     
-                            # Executes astrometry.net to get the astrometry of the image.
+                            # Executes astrometry.net to get the astrometry 
+                            # of the image.
                             return_code = subprocess.call(command, \
                                 shell=True, stdout=subprocess.PIPE, \
                                 stderr=subprocess.PIPE)
     
-                            logging.debug("Astrometry execution return code: " + str(return_code))                            
+                            logging.debug("Astrometry execution return code: " \
+                                          + str(return_code))                            
                         else:
-                            logging.debug("Catalog file already exists: " + catalog_file_name)
+                            logging.debug("Catalog file already exists: " + \
+                                          catalog_file_name)
                             return_code = 0
                             
                         if return_code == 0:
                             # Generates catalog files with x,y and ra,dec values 
                             # and if it successfully count it. 
                             if write_coord_catalogues(fl, catalog_file_name, \
-                                                   obj, objects_references[obj_idx]):
-                                number_of_successfull_images = number_of_successfull_images + 1
+                                                      obj, \
+                                                      objects_references[obj_idx]):
+                                number_of_successfull_images = \
+                                    number_of_successfull_images + 1
                             else:
                                 images_without_astrometry.extend([fl])
                             
                     except ObjectNotFound as onf:
-                        logging.debug("Object not found related to file: " + onf.filename)
+                        logging.debug("Object not found related to file: " + \
+                                      onf.filename)
 
     logging.info("Astrometry results:")
     logging.info("- Number of images processed: " + str(number_of_images))
-    logging.info("- Images processed successfully: " + str(number_of_successfull_images))
-    logging.info("- Number of images without astrometry: " + str(len(images_without_astrometry)))    
-    logging.info("- List of images without astrometry: " + str(images_without_astrometry))
+    logging.info("- Images processed successfully: " + \
+                 str(number_of_successfull_images))
+    logging.info("- Number of images without astrometry: " + \
+                 str(len(images_without_astrometry)))    
+    logging.info("- List of images without astrometry: " + \
+                 str(images_without_astrometry))

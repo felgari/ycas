@@ -61,17 +61,21 @@ class ImagesArguments(object):
         self.__parser.add_argument("-l", dest="l", action="store_true", \
                                    help="List objects found in images")
         
-        self.__parser.add_argument("-d", metavar="destiny directory", dest="d", \
+        self.__parser.add_argument("-d", metavar="destiny directory", \
+                                   dest="d", \
                                    help="Destiny directory for images") 
         
-        self.__parser.add_argument("-s", metavar="source directory", dest="s", \
+        self.__parser.add_argument("-s", metavar="source directory", \
+                                   dest="s", \
                                    help="Source directory for images") 
         
         self.__parser.add_argument("-o", metavar="objects", dest="o", \
-                                   help="File containing the objects of interest")
+                                   help="File containing the objects of " + \
+                                   "interest")
         
         self.__parser.add_argument("-t", dest="t", action="store_true", 
-                                   help="Use header information to get the type of the image")           
+                                   help="Use header information to get the " + \
+                                   "type of the image")           
         
     @property    
     def is_extraction(self):        
@@ -326,8 +330,9 @@ def list_objects_in_files(source_dir):
 def main(progargs):
     """ 
 
-    Main function. Configure logging, check a correct number of program arguments,
-    and read the objects of interest to look for images related to them.
+    Main function. Configure logging, check a correct number of program 
+    arguments, and read the objects of interest to look for images related 
+    to them.
 
     """  
     
@@ -342,7 +347,8 @@ def main(progargs):
         if progargs.destiny_dir_provided and \
             progargs.source_dir_provided:
             
-            logging.debug("Copying images for the objects indicated to the destiny directory.")            
+            logging.debug("Copying images for the objects indicated to the " + \
+                          "destiny directory.")            
             
             # Copy images for the list of objects into the path indicated.
             copy_images(progargs.destiny_dir, \

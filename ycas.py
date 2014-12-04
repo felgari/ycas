@@ -83,8 +83,8 @@ def init_log(progargs):
 def main(progargs):
     """ Main function.
 
-    A main function allows the easy calling from other modules and also from the
-    command line.
+    A main function allows the easy calling from other modules and also from 
+    the command line.
     
     This function performs all the steps needed to process the images.
     Each step is a calling to a function that implements a concrete task.
@@ -107,7 +107,8 @@ def main(progargs):
         orgfits.organize_files(progargs)
         something_done = True
     else:
-        logging.info("* Step 1 * Skipping organizing image files in directories. Not requested.")
+        logging.info("* Step 1 * Skipping organizing image files in " + \
+                     "directories. Not requested.")
     
     # This step reduces the data images applying the bias and flats.
     if progargs.reduction_requested:
@@ -117,17 +118,18 @@ def main(progargs):
     else:
         logging.info("* Step 2 * Skipping reducing images. Not requested.")
     
-    # This step find objects in the images. The result is a list of x,y and AR,DEC
-    # coordinates.
+    # This step find objects in the images. The result is a list of x,y and 
+    # AR,DEC coordinates.
     if progargs.astrometry_requested:
         logging.info("* Step 3 * Performing astrometry.")
         astrometry.do_astrometry(progargs)
         something_done = True        
     else:
-        logging.info("* Step 3 * Skipping performing astrometry. Not requested.")
+        logging.info("* Step 3 * Skipping performing astrometry. " + \
+                     "Not requested.")
     
-    # This step aligns the data images of the same object. This step is optional as
-    # the rest of steps could be performed with images not aligned.
+    # This step aligns the data images of the same object. This step is 
+    # optional as the rest of steps could be performed with images not aligned.
     if progargs.align_requested:
         logging.info("* Step 4 * Performing alignment.")    
         align.align_images()
@@ -135,13 +137,15 @@ def main(progargs):
     else:
         logging.info("* Step 4 * Skipping performing alignment. Not requested.")
         
-    # This step calculates the photometry of the objects detected doing the astrometry.
+    # This step calculates the photometry of the objects detected doing the 
+    # astrometry.
     if progargs.photometry_requested:
         logging.info("* Step 5 * Performing photometry.")     
         photometry.calculate_photometry(progargs)
         something_done = True        
     else:
-        logging.info("* Step 5 * Skipping performing photometry. Not requested.")
+        logging.info("* Step 5 * Skipping performing photometry. " + \
+                     "Not requested.")
         
     # This step calculates the differental photometry of the objects detected 
     # doing the astrometry.        
@@ -150,16 +154,18 @@ def main(progargs):
         photometry.differential_photometry(progargs)
         something_done = True        
     else:
-        logging.info("* Step 6 * Skipping differential magnitudes of each object. Not requested.")          
+        logging.info("* Step 6 * Skipping differential magnitudes of " + \
+                     "each object. Not requested.")          
                 
-    # This step process the magnitudes calculated for each object and generates a file
-    # that associate to each object all its measures.
+    # This step process the magnitudes calculated for each object and 
+    # generates a file that associate to each object all its measures.
     if progargs.magnitudes_requested:
         logging.info("* Step 7 * Processing magnitudes of each object.")     
         magnitude.calculate_magnitudes(progargs)
         something_done = True        
     else:
-        logging.info("* Step 7 * Skipping processing magnitudes of each object. Not requested.")     
+        logging.info("* Step 7 * Skipping processing magnitudes of each " + \
+                     "object. Not requested.")     
         
     if not something_done:
         progargs.print_help()   

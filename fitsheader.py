@@ -33,7 +33,8 @@ NO_VALUE = "NO VALUE"
 
 FIELD_SEP = ", "
 
-FIT_HEADER_FIELDS = ["DATE-OBS", "OBJCTRA", "OBJCTDEC", "IMAGETYP", "FILTER", "AIRMASS"]
+FIT_HEADER_FIELDS = ["DATE-OBS", "OBJCTRA", "OBJCTDEC", "IMAGETYP", \
+                     "FILTER", "AIRMASS"]
 
 def summarize_fit_headers():
     """
@@ -63,7 +64,9 @@ def summarize_fit_headers():
                 logging.debug("Found a directory for data: " + full_dir)
 
                 # Get the list of files.
-                files = glob.glob(os.path.join(full_dir, "*" + DATA_FINAL_PATTERN))
+                files = glob.glob(os.path.join(full_dir, "*" + \
+                                               DATA_FINAL_PATTERN))
+                
                 logging.debug("Found " + str(len(files)) + " data files")
                 
                 for fl in files:
@@ -90,8 +93,8 @@ def summarize_fit_headers():
 def main(argv=None):
     """ main function.
 
-    A main function allows the easy calling from other modules and also from the
-    command line.
+    A main function allows the easy calling from other modules and also from 
+    the command line.
 
     Arguments:
     argv - List of arguments passed to the script.

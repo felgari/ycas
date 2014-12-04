@@ -49,7 +49,8 @@ def init_iraf():
     # initialization and run in terminal-only mode to avoid warning messages.
     os.environ['PYRAF_NO_DISPLAY'] = '1'
 
-    # Set PyRAF process caching off to avoid errors if spawning multiple processes.
+    # Set PyRAF process caching off to avoid errors if spawning multiple 
+    # processes.
     iraf.prcacheOff()
 
     # Load iraf packages and does not show any output of the tasks.
@@ -123,15 +124,18 @@ def calculate_datamin(image_file_name):
     datamin = DATAMIN_VALUE
     
     try:
-        imstat_output = iraf.imstat(image_file_name, fields='mean,stddev', Stdout=1)
+        imstat_output = iraf.imstat(image_file_name, fields='mean,stddev', \
+                                    Stdout=1)
         imstat_values = imstat_output[IMSTAT_FIRST_VALUE]
         values = imstat_values.split() # Set a calculated value for datamin.
         datamin = float(values[0]) - DATAMIN_MULT * float(values[1])
     except iraf.IrafError as exc:
-        logging.error("Error executing imstat: Stats for data image: " + image_file_name)
+        logging.error("Error executing imstat: Stats for data image: " + \
+                      image_file_name)
         logging.error("Iraf error is: " + str(exc))
     except ValueError as ve:
-        logging.error("Value Error calculating datamin for image: " + image_file_name)
+        logging.error("Value Error calculating datamin for image: " + \
+                      image_file_name)
         logging.error("mean is: " + values[0] + " stddev is: " + values[1])
         logging.error("Value Error is: " + str(ve))
         
@@ -203,9 +207,9 @@ def do_photometry(progargs):
                 # Each catalog indicates one or more images.
                 for cat_file in catalog_files:
                     
-                    # The images used are the aligned ones with a name that matches
-                    # the name of the catalog, so the catalog references are valid
-                    # for all these images.
+                    # The images used are the aligned ones with a name that 
+                    # matches the name of the catalog, so the catalog references
+                    # are valid for all these images.
                     object_name = cat_file[0:cat_file.find(DATANAME_CHAR_SEP)]
                      
                     image_file_pattern = object_name + "*" + DATA_FINAL_PATTERN
@@ -215,7 +219,8 @@ def do_photometry(progargs):
                     logging.debug("Found " + str(len(images_of_catalog)) + \
                                   " images for this catalog.")
                         
-                    # Calculate the magnitudes for each image related to the catalog.
+                    # Calculate the magnitudes for each image related to the 
+                    # catalog.
                     for image in images_of_catalog:
                             
                         # Get the name of the file for the magnitudes from 
@@ -225,7 +230,8 @@ def do_photometry(progargs):
                      
                         # If magnitude file exists, skip.
                         if not os.path.exists(output_mag_file_name):
-                            do_phot(image, cat_file, output_mag_file_name, progargs)  
+                            do_phot(image, cat_file, output_mag_file_name, \
+                                    progargs)  
                         else:
                             logging.debug("Skipping phot for: " + \
                                           output_mag_file_name + \
@@ -252,8 +258,11 @@ def txdump_photometry_info():
                 logging.debug("Found a directory for data: " + path)
 
                 # Get the list of magnitude files.
-                mag_files = glob.glob(os.path.join(path, "*." + MAGNITUDE_FILE_EXT))
-                logging.debug("Found " + str(len(mag_files)) + " magnitude files")    
+                mag_files = glob.glob(os.path.join(path, "*." + \
+                                                   MAGNITUDE_FILE_EXT))
+                
+                logging.debug("Found " + str(len(mag_files)) + \
+                              " magnitude files")    
                 
                 # Reduce each data file one by one.
                 for mfile in mag_files:                  
@@ -271,7 +280,8 @@ def txdump_photometry_info():
                     mag_dest_file = open(mag_dest_file_name, 'w' )
                     
                     try:
-                        iraf.txdump(mfile, fields=TXDUMP_FIELDS, expr='yes', Stdout=mag_dest_file)
+                        iraf.txdump(mfile, fields=TXDUMP_FIELDS, expr='yes', \
+                                    Stdout=mag_dest_file)
                     except iraf.IrafError as exc:
                         logging.error("Error executing txdump to get: " + \
                                       mag_dest_file_name)
@@ -376,8 +386,8 @@ def save_manitudes_diff(all_magnitudes, objects, filters, max_index):
                         write_manitudes_diff_file(lofi, file_name)  
                         
                     else:
-                        logging.debug("Dif. mag. not found for " + o + ", " + f + \
-                                      " and " + str(n))
+                        logging.debug("Dif. mag. not found for " + o + ", " + \
+                                      f + " and " + str(n))
             else:
                 logging.debug("Not found for " + o + " and " + f)
 
@@ -426,7 +436,8 @@ def differential_photometry(progargs):
                                             "." + CSV_FILE_EXT)) \
                      if not os.path.basename(fn).startswith('.')]
                     
-                logging.debug("Found " + str(len(files_full_path)) + " magnitude files")
+                logging.debug("Found " + str(len(files_full_path)) + \
+                              " magnitude files")
                 
                 # Process the magnitude files to get all the data.
                 for fl in files_full_path:
@@ -514,7 +525,8 @@ def differential_photometry(progargs):
                     # Check if the object of interest has INDEF values.
                     if obj_int_row[INDEF_COL_DF] == False:
                             
-                        # Calculate the differences between the first row and the rest.
+                        # Calculate the differences between the first row 
+                        # and the rest.
                         for i in range(1,len(file_rows),1):
                             current_row = file_rows[i]
                             
@@ -522,7 +534,8 @@ def differential_photometry(progargs):
                             # In that case is ignored.
                             if current_row[INDEF_COL_DF] == False:
                             
-                                # Calculate the values for the row with the differences.
+                                # Calculate the values for the row with the 
+                                # differences.
                                 diff_row = [obj_int_row[OBJ_NAME_COL_DF], \
                                             obj_int_row[FILTER_COL_DF], \
                                             current_row[INDEX_COL_DF] - 1, \
