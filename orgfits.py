@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""
-This module organize the files to process into different directories
-depending on the type of image: bias, flat or data.
+"""This module organize the files to process into different directories.
+
+The organization takes into account the session (day) where was taken and 
+the type of the image: bias, flat or data.
 The module assume that images are initially stored in directories that 
 corresponds to the day which were taken.
 Into each day the images are organized in a directory for bias, another
@@ -44,9 +45,13 @@ def create_directory(path, dirname):
     This function creates a directory with the given name located in the
     path received.
     
+    Keyword arguments: 
+    path -- Path where the directory is created.
+    dirname -- Name of the directory to create.
+    
     """
 
-    complete_dirname = os.path.join(path,dirname)
+    complete_dirname = os.path.join(path, dirname)
 
     # Check if the directory exists.
     if not os.path.exists(complete_dirname):
@@ -58,10 +63,18 @@ def create_directory(path, dirname):
                 raise  
 
 def analyze_and_organize_dir(filename, path, progargs):
-    """ 
+    """Establish the type of each file and copies it to the appropriate folder. 
     
     This function determines the file type and moves the
     files to the proper directory created for that type of file.
+    
+    First try, is to establish the type of each file looking the file header,
+    of not possible the name of the file is used.
+    
+    Keyword arguments:     
+    filename  -- Name of the file to analyze.
+    path -- Path where is the file.
+    progargs -- Program arguments.
     	
     """
 
@@ -124,9 +137,13 @@ def ignore_current_directory(dir, progargs):
     """ Determines if current directory should be ignored.
     
     A directory whose name matches that of bias, flat or data directories or
-    has a parent directory named as a flat or data directory, it is ignored 
+    has a parent directory named as a flat or data directory is ignored, 
     as this directory could be a directory created in a previous run and a new
-    bias/flat/data directory should be created from them 
+    bias/flat/data and redundant directory should be created for it.
+    
+    Keyword arguments:
+    dir -- Directory to process.
+    progargs -- Program arguments.  
     
     """
     ignore  = False
@@ -144,10 +161,13 @@ def ignore_current_directory(dir, progargs):
     return ignore  
 
 def get_binnings_of_images(data_path):
-    """
+    """Returns the binnings used for the images in the path indicated.
     
-    This function returns the binnings used for the images
-    in the path indicated.
+    Keyword arguments:    
+    data_path -- Directory with full path with images to analyze.
+    
+    Returns:
+    The list of binning used for the data images in the directory indicated.
     
     """
     
@@ -178,10 +198,11 @@ def get_binnings_of_images(data_path):
     return binnings
 
 def remove_images_with_diff_binning(data_path, binnings):
-    """
+    """Remove images with a binning not included in the binnings received.
     
-    Remove the images found in the path indicated with a binning
-    not included in the binnings received.
+    Keyword arguments:    
+    data_path -- Path that contains the images to analyze.
+    binnings -- List of binnings to consider.
     
     """
     
@@ -212,17 +233,18 @@ def remove_images_with_diff_binning(data_path, binnings):
     
 
 def remove_dir_if_empty(source_path):
-    """
+    """Check if the directory is empty and in that case is removed.
     
-    Check if the directory is empty and in that case is removed.
-    
+    Keyword arguments:    
+    source_path -- Path to analyze.
+        
     """
     
     # If current directory is empty, remove it.
     if os.listdir(source_path) == []:
         logging.debug("Removing empty directory: " + source_path)
         try:
-            os.rmdir(path)
+            os.rmdir(source_path)
         except OSError as oe:
             logging.error("Removing directory " + source_path)
             logging.error("Error is: " + str(oe))
@@ -235,11 +257,14 @@ def remove_dir_if_empty(source_path):
                 remove_dir_if_empty(os.path.join(path,d))
 
 def remove_images_according_to_binning(path):
-    """
+    """Remove bias and flat whose binning doesn't match that of the data images.
     
-    This function analyzes the binning of the images and remove
-    those images whose binning does not match that of the images.
+    Analyzes the binning of the bias and flat images and remove those whose 
+    binning does not match that of the data images.
     
+    Keyword arguments:    
+    path -- Path where the analysis of the images should be done.
+        
     """
     
     data_path = os.path.join(path, DATA_DIRECTORY)
@@ -280,6 +305,11 @@ def organize_files(progargs):
     when a directory with image files is found the directory contents
     are analyzed and organized.
     
+    Keyword arguments:    
+    progargs -- Program arguments.
+    
+    Returns:    
+        
     """
     
     # Walk from current directory.

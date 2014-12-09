@@ -18,9 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""
-This module calculates the magnitude of a group of objects performing
-a sequence of steps.
+"""Calculates the magnitude of a group of objects in a sequence of steps.
 
 The processing assumes certain values in the header of the fits images,
 even in the names of the files. Also a list of objects of interest, 
@@ -41,6 +39,12 @@ import magnitude
 from constants import *
 
 def convert_logging_level(level):
+    """ Convert the log level received to one of the loogging module. "
+    
+    Keyword arguments:
+    level -- Level to convert.
+    
+    """
     
     try:
         logging_level = LOG_LEVELS[level]
@@ -56,8 +60,9 @@ def convert_logging_level(level):
 def init_log(progargs):
     """ Initializes the file log and messages format. 
     
-        progargs - ProgramArguments object, it contains the
-            information of all program arguments received.
+    Keyword arguments:
+    progargs - ProgramArguments object, it contains the information of all 
+        program arguments received.
     
     """    
     

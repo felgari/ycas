@@ -18,9 +18,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""
-This module get some summaries from a directory structure where
-a set of images have been processed by ycas.
+"""This module get some summaries from a directory structure.
+
+This structure is supposed to be created by ycas when processing fit files.
 """
 
 import sys
@@ -204,6 +204,10 @@ def walk_directories(root_dir, file_pattern, dir_name = None, \
     for directories and files that match the patterns received and
     return the files matching these criteria.
     
+    Keyword arguments: 
+    
+    Returns:        
+    
     """
     
     directories_found = []
@@ -251,6 +255,16 @@ def walk_directories(root_dir, file_pattern, dir_name = None, \
 
 def sum_org_images_of_type(messages, has_filters, type_name, dir_name, \
                            master_file_name = None):
+    """Generates a summary for the images.
+    
+    Keyword arguments:    
+    messages -- List where the messages are added.
+    has_filters -- Indicates if the directories are organized by filters.
+    type_name -- Name of the type of image analyzed.
+    dir_name -- Directory to walk to search for images.
+    master_file_name -- Name of the master file, if any.
+                
+    """
     
     messages.append(["> Summary for " + type_name + " files."])
     
@@ -401,11 +415,7 @@ def sum_org_images_of_type(messages, has_filters, type_name, dir_name, \
                      str(mode(num_files_by_dir)[0][0])])
 
 def summary_organization():
-    """
-    
-    Get the summary for: Organization.
-    
-    """
+    """ Get the summary for: Organization. """
     
     messages = []   
         
@@ -426,11 +436,7 @@ def summary_organization():
     print_summary(ORG_SUM_NAME, messages)
 
 def summary_reduction():
-    """
-    
-    Get the summary for: Reduction.
-    
-    """
+    """Get the summary for: Reduction. """
     
     messages = []      
     
@@ -477,11 +483,7 @@ def summary_reduction():
     print_summary(RED_SUM_NAME, messages)        
 
 def summary_astrometry():
-    """
-    
-    Get the summary for: Astrometry.
-    
-    """
+    """Get the summary for: Astrometry. """
     
     messages = []      
     
@@ -524,11 +526,7 @@ def summary_astrometry():
     print_summary(ASTRO_SUM_NAME, messages)
 
 def summary_photometry():
-    """
-    
-    Get the summary for: Photometry.
-    
-    """
+    """ Get the summary for: Photometry. """
     
     messages = []      
     
@@ -573,28 +571,20 @@ def summary_photometry():
     print_summary(ASTRO_SUM_NAME, messages)
 
 def summary_diff_photometry():
-    """
-    
-    Get the summary for: Differential Photometry.
-    
-    """
+    """Get the summary for: Differential Photometry. """
     
     pass 
 
 def summary_magnitude():
-    """
-    
-    Get the summary for: Magnitude.
-    
-    """
+    """Get the summary for: Magnitude. """
     
     pass 
         
 def init_log(progargs):
     """ Initializes the file log and messages format. 
     
-        progargs - ProgramArguments object, it contains the
-            information of all program arguments received.
+    Keyword arguments: 
+    progargs - Program arguments.
     
     """    
     
@@ -624,10 +614,11 @@ SUMMARY_PROCESS = [
                    ]
         
 def main(progargs):
-    """
+    """ Generates the summaries requested.
     
-    Generates the summaries requested.
-    
+    Keyword arguments: 
+    progargs - Program arguments.
+        
     """
     
     exit_value = 0

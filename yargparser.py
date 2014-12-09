@@ -18,8 +18,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""
-This module process the program arguments received by main function.
+"""Process the program arguments received by main function.
+
 Define the arguments available, check for its correctness, and provides 
 these arguments to other modules. 
 """
@@ -29,9 +29,7 @@ import logging
 from constants import *
 
 class ProgramArguments(object):
-    """ Encapsulates the definition and processing of program arguments.
-        
-    """
+    """ Encapsulates the definition and processing of program arguments. """
     
     MIN_NUM_ARGVS = 1
     

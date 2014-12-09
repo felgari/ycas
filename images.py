@@ -18,12 +18,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""
-This module searches image files related to a set of objects of interest
-whose magnitudes are going to be calculated.
+"""Preprocess the location of image files whose magnitudes are going to be 
+calculated.
 
-The images are located in a directory with the bias and flats that also
-exists for the images found.
+The images for the same day are located in a directory along with the bias 
+and flats that also exists for the images found.
 """
 
 import sys
@@ -134,12 +133,16 @@ class ImagesArguments(object):
         self.__parser.print_help()                     
             
 def get_filename_start(path_file):
-    """
+    """Returns the first part of the name of a file.
     
-    This function returns the first part of the name of a file,
-    this word indicated the file type or the name of the object
+    This starting word indicates the file type or the name of the object
     related to this image.
     
+    Keyword arguments:
+    path_file -- File name with the complete path.
+    
+    Returns:      
+    The first part of the file name.
     """
     
     # Discard the path and get only the filename.
@@ -153,13 +156,18 @@ def get_filename_start(path_file):
     return filename_start.split(".")[-1]                
 
 def get_files_of_interest(obj_names, files):
-    """
+    """Returns a subset of the file list containing the images of the objects.
     
-    This function returns a subset of the file list that
-    contains the images corresponding to objects of interest,
-    if any, and in this case also returns the bias and flat
-    images found. 
+    If the images for an object are found also returns the bias and flat
+    images related. 
     
+    Keyword arguments:
+    obj_names -- Names of the objects whose images are of interest.
+    files -- List of files that could contain images related to the objects.
+    
+    Returns:    
+    Set of files related to the objects indicated.
+        
     """
     
     file_list = []
@@ -227,12 +235,12 @@ def get_files_of_interest(obj_names, files):
     return file_list
     
 def copy_files_of_interest(destiny_path, files_of_interest):
-    """
+    """Creates a directory in the path indicated and copy the files received.
     
-    This function creates a directory in the path indicated,
-    with the name indicated and copy into it all the files
-    of interest received.
-    
+    Keyword arguments:
+    destiny_path -- Destiny path to create and where to copy the files.
+    files_of_interest -- Files to copy.  
+            
     """
     
     # if destiny directory does not exists, create it.
@@ -248,12 +256,13 @@ def copy_files_of_interest(destiny_path, files_of_interest):
         shutil.copyfile(f, os.path.join(destiny_path, destiny_filename))
 
 def copy_images(destiny_path, source_path, objects_file):
-    """
+    """Searches files related to the object and copy them to the path indicated.
     
-    This function search for file images related to the
-    object of interest received and copy them to a new
-    directory in the path indicated.
-    
+    Keyword arguments:
+    destiny_path -- Destiny path to create and where to copy the files.
+    source_path -- Source where to look for files.
+    objects_file -- Objects whose related files are searched.
+            
     """
     
     # Read the objects from the file received.
@@ -285,10 +294,11 @@ def copy_images(destiny_path, source_path, objects_file):
                 copy_files_of_interest(full_destiny_path, files_of_interest) 
 
 def list_objects_in_files(source_dir):
-    """
-    This function walks the directory and create a list of the
-    objects with images.
+    """Walks the directory and create a list of the objects with images.
     
+    Keyword arguments:
+    source_dir -- Source directory where to search for files.
+            
     """
     
     objects = []
@@ -328,12 +338,11 @@ def list_objects_in_files(source_dir):
     print "Objects: " +  str(objects_set)               
             
 def main(progargs):
-    """ 
+    """Configure logging, check arguments and read objects of interest. 
 
-    Main function. Configure logging, check a correct number of program 
-    arguments, and read the objects of interest to look for images related 
-    to them.
-
+    Keyword arguments:
+    progargs -- Program arguments.    
+        
     """  
     
     # Set the file, format and level of logging output.

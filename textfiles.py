@@ -18,9 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""
-This module groups some functions performed on text files.
-"""
+""" This module groups some functions performed on text files. """
 
 import logging
 import csv
@@ -32,11 +30,13 @@ RA_POS_COO = 0
 DEC_POS_COO = 1
 
 def read_objects_of_interest(objects_file):
-    """
-        
-    Read the list of objects of interest from the file indicated.
+    """Read the list of objects of interest from the file indicated.
+    
     This file contains the name of the object and the AR, DEC 
     coordinates of each object.
+    
+    Keyword arguments:
+    objects_file -- Name of the file that contains the information of objects.
     
     """
     
@@ -58,10 +58,15 @@ def read_objects_of_interest(objects_file):
     return objects  
 
 def convert_deg_to_dec_deg(str_degress, is_ra = False):
-    """
+    """Convert the coordinate in degrees received to decimal degrees.
     
-    Convert the coordinate in degrees received to decimal degrees.
+    Keyword arguments:
+    str_degress -- A string containing a value in degrees, minutes and seconds.
+    is_ra -- Indicates if the value received is right ascension and so it
+        should be multiplied to scale it from 24 to 360.
     
+    Returns:    
+    The value received converted to decimal degrees.
     """    
     
     multiplier = 1.0
@@ -80,11 +85,17 @@ def convert_deg_to_dec_deg(str_degress, is_ra = False):
     return decimal_degrees * multiplier
 
 def get_coordinates(content):
-    """
+    """Convert the RA, DEC pair of coordinates received to decimal degrees.
     
-    Returns the coordinates in degree stored in the list received
+    in degrees stored in the list received
     converted to a pair RA, DEC in decimal degrees.
     
+    Keyword arguments:
+    content -- String of coordinates of RA and DEC in degrees, minutes and 
+        seconds.
+    
+    Returns:    
+    RA and DEC values converted to decimal degrees.    
     """
     
     # Get RA and DEC strings in degrees.
@@ -100,13 +111,20 @@ def get_coordinates(content):
     return ra_dec_deg, dec_dec_deg
 
 def read_references_for_object(object_name):
-    """
+    """ Read a file with the coordinates of some objects in its field.
     
     Read a file with the name of the object that contains coordinates
-    of reference objects for the first one to perform differential photometry.
+    of reference objects in its same field to perform differential photometry.
+    The first object object of the file are the coordinate of the proper object.
     Return a list of lists, each list contains the coordinates for the field 
     of an object
         
+    Keyword arguments:
+    object_name -- The name of the object.
+    
+    Returns:    
+    The coordinates read from the file indicated.
+    
     """
     
     references = []

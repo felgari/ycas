@@ -18,15 +18,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Calculates the magnitude of a group of objects.
+"""Joins the measurements taken for an object in a time series.
 
-The magnitudes are calculated performing a sequence of steps.
+The measurements are taken from several files indicated as program 
+arguments. All the files have a column, typically MJD, used to sort
+the data in time.
 
-The processing assumes certain values in the header of the fits images,
-even in the names of the files. Also a list of objects of interest, 
-whose magnitudes are calculated, and a list of standard stars.
-Some characteristics of the CCD camera are also needed to calculate
-the photometric magnitude of the objects.
+If there are measurements in the same day it is possible to use a median value
+for all these measurements.
+
 """
 
 import sys
@@ -44,9 +44,7 @@ ERR_COL = 5
 NO_VALUE = "NA"
 
 class CurvesArguments(object):
-    """Encapsulates the definition and processing of program arguments.
-        
-    """
+    """Encapsulates the definition and processing of program arguments. """
     
     MIN_NUM_ARGVS = 2
     OUTPUT_FILE = "curves.csv"    
@@ -123,8 +121,6 @@ def write_data(data, output_file_name):
     Keyword arguments:
     data -- Data to write.
     output_file_name -- Name of the file where the data will be written.
-    
-    Returns:    
         
     """
     
@@ -252,7 +248,7 @@ def calculate_data_median(files_data):
 def process_data(files_data, progargs):
     """ Process the data read depending on the program arguments indicated. 
     
-    It should be a set of lists with items  containing a first field related 
+    It should be a set of lists with items containing a first field related 
     to a common numeric domain, i.e. MJD as the independent variable.
     The following fields should be the dependent variable and error.    
     

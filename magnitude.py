@@ -18,9 +18,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""
-This module obtains the magnitude of a set of object using the photometry
-values calculated previously.
+"""Obtains the magnitude of objects using the photometry calculated previously.
+
 The magnitude values are stored in different files for each object.
 """
 
@@ -37,6 +36,15 @@ import numpy as np
 from scipy import stats
 
 def get_object_name_from_rdls(rdls_file):
+    """ Get the name of the object contained in the file name.
+    
+    Keyword arguments:
+    rdls_file -- RDLS file where to look for the object name. 
+    
+    Returns:
+    The name of the object.
+    
+    """
     
     # From the file name get the name of the object.
     object_name_with_path = rdls_file[0:rdls_file.find(DATANAME_CHAR_SEP)]
@@ -44,18 +52,26 @@ def get_object_name_from_rdls(rdls_file):
     return os.path.basename(object_name_with_path)     
 
 def get_ra_dec_for_object(objects, object_name):
-    """
+    """Returns the coordinates for an object from a list of objects.
     
-    This function receives the name of an object and the set of objects
-    and returns the coordinates for that object contained in the
-    list of objects.
+    Receives the name of an object and a set of objects with the coordinates
+    of these objects.  
+    
+    Keyword arguments:
+    objects -- List of objects. 
+    object_name -- The name of the object whose coordinates are requested.
+    
+    Returns:
+    The coordinates of the object indicated.    
     
     """
     
     ra = 0.0
     dec = 0.0
     
+    # Iterate over the list of object.s
     for obj in objects:
+        # Check current object by name.
         if obj[OBJ_NAME_COL] == object_name:
             ra = float(obj[OBJ_RA_COL])
             dec = float(obj[OBJ_DEC_COL])
@@ -63,12 +79,17 @@ def get_ra_dec_for_object(objects, object_name):
     return ra, dec  
 
 def get_rdls_data(rdls_file):
-    """
+    """Returns the AR, DEC values stores in a RDLS file.
     
-    This function returns the AR, DEC values stores in a RDLS
-    file generated during the photometry step.
-    This file is a FIT file that contains a table and this
-    function returns the values in a list.
+    This file is a FIT file that contains a table and this function returns
+    the coordinates values in a list.
+    
+    Keyword arguments:
+    rdls_file -- RDLS file where to look for the coordinates. 
+    
+    Returns:
+    A list containing in each item an index, and the AR, DEC for all the 
+    coordinates read form the RDLA file.    
     
     """
     
@@ -86,6 +107,7 @@ def get_rdls_data(rdls_file):
     # To add an index to the rows.
     n = 1
     
+    # Iterate over the table read from the RDLS file.
     for row in tbdata:
         ldata.append([n, row[0], row[1]])
         n += 1
@@ -93,12 +115,19 @@ def get_rdls_data(rdls_file):
     return ldata  
 
 def get_object_references(rdls_file, objects):
-    """
+    """Search the indexes in a RDLS that corresponds to a set of objects.
     
-    This function takes and RDLS file and a list of objects and 
-    returns the index in the RDLS file whose coordinates get the
-    better match for those of the object and also the name of the
-    object.
+    From the RDLS file and the list of objects returns the index in the RDLS 
+    file whose coordinates get the better match for those of the object and 
+    also the name of the object.
+    
+    Keyword arguments:
+    rdls_file -- RDLS file where to look for the coordinates.
+    objects -- Objects to look for in the RDLS file using its coordinates.
+    
+    Returns:    
+    The list of indexes related to a RDLS file whose coordinates corresponds
+    to the objects received.
     
     """
     
@@ -137,10 +166,17 @@ def get_object_references(rdls_file, objects):
     return index, object_name    
 
 def get_inst_magnitudes_for_object(rdls_file, path, objects):
-    """
+    """Searches in a given path all the files related to an object.
     
-    This function search in a given path all the files related to
-    an object that contains magnitudes for that object.
+    Keyword arguments:
+    rdls_file -- RDLS file where to look for the coordinates. The name of the
+    object is retrieved from the file name.
+    path -- Path where to search the files.
+    objects -- List of all objects of interest.
+    
+    Returns:        
+    All the magnitudes read from the files found related to the object of 
+    interest.
     
     """
     
@@ -189,15 +225,18 @@ def get_inst_magnitudes_for_object(rdls_file, path, objects):
                 
     return magnitudes 
 
-def save_magnitudes(object_name, filename_sufix, inst_magnitudes_obj):
-    """
+def save_magnitudes(object_name, filename_suffix, inst_magnitudes_obj):
+    """Save the magnitudes to a text file.
     
-    Save the magnitudes to a text file.
+    Keyword arguments:     
+    object_name -- Name of the object that corresponds to the magnitudes.
+    filename_suffix -- Suffix to add to the file name.
+    inst_magnitudes_obj -- List of magnitudes.
     
     """
     
     # Get the name of the output file.
-    output_file_name = object_name + filename_sufix + "." + TSV_FILE_EXT
+    output_file_name = object_name + filename_suffix + "." + TSV_FILE_EXT
 
     with open(output_file_name, 'w') as fw:
         
@@ -211,10 +250,13 @@ def save_magnitudes(object_name, filename_sufix, inst_magnitudes_obj):
             writer.writerows(imag)  
 
 def compile_instrumental_magnitudes(objects):
-    """
+    """Receives a list of object and compiles the magnitudes for each object.
     
-    This function receives a list of object and compiles all the magnitudes
-    found in a text file for each object.
+    Keyword arguments:
+    objects -- The list of objects.
+    
+    Returns:        
+    A list containing all the magnitudes found for each object.
     
     """
     
@@ -282,12 +324,16 @@ def compile_instrumental_magnitudes(objects):
     return instrumental_magnitudes  
             
 def get_day_of_measurement(time_jd):
-    """
+    """Returns the julian day related to the Julian time received.
     
-    Returns the julian day that is assigned to this value.
     The day is assigned to that which the night begins.
-    So a JD between .0 (0:00:00) and .4 (+8:00:00) belongs 
-    to the day before.
+    So a JD between .0 (0:00:00) and .4 (+8:00:00) belongs to the day before.
+    
+    Keyword arguments:
+    time_jd -- A Julian time value.
+    
+    Returns:        
+    The Julian day related to the Julian time received. 
     
     """    
     
@@ -307,10 +353,16 @@ def get_day_of_measurement(time_jd):
     return day
 
 def get_standard_magnitude(object_data, filter):
-    """
+    """Get the standard magnitude of an object in the filter indicated.
     
-    Get the standard magnitude of an object in the filter indicated.
+    Keyword arguments:
+    object_data -- All the data for an object.
+    filter -- The filter to use.
     
+    Returns:        
+    The magnitude of this object for the filter indicated taken from the data
+    of the object.
+        
     """
     
     std_mag = None
@@ -326,9 +378,14 @@ def get_standard_magnitude(object_data, filter):
     return std_mag
 
 def calculate_extinction_coefficient(mag_data):
-    """
+    """Calculates the extinction coefficient using the data received.
     
-    Calculate the extinction coefficient using the data received.
+    Keyword arguments:
+    mag_data -- The data with all the magnitude values needed to calculate
+    the linear regression for the extinction coefficient.
+    
+    Returns:        
+    The extinction coefficient calculated.
     
     """
     
@@ -360,10 +417,16 @@ def calculate_extinction_coefficient(mag_data):
     return slope, intercept
 
 def valid_data_to_calculate_ext_cof(obj_data_for_ext_coef):
-    """
-    This function examines the data from an object to ensure are coherent,
-    i.e., airmass and instrumental magnitude are proportional, greater airmass
+    """Examines the data from an object to ensure are coherent.
+    
+    I.e., airmass and instrumental magnitude are proportional, greater airmass
     is also a greater magnitude, otherwise these data is not considered valid. 
+    
+    Keyword arguments:
+    obj_data_for_ext_coef -- Data of magnitude and airmass for an object.
+    
+    Returns:        
+    True if coherent, False otherwise.
     
     """
     
@@ -371,15 +434,21 @@ def valid_data_to_calculate_ext_cof(obj_data_for_ext_coef):
     # calculated and the slope inspected. 
     slope, intercept = calculate_extinction_coefficient(obj_data_for_ext_coef)
     
-    return slope > 0.0
-    
+    return slope > 0.0    
     
 def extinction_coefficient(objects, standard_obj_index, \
                            instrumental_magnitudes):
-    """
+    """Calculates the extinction coefficient using the standard objects.
     
-    Calculate the atmospheric extinction coefficient using the standard objects.
+    Keyword arguments:
+    objects -- The list of all the objects.
+    standard_obj_index -- The indexes in the list that correspond to standard 
+        objects.
+    instrumental_magnitudes -- The magnitude values.
     
+    Returns:        
+    The extinction coefficient calculated, the days of each calculation and 
+    the filters. 
     """
     
     ext_coef = []
@@ -471,11 +540,16 @@ def extinction_coefficient(objects, standard_obj_index, \
     return ext_coef, days, filters
 
 def get_extinction_coefficient(ext_coef, day, filter):
-    """
+    """ Returns parameters of the extinction coefficient for a day and filter.
     
-    Returns the parameters related to a extinction coefficient
-    for a day and filter.
+    Keyword arguments:
+    ext_coef -- All the extinction coefficients calculated.
+    day -- The day of interest.
+    filter -- The filter of interest.
     
+    Returns:        
+    The slope and intercept value calculated for a day and filer given.
+        
     """
     
     # Default values that don't change the returns the instrumental
@@ -495,12 +569,16 @@ def get_extinction_coefficient(ext_coef, day, filter):
     return slope, intercept 
         
 def get_indexes_of_std_and_no_std(objects, instrumental_magnitudes):
-    """
+    """Returns the indexes for the standard and no standard objects.
     
-    This function returns the indexes for the standard and no standard
-    objects.
-    Also store to a text file the instrumental magnitudes.
+    Also store to a text file the instrumental magnitudes of each object.
     
+    Keyword arguments:
+    objects -- List of objects to process.
+    instrumental_magnitudes -- List of magnitudes for all the objects.
+    
+    Returns:        
+    The indexes for the standard and no standard objects.
     """
     
     standard_obj_index = []
@@ -520,20 +598,25 @@ def get_indexes_of_std_and_no_std(objects, instrumental_magnitudes):
             standard_obj_index.extend([i])
         else:
             no_standard_obj_index.extend([i])     
-            
-    
+                
     return standard_obj_index, no_standard_obj_index 
 
 def get_extinction_corrected_mag(obj, \
                                  object_inst_mags, \
                                  ext_coef):
-    """
-    
-    Get the extinction corrected magnitude for the measures
-    of the object received. 
+    """Get the magnitude corrected for extinction for the object received.
+     
     The extinction coefficients are applied and the magnitudes 
     calculated are saved to a file and returned.
     
+    Keyword arguments:
+    obj -- The object whose magnitudes are corrected. 
+    object_inst_mags -- The magnitudes to correct.
+    ext_coef -- The extinction coefficients to apply.
+    
+    Returns:        
+    The magnitudes corrected.   
+        
     """
     
     magnitudes = []
@@ -573,10 +656,16 @@ def calculate_transforming_coefficients(B_V_observed_mag, \
                                         V_observed_mag, 
                                         B_V_std_mag, 
                                         V_std_mag):
-    """
+    """Calculate the transforming coefficients.
     
-    Calculate the transforming coefficients.
-    
+    Keyword arguments:
+    B_V_observed_mag -- List of B-V values for object.
+    V_observed_mag -- List of V magnitudes for object.
+    B_V_std_mag -- List of B-V values for standard object.
+    V_std_mag -- List of V magnitudes for standard object.
+                                        
+    Returns:        
+    The two slopes and two intercepts to transform the magnitudes.
     """   
     
     # First calculation is:
@@ -598,12 +687,21 @@ def calculate_transforming_coefficients(B_V_observed_mag, \
 def get_transforming_coefficients(objects, \
                                   standard_obj_index, \
                                   ext_corr_mags, days, filters):
-    """
+    """Get the transforming coefficients to calculate the calibrated magnitudes.
     
     From the extinction corrected magnitudes of standard object 
     get the transforming coefficients used to calculate the
     calibrated magnitudes.
     
+    Keyword arguments:
+    objects -- List of objects.
+    standard_obj_index -- Indexes of the standard objects.
+    ext_corr_mags -- The magnitudes with the extinction corrected.
+    days -- List of days.
+    filters -- List of filters.
+    
+    Returns:        
+    The transforming coefficients to calculate the calibrated magnitudes    
     """  
     
     trans_coef = []
@@ -695,12 +793,19 @@ def get_transforming_coefficients(objects, \
     return trans_coef
     
 def calibrated_magnitudes(objects, obj_indexes, ext_corr_mags, trans_coef):
-    """
+    """Calculate the calibrated magnitudes and save them to a file.
     
     Using the transformation coefficients calculate the calibrated
     magnitudes from the extinction corrected magnitudes and save them
     to a file.
     
+    Keyword arguments:
+    objects -- List of objects.
+    obj_indexes -- List of indexes of the objects.
+    ext_corr_mags -- Magnitudes with extinction corrected.
+    trans_coef -- Transformation coefficients needed to get calibrated
+        magnitudes.     
+        
     """    
         
     # Calculate for each object.
@@ -786,12 +891,21 @@ def calculate_calibrated_mag(objects, \
                              no_standard_obj_index, \
                              instrumental_magnitudes, \
                              ext_coef, days, filters):
-    """
+    """Calculate the calibrated magnitude of the objects.
     
     Calculate the calibrated magnitude of the objects 
     using the extinction coefficient calculated previously and
     calibrating with the standard magnitudes.
     
+    Keyword arguments:
+    objects -- List of objects.
+    standard_obj_index -- Indexes of the standard objects.
+    no_standard_obj_index -- Indexes of the no standard objects.
+    instrumental_magnitudes -- All the instrumental magnitudes.
+    ext_coef -- The extinction coefficients calculated.
+    days -- The list of days with extinction coefficients calculated.
+    filters --T he list of filters with extinction coefficients calculated.     
+        
     """
     
     # To store extinction corrected magnitudes of all objects.
@@ -832,6 +946,10 @@ def process_instrumental_magnitudes(objects, instrumental_magnitudes):
     This function process the instrumental magnitudes to get magnitudes
     calibrated.
     
+    Keyword arguments:
+    objects -- List of objects.
+    instrumental_magnitudes -- All the instrumental magnitudes.
+        
     """
     
     standard_obj_index, no_standard_obj_index = \
@@ -854,6 +972,9 @@ def calculate_magnitudes(progargs):
     Get the magnitudes of the objects grouping the magnitudes and
     performing the necessary corrections and calibrations.
 
+    Keyword arguments:
+    progargs -- program arguments.        
+    
     """
     
     # Read the list of objects whose magnitudes are needed.

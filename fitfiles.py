@@ -18,9 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""
-This module groups some functions performed on fit files.
-"""
+"""This module groups some functions performed on fit files. """
 
 import logging
 import pyfits
@@ -42,13 +40,24 @@ ORG_FIT_HEADER_FIELDS = [DATE_FIELD_NAME, IMAGE_TYPE_FIELD_NAME, \
 
 XY_CENTER_FIT_HEADER_FIELDS = [CRPIX1, CRPIX2]
 
-def get_filter_from_file_name(filename):
-    """ Get the filter from the file name. """
+def search_filter_from_set_in_file_name(filename):
+    """ Get from a file name, a filter name belonging to the set filters used. 
     
+    Keyword arguments:
+    filename -- File name where the filter name is extracted.
+    
+    Returns:    
+    The filter name extracted from the file name, if any.
+    
+    """
+    
+    # By default, no filter name.
     filtername = ""
     
+    # Remove the extension from the file name.
     filename_no_ext = filename[:-len('.' + FIT_FILE_EXT)]
     
+    # Search in the file name, the name of one of the filters in use.
     for f in FILTERS:
         index = filename_no_ext.rfind(f)
         if index > 0:
@@ -57,20 +66,24 @@ def get_filter_from_file_name(filename):
     return filtername
 
 def get_image_filter(header_fields, filename):
-    """ Returns the filter indicated in the filename if any. 
+    """ Returns the filter used for this image, if any. 
     
-    This function returns the filter used for this image.
-    At first, the filter is searched in header file, if it is not found there,
-    the filter is extracted from the file name.
-    The filter name is part of the file name and is located in a
-    particular position.
+    At first, the filter is searched in header file. The filter name is part 
+    of the file name and is located in a concrete position.
+    If it is not found there, the filter is extracted from the file name.
+    
+    Keyword arguments:
+    header_fields -- Header fields of the file. 
+    filename -- Name of the file.
+    
+    Returns:    
+    The filter name, if it is identified.
     
     """    
 
     filtername = ''
     field_processed = False
-    
-    
+        
     # Check if any header field has been found.
     if header_fields != None and len(header_fields) > 0:
         
@@ -90,7 +103,7 @@ def get_image_filter(header_fields, filename):
     # If the header field has not been processed.
     if not field_processed:
         # Get the filter from the file name.
-        filtername = get_filter_from_file_name(filename)
+        filtername = search_filter_from_set_in_file_name(filename)
         
     # If the filter has been identified, show the method used.
     if len(filtername) > 0:      
@@ -104,14 +117,17 @@ def get_image_filter(header_fields, filename):
     return filtername
 
 def get_image_filter_from_file(filename):
-    """ Returns the filter indicated in the filename if any. 
+    """ Returns the filter used for this image, if any. 
     
-    This function returns the filter used for this image.
-    First, the filter is searched in header file, if it is not found there,
-    the filter is extracted from the file name.
-    The filter name is part of the file name and is located in a
-    particular position.
+    This function get the header fields and pass them and the file name to
+    another function that actually gets the filter name.
     
+    Keyword arguments:
+    filename -- Name of the file whose filter is requested.
+    
+    Returns:    
+    The filter name, if it is identified.
+            
     """    
     
     # Get some fit header fields that can be used to organize
@@ -123,11 +139,15 @@ def get_image_filter_from_file(filename):
     return get_image_filter(header_fields, filename)  
 
 def get_fit_fields(fit_file_name, fields = ORG_FIT_HEADER_FIELDS):
-    """
+    """Retrieves the fields of the fit header from the file indicated.
     
-    This function retrieves some fields of the fit header
-    corresponding to the file name received.
+    Keyword arguments:
+    fit_file_name -- Name of the fit file
+    fields -- The fields to return.
     
+    Returns:    
+    The requested fields found in the file name indicated. 
+        
     """
     
     logging.debug("Extracting header fields for: " + fit_file_name)
@@ -164,11 +184,16 @@ def get_fit_fields(fit_file_name, fields = ORG_FIT_HEADER_FIELDS):
     return header_fields
   
 def remove_prefixes(file_name):
-    """
+    """ Returns a file where the numeric prefixes are removed.
     
-    This function returned a file where the numeric prefixes, indicated by dots,
-    that the file name received can have are removed.
+    The numeric prefixes should be separated by dots.
     
+    Keyword arguments:
+    file_name -- Name of the file to process.
+    
+    Returns:    
+    The name of the file without prefixes.
+        
     """
     
     # By default the file name returned is the name received.
@@ -202,18 +227,23 @@ def remove_prefixes(file_name):
     return final_file_name 
 
 def file_is_type(header_fields, filename_path, field_type, type_string):
-    """
+    """Determines if the data received are related to a specific type of file.
+     
+    First the header fields are evaluated and if the result is not conclusive 
+    the file name is analyzed.
+    The file name has the the form type-orderfilter.fit'. Where 'type' could be
+    'flat', 'bias' or a proper name. A '-' character separates the 'orderfilter'
+    part that indicates the ordinal number of the image and optionally a filter,
+    only bias has no filter.     
     
-    This function determine if the data received are
-    related to a specific type of file. 
-    First the header fields are evaluated and if the 
-    result is not conclusive the file name is analyzed.
-    The file name has the the form type-orderfilter.fit'.
-    Where 'type' could be 'flat', 'bias' or a proper name.
-    A '-' character separates the 'orderfilter' part that
-    indicates the ordinal number of the image and optionally
-    a filter, only bias has no filter.     
+    Keyword arguments:
+    header_fields -- The headers of the file.
+    filename_path -- The path of the file.
+    field_type -- The value to compare with that of the fields.
+    type_string -- The value expected in the file name to check the type.
     
+    Returns:    
+        
     """  
     
     is_type = False
@@ -264,11 +294,15 @@ def file_is_type(header_fields, filename_path, field_type, type_string):
     return is_type       
 
 def file_is_bias(header_fields, filename):    
-    """
+    """Determines if the data received are related to a bias file. 
     
-    This function determine if the data received are
-    related to a bias file. 
+    Keyword arguments:
+    header_fields -- Fields from the file header to check if it is a bias.
+    filename -- Name of the file.
     
+    Returns:    
+    True if the file is for a bias, False otherwise.
+        
     """
     
     type = file_is_type(header_fields, filename, \
@@ -279,11 +313,15 @@ def file_is_bias(header_fields, filename):
     return type
     
 def file_is_flat(header_fields, filename):    
-    """
+    """Determine if the data received are related to a flat file. 
     
-    This function determine if the data received are
-    related to a flat file. 
+    Keyword arguments:
+    header_fields -- Fields from the file header to check if it is a flat.
+    filename -- Name of the file.
     
+    Returns:    
+    True if the file is for a flat, False otherwise.  
+        
     """
     
     type = file_is_type(header_fields, filename, \
@@ -294,11 +332,16 @@ def file_is_flat(header_fields, filename):
     return type
 
 def get_file_binning(fit_file_name):
-    """
+    """ Returns the binning of a fit file reading its header.
     
-    Returns the binning of a fit file reading its header.
     The return format is: 1x1, 2x2, and so on.
     
+    Keyword arguments:
+    fit_file_name -- Name of the fit file.
+    
+    Returns:    
+    The binning value, if found.
+        
     """
     
     bin = None

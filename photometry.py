@@ -18,7 +18,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""
+"""This module calculates the photometry.
+
 This module calculates the photometry of the objects detected previously
 by means of astrometry in a set of data images.
 The photometry values calculated are stored in a text file that contains
@@ -39,11 +40,7 @@ from images import *
 phot_progargs = None
 
 def init_iraf():
-    """
-    
-    This function initializes the pyraf environment.
-    
-    """
+    """Initializes the pyraf environment. """
     
     # The display of graphics is not used, so skips Pyraf graphics 
     # initialization and run in terminal-only mode to avoid warning messages.
@@ -63,10 +60,7 @@ def init_iraf():
     iraf.phot.verify = "no"
     
 def set_common_phot_pars():
-    """
-    
-    This function sets the pyraf parameters used to perform
-    the photometry of images that do not depends of each image.
+    """Sets the pyraf parameters used to in photometry common to all the images.
     
     """        
     
@@ -86,10 +80,11 @@ def set_common_phot_pars():
     iraf.datapars.datamax = OSN_CCD_T150_DATAMAX 
 
 def set_image_specific_phot_pars(fwhm, datamin):
-    """
+    """Sets the pyraf parameters in photometry that changes for each image.
     
-    This function sets the pyraf parameters used to perform
-    the photometry that depends on each image.
+    Keyword arguments: 
+    fwhm -- FWHM value.
+    datamin - datamin value to set.
     
     """        
     
@@ -101,11 +96,7 @@ def set_image_specific_phot_pars(fwhm, datamin):
     iraf.datapars.datamin = datamin
 
 def save_parameters():
-    """
-    
-    This function saves the parameters used to do the photometry.
-    
-    """    
+    """Saves the parameters used to do the photometry. """    
     
     # Save parameters in files.
     iraf.centerpars.saveParList(filename='center.par')
@@ -115,8 +106,10 @@ def save_parameters():
 
 
 def calculate_datamin(image_file_name):
-    """
-    Calculate a datamin value for the image received using imstat.
+    """ Calculate a datamin value for the image received using imstat. 
+    
+    Keyword arguments: 
+    image_file_name -- Name of the file with the image. 
     
     """
     
@@ -142,11 +135,16 @@ def calculate_datamin(image_file_name):
     return datamin
 
 def do_phot(image_file_name, catalog_file_name, output_mag_file_name, progargs):
-    """
+    """Calculates the photometry of the images.
     
-    This function calculates the photometry of the images. 
     Receives the image to use, a catalog with the position of the objects
     contained in the image and the name of the output file.
+    
+    Keyword arguments:     
+    image_file_name -- Name of the file with the image. 
+    catalog_file_name -- File with the X, Y coordinates to do phot.
+    output_mag_file_name -- Name of the output file with the magnitudes.
+    progargs -- Program arguments.
     
     """
     
@@ -175,7 +173,7 @@ def do_phot(image_file_name, catalog_file_name, output_mag_file_name, progargs):
         logging.error( "Iraf error is: " + str(exc))
 
 def do_photometry(progargs):   
-    """
+    """walk the directories searching for image to calculate its photometry.
     
     This function walk the directories searching for catalog files
     that contains the x,y coordinates of the objects detected by the
@@ -183,6 +181,9 @@ def do_photometry(progargs):
     For each catalog the corresponding data image is located and passes
     along with the catalog to a function that calculates the photometry
     of the objects in the catalog file.
+    
+    Keyword arguments:     
+    progargs -- Program arguments.    
     
     """
     
@@ -238,11 +239,11 @@ def do_photometry(progargs):
                                           " already done.")
                     
 def txdump_photometry_info():
-    """
+    """Extract the results of photometry from files to save them to a text file.
     
     This function search files containing the results of photometry
     and using txdump extracts the coordinates and photometric measure
-    to save it to a text file.
+    to save it to a text file. 
     
     """
     
@@ -290,10 +291,10 @@ def txdump_photometry_info():
                     mag_dest_file.close()
                            
 def calculate_photometry(progargs):
-    """ Calculates the photometry of data images.
-
-    This function calculates the photometry for all the data images found.
-
+    """ Calculates the photometry for all the data images found.
+    
+    Keyword arguments:    
+    progargs -- Program arguments.
     """
 
     # Init iraf package.
@@ -308,30 +309,37 @@ def calculate_photometry(progargs):
     # Export photometry info to a text file with only the columns needed.
     txdump_photometry_info()
     
-def get_object_final_name(object_name, int_objects):
-    """
+def get_object_final_name(object_name, objects_final_names):
+    """Get the name to use for a the received object name.
     
     This function receives the name of an object and returns
     the final name given to that object according to the final
     name indicated in the objects file.
     
+    Keyword arguments:
+    object_name -- Name of the object.
+    objects_final_names -- Names to use for the objects.
+    
+    Returns:    
+    Final name for the object. 
+    
     """
     
     object_final_name = object_name
     
-    for o in int_objects:
+    for o in objects_final_names:
         if o[OBJ_NAME_COL] == object_name:
             object_final_name = o[OBJ_FINAL_NAME_COL]
     
-    return object_final_name
-    
+    return object_final_name    
     
 def write_manitudes_diff_file(diff_mags, file_name):
-    """
+    """Write the magnitudes received in a text file with the name indicated.
     
-    Write all the differences of magnitudes in a text file with
-    the name indicated.
-    
+    Keyword arguments:
+    diff_mags -- List of differential magnitudes.
+    file_name -- Name of the file to write.
+
     """
     
     logging.info("Saving differences of magnitudes to file: " + file_name)    
@@ -345,11 +353,18 @@ def write_manitudes_diff_file(diff_mags, file_name):
             writer.writerow(row)     
       
 def save_manitudes_diff(all_magnitudes, objects, filters, max_index):
-    """
+    """Write the magnitudes in text files according to the data received.
     
-    Write all the differences of magnitudes in several text files
-    according to the object, the filter and the index.
+    Write a file with all the magnitudes and also a file for each object
+    and filter. Only are saved the magnitudes with an index smaller than 
+    received
     
+    Keyword arguments:
+    all_magnitudes -- All the magnitudes.
+    objects -- The objects related to the magnitudes.
+    filters -- The filters related to the magnitudes.
+    max_index -- The maximum index that the magnitude may have to be saved.
+        
     """
     
     # First save a file with all the magnitudes.
@@ -367,8 +382,9 @@ def save_manitudes_diff(all_magnitudes, objects, filters, max_index):
             lof = [ i for i in all_magnitudes \
                  if i[OBJ_NAME_COL_DF] == o and i[FILTER_COL_DF] == f ]
             
-            # Select also by index.
+            # If there is any element.
             if len(lof) > 0:
+                # Select those with an index smaller that this indicated.
                 for n in range(max_index):
                     lofi = [ i for i in lof if i[INDEX_COL_DF] == n and
                                 i[JD_COL_DF] != 0.0 and i[MAG_COL_DF] != 0.0 ]
@@ -392,11 +408,14 @@ def save_manitudes_diff(all_magnitudes, objects, filters, max_index):
                 logging.debug("Not found for " + o + " and " + f)
 
 def differential_photometry(progargs):
-    """
+    """Calculates the differential photometry with one or more objects.
     
-    This function calculates the differential photometry between the
-    object of interest and one or more objects in the same image.    
+    The objects used to calculate the difference are objects that exists in
+    the same image.    
 
+    Keyword arguments:
+    progargs -- Program arguments.
+    
     """
     
     # Read the object of interest.
@@ -554,4 +573,3 @@ def differential_photometry(progargs):
     logging.debug("Compiled " + str(len(all_magnitudes)) + " magnitudes.")
     
     save_manitudes_diff(all_magnitudes, objects, filters, max_index) 
-                    

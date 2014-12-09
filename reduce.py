@@ -18,9 +18,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""
-This module performs the reduction of images. Walk the directories looking for
-bias, flat and data images.
+"""This module performs the reduction of images. 
+
+Walk the directories looking for bias, flat and data images.
 For bias images calculates the average bias.
 For flats images, subtract the bias and calculates the average flat for each 
 filter.
@@ -39,8 +39,10 @@ from constants import *
 def show_files_statistics(list_of_files):
     """ Show the statistics for the files received.
     
-    This function applies imstat to the files received and
-    print the results.
+    This function applies imstat to the files received and print the results.
+    
+    Keyword arguments: 
+    list_of_files -- List of files to get its statistics.   
     
     """
     
@@ -123,6 +125,12 @@ def normalize_flats(files):
     value of the flat image. This mean is the result of applying imstat
     to each image.
     
+    Keyword arguments: 
+    files -- The names of the files corresponding to the flat images.
+    
+    Returns:    
+    The list of file names related to the normalized images.
+    
     """
     
     # The output list of normalized files is created.
@@ -178,8 +186,8 @@ def do_masterflat():
     images are divides in different directories, one for each filter.
     Once a directory for flat had been found, a bias subtraction is performed
     with each flat image. Finally a masterflat is calculated for each flat 
-    directory with an average operation using all the bias files.
-    
+    directory with an average operation using all the bias files.    
+        
     """
     
     logging.info("Doing masterflat ...")
@@ -296,8 +304,8 @@ def reduce_data():
     For each data image a bias subtraction and a subsequent division by the 
     flat is performed.
     The resulting image is saved in the same directory but with a different
-    name to keep the original file.
-    
+    name to keep the original file. 
+        
     """
     
     logging.info("Reducing data ...")
@@ -415,11 +423,7 @@ def reduce_data():
                             logging.error("Iraf error is: " + str(exc))
                         
 def reduce_images():
-    """ Complete reduction process.
-
-    This function performs the reduction of data images.
-
-    """
+    """This function performs the reduction of data images. """
 
     # Load the images package and does not show any output of the tasks.
     iraf.images(_doprint=0)

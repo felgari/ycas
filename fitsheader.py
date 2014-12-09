@@ -18,9 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""
-This module performs operations with the headers of FIT files.
-"""
+"""This module performs operations with the headers of FIT files. """
 
 import sys
 import os
@@ -37,10 +35,8 @@ FIT_HEADER_FIELDS = ["DATE-OBS", "OBJCTRA", "OBJCTDEC", "IMAGETYP", \
                      "FILTER", "AIRMASS"]
 
 def summarize_fit_headers():
-    """
-    
-    This function searches FIT files that correspond to data images and
-    prints the values stored for a set of headers fields.
+    """Searches FIT files that correspond to data images and prints the values 
+    stored for a set of headers fields.
     
     """
     
