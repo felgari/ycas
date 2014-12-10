@@ -193,9 +193,9 @@ def get_files_of_interest(obj_names, files):
                 filter = header_fields[FILTER_FIELD_NAME]
             except KeyError as ke:
                 # If not, get the image filter from the file name.
-                filter = get_filter_from_file_name(f)
+                filter = search_filter_from_set_in_file_name(f)
         else:
-            filter = get_filter_from_file_name(f)
+            filter = search_filter_from_set_in_file_name(f)
         
         # Determine the file type and add it to the appropriate list,
         # also save the filter for flats and images.
