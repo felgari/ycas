@@ -169,7 +169,7 @@ def normalize_flats(files):
     	
         except iraf.IrafError as exc:
             logging.error("Error executing imstat: getting stats for flat " + \
-                          image: " + fl)
+                          "image: " + fl)
             logging.error("Iraf error is: " + str(exc))       
     
     return list_of_norm_flat_files
@@ -282,11 +282,11 @@ def do_masterflat():
                                           list_of_work_flat_files)    
                             logging.error("Iraf error is: " + str(exc)) 
                         except OSError as oe:
-                            logging.error("OSError removing normalized " + \ 
+                            logging.error("OSError removing normalized " + \
                                           "flat is: " + str(oe))           
                         
                     except iraf.IrafError as exc:
-                        logging.error("Error executing imarith. " + \ 
+                        logging.error("Error executing imarith. " + \
                                       "Subtracting masterbias " + \
                                       masterbias_name + " to: " + \
                                       list_of_flat_files)
