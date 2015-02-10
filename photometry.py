@@ -68,7 +68,7 @@ def set_common_phot_pars():
     iraf.fitskypars.dannulus = DANNULUS_VALUE
     iraf.fitskypars.skyvalue = SKY_VALUE
     iraf.fitskypars.salgorithm = "mode"
-    iraf.centerpars.cbox = 0
+    iraf.centerpars.cbox = CBOX_VALUE
     iraf.centerpars.calgori = "centroid"
     
     # Name of the fields FITS that contains these values.
