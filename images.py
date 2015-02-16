@@ -55,8 +55,8 @@ class ImagesArguments(object):
         self.__parser = argparse.ArgumentParser()
         
         self.__parser.add_argument("-e", dest="e", action="store_true", \
-                                   help='Extract images of objects of " \
-                                   "interest to destiny directory')
+                                   help='Extract images of objects of \
+                                   interest to destiny directory')
         
         self.__parser.add_argument("-l", dest="l", action="store_true", \
                                    help="List objects found in images")
@@ -74,8 +74,8 @@ class ImagesArguments(object):
                                    "interest")
         
         self.__parser.add_argument("-t", dest="t", action="store_true", 
-                                   help="Use header information to get the " + \
-                                   "type of the image")           
+                                   help="Use header information to get the \
+                                   type of the image")           
         
     @property    
     def is_extraction(self):        
