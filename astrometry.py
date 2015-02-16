@@ -41,6 +41,11 @@ else:
     import subprocess
     
 XY_PERCENT_DEV_FROM_CENTER = 0.7
+
+# Positions for the values of the objects coordinates. 
+RA_POS = 0
+DEC_POS = 1
+ID_POS = 2
     
 class ObjectNotFound(StandardError):
     """Raised if object is not found from file name. """
@@ -196,39 +201,46 @@ def get_indexes_for_obj_cood(rd_data, object, object_references):
     
     """
     
+    # Indexes of the objects found.
     indexes = []
+    # Identifiers of the objects found.
+    identifiers = []
     
     # Get the index for the object.
     new_index = get_rd_index(rd_data, float(object[OBJ_RA_COL]), \
                              float(object[OBJ_DEC_COL]))
     
+    # If the object has been found.
     if new_index >= 0:
         logging.debug("Index for object '" + object[OBJ_NAME_COL] + \
                       "' is " +  str(new_index))
         
-        indexes.extend([new_index])
-        
         # Get the indexes for the objects references.
         for obj_ref in object_references:
-            new_index = get_rd_index(rd_data, float(obj_ref[0]), \
-                                     float(obj_ref[1]))
+            new_index = get_rd_index(rd_data, 
+                                     float(obj_ref[RA_POS]), \
+                                     float(obj_ref[DEC_POS]))
             
             # Check that an index has been found for this object.
             if new_index >= 0:
-                logging.debug("Index for references " + str(obj_ref[0]) + \
-                              "," + str(obj_ref[1]) + " is " + str(new_index))        
+                logging.debug("Index for references " + str(obj_ref[RA_POS]) + \
+                              "," + str(obj_ref[DEC_POS]) + " with id " +
+                              obj_ref[ID_POS]+ " is " + str(new_index))        
                                          
-                indexes.extend([new_index])      
+                indexes.extend([new_index])  
+                
+                identifiers.extend([obj_ref[ID_POS]])    
             else:
-                logging.debug("Index for references " + str(obj_ref[0]) + \
-                              "," + str(obj_ref[1]) + " not found")
+                logging.debug("Index for references " + str(obj_ref[RA_POS]) + \
+                              "," + str(obj_ref[DEC_POS]) + " with id " + \
+                              obj_ref[ID_POS]+ " not found")
     else:
         logging.debug("Index for object " + object[OBJ_NAME_COL] + \
                       " not found")
 
-    return indexes
+    return indexes, identifiers
 
-def write_catalog_file(catalog_file_name, indexes, xy_data):
+def write_catalog_file(catalog_file_name, indexes, xy_data, identifiers):
     """Write text files with the x,y and ra,dec coordinates.
     
     The coordinates written are related to the x,y data and indexes set 
@@ -239,6 +251,7 @@ def write_catalog_file(catalog_file_name, indexes, xy_data):
     indexes -- List of indexes corresponding to the coordinates to write.
     xy_data -- List of the X, Y coordinates that are referenced by X, Y
     coordinates.    
+    identifiers -- Identifiers of the objects found.    
     
     """
     
@@ -248,10 +261,13 @@ def write_catalog_file(catalog_file_name, indexes, xy_data):
     catalog_file = open(catalog_file_name, "w")
         
     # Iterate over the indexes to write them to the file.
-    for i in indexes:
+    for i in range(len(indexes)):
         # The indexes corresponds to items in the XY data list.
-        catalog_file.write(str(xy_data[i][XY_DATA_X_COL]) + " " + \
-                           str(xy_data[i][XY_DATA_Y_COL]) + "\n")
+        ind = indexes[i]
+        
+        catalog_file.write(str(xy_data[ind][XY_DATA_X_COL]) + " " + \
+                           str(xy_data[ind][XY_DATA_Y_COL]) + " " + \
+                           identifiers[i] + "\n")
     
     catalog_file.close()
     
@@ -404,7 +420,8 @@ def write_coord_catalogues(image_file_name, catalog_full_file_name, \
         
         # Get the indexes for x,y and ra,dec data related to the
         # objects received.
-        indexes = get_indexes_for_obj_cood(rd_data, object, object_references)
+        indexes, identifiers = \
+            get_indexes_for_obj_cood(rd_data, object, object_references)
         
         # Check if the coordinates complies with the 
         # coordinates validation criteria.
@@ -413,7 +430,8 @@ def write_coord_catalogues(image_file_name, catalog_full_file_name, \
 
             # Write catalog file with the x,y coordinate to do the
             # photometry.
-            write_catalog_file(catalog_full_file_name, indexes, xy_data)        
+            write_catalog_file(catalog_full_file_name, indexes, xy_data, \
+                               identifiers)        
             
             success = True
     else:
