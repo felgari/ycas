@@ -208,7 +208,7 @@ def do_photometry(progargs):
                 # Each catalog indicates one or more images.
                 for cat_file in catalog_files:
                     
-                    # The images used are the aligned ones with a name that 
+                    # The images used are the ones with a name that 
                     # matches the name of the catalog, so the catalog references
                     # are valid for all these images.
                     object_name = cat_file[0:cat_file.find(DATANAME_CHAR_SEP)]

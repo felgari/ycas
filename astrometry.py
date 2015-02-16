@@ -208,8 +208,7 @@ def get_indexes_for_obj_cood(rd_data, object, object_references):
         
         indexes.extend([new_index])
         
-        # Get the indexes for the objects references (the first is the
-        # object of interest).
+        # Get the indexes for the objects references.
         for obj_ref in object_references:
             new_index = get_rd_index(rd_data, float(obj_ref[0]), \
                                      float(obj_ref[1]))
@@ -367,7 +366,8 @@ def write_coord_catalogues(image_file_name, catalog_full_file_name, \
     image_file_name -- Name of the file of the image.
     catalog_full_file_name -- Name of the catalog to write
     object -- Data of the object corresponding to the image.
-    object_references -- 
+    object_references -- Coordinates for other objects in the field of the 
+        object of interest.
                            
     Returns:    
     True if the file is written successfully.
@@ -472,7 +472,7 @@ def do_astrometry(progargs):
     # Read the list of objects of interest.
     objects = read_objects_of_interest(progargs.interest_object_file_name)
     
-    # Read the coordinates of the reference object that has each object of
+    # Read the coordinates of the reference objects that has each object of
     # interest.
     objects_references = read_objects_references(objects)
 
@@ -522,7 +522,7 @@ def do_astrometry(progargs):
                                                        "." + CATALOG_FILE_EXT)
 
                         # Check if the catalog file already exists.
-                        # If ir already exists the astrometry is not calculated.
+                        # If it already exists the astrometry is not calculated.
                         if os.path.exists(catalog_file_name) == False :
     
                             use_sextractor = ""
