@@ -28,6 +28,7 @@ from constants import *
 
 RA_POS_COO = 0
 DEC_POS_COO = 1
+ID_POS_COO = 2
 
 def read_objects_of_interest(objects_file):
     """Read the list of objects of interest from the file indicated.
@@ -101,14 +102,16 @@ def get_coordinates(content):
     # Get RA and DEC strings in degrees.
     ra_deg = content[RA_POS_COO]
     dec_deg = content[DEC_POS_COO]
+    id = content[ID_POS_COO]
     
     # Remove comma.
     ra_deg = ra_deg[:ra_deg.find(',')]
+    dec_deg = dec_deg[:dec_deg.find(',')]
             
     ra_dec_deg = convert_deg_to_dec_deg(ra_deg, True)
     dec_dec_deg = convert_deg_to_dec_deg(dec_deg)
     
-    return ra_dec_deg, dec_dec_deg
+    return ra_dec_deg, dec_dec_deg, id
 
 def read_references_for_object(object_name):
     """ Read a file with the coordinates of some objects in its field.
@@ -138,13 +141,13 @@ def read_references_for_object(object_name):
     with open(file_name, 'rb') as fr:
         reader = csv.reader(fr, delimiter=' ')        
         
-        included_cols = [2, 5]
+        included_cols = [2, 5, 6]
             
         for row in reader:
             content = list(row[i] for i in included_cols)
-            ra, dec = get_coordinates(content)
+            ra, dec, id = get_coordinates(content)
             
-            references.append([ra, dec])    
+            references.append([ra, dec, id])    
 
     logging.debug("Coordinates read: " + str(references))
 
