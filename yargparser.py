@@ -56,8 +56,8 @@ class ProgramArguments(object):
         self.__parser = argparse.ArgumentParser()
         
         self.__parser.add_argument("-b", dest="b", metavar="bias", \
-                                   help='Name for the destiny directory " + \
-                                   "name where the bias images are stored')
+                                   help="Name for the destiny directory " + \
+                                   "name where the bias images are stored")
         
         self.__parser.add_argument("-f", dest="f", metavar="flat", \
                                    help="Name for the destiny directory " + \
