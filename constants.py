@@ -85,8 +85,13 @@ ASTROMETRY_NUM_OBJS = 20
 # Overwrite previous files and limit the number of objects to look at"
 ASTROMETRY_PARAMS = "--overwrite -d "
 # Radius of the field to solve.
-SOLVE_FIELD_RADIUS = 1.0
+SOLVE_FIELD_RADIUS = 0.1
+# Identifier for object of interest in the coordinates list of a field.
+OBJ_OF_INTEREST_ID = 0
+# Error margin when assigning astrometry coordinates.
+ASTROMETRY_COORD_RANGE = 0.005
 
+# First index for a FIT table.
 FIT_FIRST_TABLE_INDEX = 1
 
 # sextractor parameters.

@@ -173,12 +173,15 @@ def get_rd_index(rd_data, ra, dec):
         # the differences with RA (up to 360).
         temp_dec_diff = abs(float(rd[RD_DATA_DEC_COL]) - dec) * 4.0   
         
-        # If current row coordinates are smaller than previous this
-        # row is chosen as candidate for the object.
-        if temp_ra_diff + temp_dec_diff < ra_diff + dec_diff:
-            ra_diff = temp_ra_diff
-            dec_diff = temp_dec_diff
-            index = i        
+        # If the differences are into the margin.
+        if temp_ra_diff < ASTROMETRY_COORD_RANGE and \
+            temp_dec_diff < ASTROMETRY_COORD_RANGE:
+            # If current row coordinates are smaller than previous this
+            # row is chosen as candidate for the object.
+            if temp_ra_diff + temp_dec_diff < ra_diff + dec_diff:
+                ra_diff = temp_ra_diff
+                dec_diff = temp_dec_diff
+                index = i
     
         i += 1
         
@@ -272,7 +275,7 @@ def write_catalog_file(catalog_file_name, indexes, xy_data, identifiers):
     catalog_file.close()
     
 def check_celestial_coordinates(image_file_name, object, indexes, \
-                                rd_data, xy_data):
+                                identifiers, rd_data, xy_data):
     """Check if ra,dec coordinates complies the validation criteria.
     
     These validations are performed to ensure the astrometry coordinates are
@@ -366,6 +369,14 @@ def check_celestial_coordinates(image_file_name, object, indexes, \
                       image_file_name)
         
         success = False
+        
+    if len(set(identifiers)) < len(identifiers):
+        logging.error("Duplicated coordinates for some object in: " + \
+                      image_file_name)
+        
+    if len([x for x in identifiers if x == '0']) == 0:
+        logging.error("No coordinates identified for object of interest in: " + \
+                      image_file_name)        
     
     return success    
 
@@ -421,12 +432,12 @@ def write_coord_catalogues(image_file_name, catalog_full_file_name, \
         # Get the indexes for x,y and ra,dec data related to the
         # objects received.
         indexes, identifiers = \
-            get_indexes_for_obj_cood(rd_data, object, object_references)
+            get_indexes_for_obj_cood(rd_data, object, object_references)        
         
         # Check if the coordinates complies with the 
         # coordinates validation criteria.
         if check_celestial_coordinates(image_file_name, object, indexes, \
-                                       rd_data, xy_data):
+                                       identifiers, rd_data, xy_data):
 
             # Write catalog file with the x,y coordinate to do the
             # photometry.
