@@ -198,6 +198,7 @@ def get_inst_magnitudes_for_object(rdls_file, path, objects):
     
     # To store the magnitudes.
     magnitudes = list()
+    all_magnitudes = list()
     
     # Read magnitudes from csv files and add it to RDLS data.
     # Each csv file contains the magnitudes for all the object of an image.
@@ -206,26 +207,44 @@ def get_inst_magnitudes_for_object(rdls_file, path, objects):
         with open(csv_fl, 'rb') as fr:
             reader = csv.reader(fr)
             
-            nrow = 0
+            nrow = 0    
             
+            all_mag = []     
+            
+            # Process all the instrumental magnitudes in the file.
             for row in reader:
             
-                # Check if current row corresponds to the object.
+                # Get a list of values from the CSV row read.
+                fields = str(row).translate(None, "[]\'").split()            
+            
+                # Add magnitude for object of interest, so check 
+                # if current row corresponds to the object.
                 if nrow == object_index:
-                    # Get a list of values from the CSV row read.
-                    fields = str(row).translate(None, "[]\'").split()
                     
                     # Add magnitude value to the appropriate row from RDLS file.
                     magnitudes.append([fields[CSV_TIME_COL], 
                                          fields[CSV_MAG_COL],
                                          fields[CSV_AIRMASS_COL], 
+                                         fields[CSV_ERROR_COL],
                                          filter_name])
+                    
+                # Add the magnitude in any case to the other list, regardless
+                # if it is the object of interest or not. Only take into account
+                # the first value to add only once the time.
+                if nrow == 0:
+                    all_mag.extend([fields[CSV_TIME_COL], 
+                                    fields[CSV_ERROR_COL],
+                                    filter_name])
+                    
+                all_mag.extend([fields[CSV_MAG_COL], fields[CSV_ERROR_COL]])
                 
                 nrow += 1
                 
-    return magnitudes 
+            all_magnitudes.append(all_mag)
+                
+    return magnitudes, all_magnitudes
 
-def save_magnitudes(object_name, filename_suffix, inst_magnitudes_obj):
+def save_magnitudes_to_file(object_name, filename_suffix, inst_magnitudes_obj):
     """Save the magnitudes to a text file.
     
     Keyword arguments:     
@@ -263,6 +282,7 @@ def compile_instrumental_magnitudes(objects):
     # For each object a list is created to store its magnitudes.
     # In turn, all these lists are grouped in a list. 
     instrumental_magnitudes = list()
+    all_instrumental_magnitudes = list()    
     
     # Create a dictionary to retrieve easily the appropriate list
     # using the name of the object.
@@ -270,6 +290,7 @@ def compile_instrumental_magnitudes(objects):
     
     for i in range(len(objects)):
         instrumental_magnitudes.append([])
+        all_instrumental_magnitudes.append([])
         
         objects_index[objects[i][OBJ_NAME_COL]] = i
         
@@ -299,8 +320,8 @@ def compile_instrumental_magnitudes(objects):
                 for rdls_file in rdls_files_full_path:
                     
                     # Get the magnitudes for this object in current path.
-                    im = get_inst_magnitudes_for_object(rdls_file, path, \
-                                                        objects)
+                    im, aim = get_inst_magnitudes_for_object(rdls_file, path, \
+                                                             objects)
                     
                     # If any magnitude has been get.
                     if len(im) > 0:
@@ -317,11 +338,18 @@ def compile_instrumental_magnitudes(objects):
                         
                             # Add the magnitude to the object.
                             object_mea_list.append(im)
+                            
+                            # The same for all the instrumental magnitudes.
+                            object_all_mea_list = \
+                                all_instrumental_magnitudes[magnitudes_index]
+                        
+                            # Add the magnitude to the object.
+                            object_all_mea_list.append(aim)                            
                         except KeyError as ke:
                             logging.error("RDLS file with no object of " + \
                                           "interest: " + object_name)
                         
-    return instrumental_magnitudes  
+    return instrumental_magnitudes, all_instrumental_magnitudes
             
 def get_day_of_measurement(time_jd):
     """Returns the julian day related to the Julian time received.
@@ -567,15 +595,37 @@ def get_extinction_coefficient(ext_coef, day, filter):
         intercept = ec[0][INTERCEPT_CE_DATA]
     
     return slope, intercept 
+
+def save_magnitudes(objects, instrumental_magnitudes, \
+                    all_instrumental_magnitudes):
+    """ Save the magnitudes received.
+        
+    Keyword arguments:
+    objects -- List of objects.
+    instrumental_magnitudes - Instrumental magnitudes of objects of interest.
+    all_instrumental_magnitudes -- List of magnitudes for all the objects.    
+    
+    """
+    
+    # For each object. The two list received contains the same 
+    # number of objects.
+    for i in range(len(objects)):
+        
+        # Save instrumental magnitudes of objects of interest to a file.
+        save_magnitudes_to_file(objects[i][OBJ_NAME_COL], INST_MAG_SUFFIX, \
+                                instrumental_magnitudes[i])      
+        
+        # Save all the magnitudes to a file.
+        save_magnitudes_to_file(objects[i][OBJ_NAME_COL], ALL_INST_MAG_SUFFIX, \
+                                all_instrumental_magnitudes[i])
         
 def get_indexes_of_std_and_no_std(objects, instrumental_magnitudes):
-    """Returns the indexes for the standard and no standard objects.
-    
-    Also store to a text file the instrumental magnitudes of each object.
+    """ Returns the indexes for the standard and no standard objects.
     
     Keyword arguments:
     objects -- List of objects to process.
-    instrumental_magnitudes -- List of magnitudes for all the objects.
+    instrumental_magnitudes -- List of magnitudes for objects of interest, 
+        standard and no standard.
     
     Returns:        
     The indexes for the standard and no standard objects.
@@ -586,12 +636,7 @@ def get_indexes_of_std_and_no_std(objects, instrumental_magnitudes):
     
     # For each object. The two list received contains the same 
     # number of objects.
-    for i in range(len(objects)):
-        
-        # Save instrumental magnitudes to a file.
-        save_magnitudes(objects[i][OBJ_NAME_COL], INST_MAG_SUFFIX, \
-                        instrumental_magnitudes[i])        
-        
+    for i in range(len(objects)):     
         # Check if it is a standard object to put the object in
         # the right list.
         if objects[i][OBJ_STANDARD_COL] == STANDARD_VALUE:
@@ -648,7 +693,7 @@ def get_extinction_corrected_mag(obj, \
                               "for object " + obj[OBJ_NAME_COL])
             
     # Save extinction corrected magnitude for current object.
-    save_magnitudes(obj[OBJ_NAME_COL], CORR_MAG_SUFFIX, [magnitudes])  
+    save_magnitudes_to_file(obj[OBJ_NAME_COL], CORR_MAG_SUFFIX, [magnitudes])  
     
     return magnitudes      
 
@@ -877,8 +922,8 @@ def calibrated_magnitudes(objects, obj_indexes, ext_corr_mags, trans_coef):
                                           om[FILTER_CEM_COL]])
                 
                 # Save the calibrated magnitudes to a file.
-                save_magnitudes(obj[OBJ_NAME_COL], CAL_MAG_SUFFIX, \
-                                [cal_magnitudes])
+                save_magnitudes_to_file(obj[OBJ_NAME_COL], CAL_MAG_SUFFIX, \
+                                        [cal_magnitudes])
             else:
                 logging.warning("Calibrated magnitudes are not calculated " + \
                                 "for object: " + obj[OBJ_NAME_COL] + \
@@ -940,7 +985,8 @@ def calculate_calibrated_mag(objects, \
     # Calculate the calibrated magnitudes for all the objects.
     calibrated_magnitudes(objects, obj_indexes, ext_corr_mags, trans_coef)
 
-def process_instrumental_magnitudes(objects, instrumental_magnitudes):
+def process_instrumental_magnitudes(objects, instrumental_magnitudes, \
+                                        all_instrumental_magnitudes):
     """
     
     This function process the instrumental magnitudes to get magnitudes
@@ -948,9 +994,13 @@ def process_instrumental_magnitudes(objects, instrumental_magnitudes):
     
     Keyword arguments:
     objects -- List of objects.
-    instrumental_magnitudes -- All the instrumental magnitudes.
+    instrumental_magnitudes -- Instrumental magnitudes for objects of interest.
+    all_instrumental_magnitudes -- Instrumental magnitudes for all the objects.
         
     """
+    
+    save_magnitudes(objects, instrumental_magnitudes, \
+                    all_instrumental_magnitudes)
     
     standard_obj_index, no_standard_obj_index = \
         get_indexes_of_std_and_no_std(objects, instrumental_magnitudes)                      
@@ -980,6 +1030,8 @@ def calculate_magnitudes(progargs):
     # Read the list of objects whose magnitudes are needed.
     objects = read_objects_of_interest(progargs.interest_object_file_name)
     
-    instrumental_magnitudes = compile_instrumental_magnitudes(objects)
+    instrumental_magnitudes, all_instrumental_magnitudes = \
+        compile_instrumental_magnitudes(objects)
     
-    process_instrumental_magnitudes(objects, instrumental_magnitudes)
+    process_instrumental_magnitudes(objects, instrumental_magnitudes, \
+                                    all_instrumental_magnitudes)

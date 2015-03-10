@@ -69,6 +69,7 @@ WORK_FILE_SUFFIX = "_work"
 NORM_FILE_SUFFIX = "_norm"
 DATA_FINAL_SUFFIX = "_final"
 INST_MAG_SUFFIX = "_inst_mag"
+ALL_INST_MAG_SUFFIX = "_all_inst_mag"
 CORR_MAG_SUFFIX = "_ec_mag"
 CAL_MAG_SUFFIX = "_cal_mag"
 
@@ -138,7 +139,8 @@ OSN_CCD_T150_DATAMAX = 65536
 # Number of the column that contains the magnitude value.
 CSV_TIME_COL = 3 
 CSV_MAG_COL = 4
-CSV_AIRMASS_COL = 5 
+CSV_AIRMASS_COL = 5
+CSV_ERROR_COL = 6
 
 # Number of the columns that contains AR and DEC values in each type of file.
 OBJECTS_RA_COL_NUMBER = 1
