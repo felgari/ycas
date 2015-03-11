@@ -205,38 +205,32 @@ def do_photometry(progargs):
                 logging.debug("Found " + str(len(catalog_files)) + \
                               " catalog files")
                 
-                # Each catalog indicates one or more images.
+                # Each catalog corresponds to an image.
                 for cat_file in catalog_files:
                     
-                    # The images used are the ones with a name that 
-                    # matches the name of the catalog, so the catalog references
-                    # are valid for all these images.
-                    object_name = cat_file[0:cat_file.find(DATANAME_CHAR_SEP)]
-                     
-                    image_file_pattern = object_name + "*" + DATA_FINAL_PATTERN
-                    
-                    images_of_catalog = glob.glob(image_file_pattern)
+                    image_file_name = cat_file.replace("." + CATALOG_FILE_EXT, \
+                                                       DATA_FINAL_PATTERN)
                         
-                    logging.debug("Found " + str(len(images_of_catalog)) + \
-                                  " images for this catalog.")
+                    logging.debug("Found image " + image_file_name + \
+                                  " for catalog " + cat_file)
                         
-                    # Calculate the magnitudes for each image related to the 
-                    # catalog.
-                    for image in images_of_catalog:
-                            
-                        # Get the name of the file for the magnitudes from 
-                        # the FITS file.
-                        output_mag_file_name = \
-                            image.replace(FIT_FILE_EXT, MAGNITUDE_FILE_EXT)
-                     
-                        # If magnitude file exists, skip.
-                        if not os.path.exists(output_mag_file_name):
-                            do_phot(image, cat_file, output_mag_file_name, \
-                                    progargs)  
-                        else:
-                            logging.debug("Skipping phot for: " + \
-                                          output_mag_file_name + \
-                                          " already done.")
+                    # Calculate the magnitudes for the image related to the 
+                    # catalog.        
+                                        
+                    # Get the name of the file for the magnitudes from 
+                    # the FITS file.
+                    output_mag_file_name = \
+                        image_file_name.replace(FIT_FILE_EXT, \
+                                                MAGNITUDE_FILE_EXT)
+                 
+                    # If magnitude file exists, skip.
+                    if not os.path.exists(output_mag_file_name):
+                        do_phot(image_file_name, cat_file, \
+                                output_mag_file_name, progargs)  
+                    else:
+                        logging.debug("Skipping phot for: " + \
+                                      output_mag_file_name + \
+                                      " already done.")
                     
 def txdump_photometry_info():
     """Extract the results of photometry from files to save them to a text file.
