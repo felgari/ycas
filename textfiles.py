@@ -151,4 +151,40 @@ def read_references_for_object(object_name):
 
     logging.debug("Coordinates read: " + str(references))
 
-    return references   
+    return references
+
+def read_catalog_file(file_name):
+    """ Read a catalog file containing coordinates and an identifier 
+        for each one.
+    
+    Read a file containing in each file a x,y coordinate pair and a numeric 
+    identifier for each coordinate.
+        
+    Keyword arguments:
+    file_name -- The name of the file to read.
+    
+    Returns:    
+    The list of coordinates read from the file indicated.
+    
+    """
+    
+    # List of coordinates read.
+    coordinates = []
+    
+    # List of identifiers for the coordinates read.
+    identifiers = []
+    
+    logging.debug("Reading coordinates from: " + file_name)
+    
+    # Read the coordinates from the file.
+    with open(file_name, 'rb') as fr:
+        reader = csv.reader(fr, delimiter=' ')        
+            
+        for row in reader:            
+            coordinates.append(row)  
+            
+            identifiers.extend([row[CAT_ID_COL]])
+
+    logging.debug("Coordinates read: " + str(identifiers))
+
+    return coordinates    

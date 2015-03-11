@@ -30,10 +30,18 @@ import yargparser
 import glob
 import pyfits
 import csv
+import math
 from constants import *
 from textfiles import *
 import numpy as np
 from scipy import stats
+
+# Columns for magnitude tuples.
+MAG_X_COL = 0
+MAG_Y_COL = 1
+MAG_COL = 2
+MAG_ERR_COL = 3
+MAG_ID_COL = 4
 
 def get_object_name_from_rdls(rdls_file):
     """ Get the name of the object contained in the file name.
@@ -163,7 +171,75 @@ def get_object_references(rdls_file, objects):
         
     logging.debug("Found index for object " + object_name + " at " + str(index))
         
-    return index, object_name    
+    return index, object_name
+
+def get_id_for_coordinates(x, y, coordinates):
+    """ Get the identifier that corresponds to the coordinates received.
+    
+    Keyword arguments:
+    x -- x coordinate.
+    y -- y coordinate.
+    coordinates -- The list of coordinates and identifiers.    
+    
+    Returns:
+    The identifier that corresponds to the coordinates received.    
+    
+    """
+    
+    id = None
+    last_distance = 1000.0
+    
+    for c in coordinates:
+        x_c = c[CAT_X_COL]
+        y_c = c[CAT_Y_COL]
+        
+        distance = math.hypot(abs(float(x) - float(x_c)), \
+                              abs(float(y) - float(y_c))) 
+        
+        if distance < last_distance:
+            id = c[CAT_ID_COL]
+            last_distance = distance
+        
+    return id
+
+def get_all_mag_row(magnitudes, coordinates, time, filter_name):
+    """Create a row containing all the magnitudes received sorted by id.
+    
+    Keyword arguments:
+    magnitudes -- The magnitudes with the x,y coordinate and the error.
+    coordinates -- The list of coordinates and identifiers.
+    time -- The time of the measurement.
+    filter_name -- The filter used for these measurements. 
+    
+    Returns:        
+    A row with the magnitudes sorted and completed with INDEF.    
+    
+    """
+    
+    # The row to return. Time and filter to the beginning of the row.
+    mag_row = [time, filter_name]
+    
+    # Get the identifier for each magnitude.
+    for m in magnitudes:
+        id = get_id_for_coordinates(m[0], m[1], coordinates)
+        
+        m.extend([id])   
+    
+    # For each coordinate add the magnitude found, and if there is not any
+    # magnitude, add INDEF values.
+    for c in coordinates:
+        id = c[CAT_ID_COL]
+        
+        mag_list = [ m for m in magnitudes if m[MAG_ID_COL] == id ] 
+        
+        if len(mag_list) == 0:
+            mag_row.extend([INDEF_VALUE, INDEF_VALUE])    
+        else:
+            mag = mag_list[0]
+            
+            mag_row.extend([mag[MAG_COL], mag[MAG_ERR_COL]])
+    
+    return mag_row
 
 def get_inst_magnitudes_for_object(rdls_file, path, objects):
     """Searches in a given path all the files related to an object.
@@ -204,12 +280,24 @@ def get_inst_magnitudes_for_object(rdls_file, path, objects):
     # Each csv file contains the magnitudes for all the object of an image.
     for csv_fl in csv_files:
         
+        # Read the catalog file that corresponds to this file.
+        # First get the name of the catalog file from the current CSV file.
+        catalog_file_name = csv_fl.replace(DATA_FINAL_SUFFIX + \
+                                           FILE_NAME_PARTS_DELIM + \
+                                           MAGNITUDE_FILE_EXT + \
+                                           "." + CSV_FILE_EXT, \
+                                           "." + CATALOG_FILE_EXT)
+        
+        # The list of coordinates used to calculate the magnitudes of the image.
+        coordinates = read_catalog_file(catalog_file_name)
+        
         with open(csv_fl, 'rb') as fr:
             reader = csv.reader(fr)
             
             nrow = 0    
             
-            all_mag = []     
+            all_mag = []
+            time = None
             
             # Process all the instrumental magnitudes in the file.
             for row in reader:
@@ -217,8 +305,8 @@ def get_inst_magnitudes_for_object(rdls_file, path, objects):
                 # Get a list of values from the CSV row read.
                 fields = str(row).translate(None, "[]\'").split()            
             
-                # Add magnitude for object of interest, so check 
-                # if current row corresponds to the object.
+                # If it is the object of interest, add the magnitude to the
+                #  magnitudes list.
                 if nrow == object_index:
                     
                     # Add magnitude value to the appropriate row from RDLS file.
@@ -228,19 +316,22 @@ def get_inst_magnitudes_for_object(rdls_file, path, objects):
                                          fields[CSV_ERROR_COL],
                                          filter_name])
                     
-                # Add the magnitude in any case to the other list, regardless
-                # if it is the object of interest or not. Only take into account
-                # the first value to add only once the time.
-                if nrow == 0:
-                    all_mag.extend([fields[CSV_TIME_COL], 
-                                    fields[CSV_ERROR_COL],
-                                    filter_name])
+                # Save the time, it is the same for all the rows. 
+                time = fields[CSV_TIME_COL]
                     
-                all_mag.extend([fields[CSV_MAG_COL], fields[CSV_ERROR_COL]])
+                # Add the magnitude to the all magnitudes list.
+                all_mag.append([fields[CSV_X_COOR_COL], \
+                                fields[CSV_Y_COOR_COL], 
+                                fields[CSV_MAG_COL], \
+                                fields[CSV_ERROR_COL]])
                 
                 nrow += 1
                 
-            all_magnitudes.append(all_mag)
+            # Sort by identifier and add INDEF for lacking objects.
+            all_mag_row = get_all_mag_row(all_mag, coordinates, time, \
+                                          filter_name)
+                
+            all_magnitudes.append(all_mag_row)
                 
     return magnitudes, all_magnitudes
 

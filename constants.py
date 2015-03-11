@@ -134,9 +134,15 @@ OSN_CCD_T150_READNOISE = 8.23
 OSN_CCD_T150_GAIN = 1.5
 OSN_CCD_T150_DATAMAX = 65536
 
-# Constants for the final compilation of measures.
+# Columns in catalog file.
+CAT_X_COL = 0
+CAT_Y_COL = 1
+CAT_ID_COL = 2
 
 # Number of the column that contains the magnitude value.
+CSV_ID_COOR_COL = 0
+CSV_X_COOR_COL = 1
+CSV_Y_COOR_COL = 2
 CSV_TIME_COL = 3 
 CSV_MAG_COL = 4
 CSV_AIRMASS_COL = 5
@@ -148,7 +154,7 @@ OBJECTS_DEC_COL_NUMBER = 2
 
 MEASURES_RA_COL_NUMBER = 1
 MEASURES_DEC_COL_NUMBER = 2
-MEASURE_FIRST_COL_NUMBER = 3 
+MEASURE_FIRST_COL_NUMBER = 3
 
 RDLS_RA_IDX_NUMBER = 0
 RDLS_RA_COL_NUMBER = 1
