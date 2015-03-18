@@ -193,7 +193,7 @@ def get_binnings_of_images(data_path):
                     
     if len(binnings) > 1:
         logging.warning("Images with more that one binning " + \
-                        str(binning) + " in: " + source_path)
+                        str(binnings) + " in: " + data_path)
             
     return binnings
 
