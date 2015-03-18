@@ -144,10 +144,11 @@ def read_references_for_object(object_name):
         included_cols = [2, 5, 6]
             
         for row in reader:
-            content = list(row[i] for i in included_cols)
-            ra, dec, id = get_coordinates(content)
-            
-            references.append([ra, dec, id])    
+            if len(row) > max(included_cols):
+                content = list(row[i] for i in included_cols)
+                ra, dec, id = get_coordinates(content)
+                
+                references.append([ra, dec, id])    
 
     logging.debug("Coordinates read: " + str(references))
 
