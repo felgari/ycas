@@ -60,7 +60,9 @@ def search_filter_from_set_in_file_name(filename):
     # Search in the file name, the name of one of the filters in use.
     for f in FILTERS:
         index = filename_no_ext.rfind(f)
-        if index > 0:
+        
+        # The filter must be at the end of the file name.
+        if index + len(f) == len(filename_no_ext) :
             filtername = f
     
     return filtername
@@ -95,7 +97,8 @@ def get_image_filter(header_fields, filename):
             if field_value != None and field_value != "":
                 field_processed = True
                 
-                filtername = field_value
+                # Remove white spaces.
+                filtername = field_value.strip()
         except KeyError as ke:
             logging.warning("Header field '" + FILTER_FIELD_NAME + \
                             "' not found in file " + filename)
