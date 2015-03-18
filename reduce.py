@@ -394,7 +394,7 @@ def reduce_data():
                                 # If masterflat exists.
                                 if len(masterflat_name) > 0:
                                     # Create the final data dividing by 
-                                    #master flat.
+                                    # master flat.
                                     iraf.imarith(work_file, "/", \
                                                  masterflat_name, final_file)
                                 else:
