@@ -37,11 +37,9 @@ import numpy as np
 from scipy import stats
 
 # Columns for magnitude tuples.
-MAG_X_COL = 0
-MAG_Y_COL = 1
-MAG_COL = 2
-MAG_ERR_COL = 3
-MAG_ID_COL = 4
+MAG_COL = 0
+MAG_ERR_COL = 1
+MAG_ID_COL = 2
 
 def get_object_name_from_rdls(rdls_file):
     """ Get the name of the object contained in the file name.
@@ -173,43 +171,14 @@ def get_object_references(rdls_file, objects):
         
     return index, object_name
 
-def get_id_for_coordinates(x, y, coordinates):
-    """ Get the identifier that corresponds to the coordinates received.
-    
-    Keyword arguments:
-    x -- x coordinate.
-    y -- y coordinate.
-    coordinates -- The list of coordinates and identifiers.    
-    
-    Returns:
-    The identifier that corresponds to the coordinates received.    
-    
-    """
-    
-    id = None
-    last_distance = 1000.0
-    
-    for c in coordinates:
-        x_c = c[CAT_X_COL]
-        y_c = c[CAT_Y_COL]
-        
-        distance = math.hypot(abs(float(x) - float(x_c)), \
-                              abs(float(y) - float(y_c))) 
-        
-        if distance < last_distance:
-            id = c[CAT_ID_COL]
-            last_distance = distance
-        
-    return id
-
-def get_all_mag_row(magnitudes, coordinates, time, filter_name):
+def get_all_mag_row(magnitudes, time, filter_name, references):
     """Create a row containing all the magnitudes received sorted by id.
     
     Keyword arguments:
     magnitudes -- The magnitudes with the x,y coordinate and the error.
-    coordinates -- The list of coordinates and identifiers.
     time -- The time of the measurement.
     filter_name -- The filter used for these measurements. 
+    references -- References objects for the object of interest processed.
     
     Returns:        
     A row with the magnitudes sorted and completed with INDEF.    
@@ -219,29 +188,34 @@ def get_all_mag_row(magnitudes, coordinates, time, filter_name):
     # The row to return. Time and filter to the beginning of the row.
     mag_row = [time, filter_name]
     
-    # Get the identifier for each magnitude.
-    for m in magnitudes:
-        id = get_id_for_coordinates(m[0], m[1], coordinates)
-        
-        m.extend([id])   
+    n_mag = 0
     
-    # For each coordinate add the magnitude found, and if there is not any
-    # magnitude, add INDEF values.
-    for c in coordinates:
-        id = c[CAT_ID_COL]
+    # For each references a magnitude is added to the row, if the magnitude
+    # does not exists, INDEF values are added.
+    for i in range(len(references)):
+        # Get current object of reference.
+        ref = references[i]
         
-        mag_list = [ m for m in magnitudes if m[MAG_ID_COL] == id ] 
+        # Get current magnitude to process.
+        current_mag = magnitudes[n_mag]
         
-        if len(mag_list) == 0:
-            mag_row.extend([INDEF_VALUE, INDEF_VALUE])    
-        else:
-            mag = mag_list[0]
+        #print str(ref[COO_ID_COL]) + " " + str(current_mag[MAG_ID_COL])
+        
+        if int(ref[COO_ID_COL]) == current_mag[MAG_ID_COL]:
+            # If there is a magnitude for this reference, add the magnitude.
+            mag_row.extend([current_mag[MAG_COL], current_mag[MAG_ERR_COL]])
             
-            mag_row.extend([mag[MAG_COL], mag[MAG_ERR_COL]])
+            # Next magnitude if there is more magnitude values.
+            if n_mag < len(magnitudes) - 1:
+                n_mag += 1
+        else:
+            # There is no magnitude for this reference, add INDEF values.
+            mag_row.extend([INDEF_VALUE, INDEF_VALUE])                        
     
     return mag_row
 
-def get_inst_magnitudes_for_object(rdls_file, path, objects):
+def get_inst_magnitudes_for_object(rdls_file, path, objects, \
+                                   objects_references):
     """Searches in a given path all the files related to an object.
     
     Keyword arguments:
@@ -249,6 +223,7 @@ def get_inst_magnitudes_for_object(rdls_file, path, objects):
     object is retrieved from the file name.
     path -- Path where to search the files.
     objects -- List of all objects of interest.
+    objects_references -- Objects of reference for each object of interest.
     
     Returns:        
     All the magnitudes read from the files found related to the object of 
@@ -291,10 +266,12 @@ def get_inst_magnitudes_for_object(rdls_file, path, objects):
         # The list of coordinates used to calculate the magnitudes of the image.
         coordinates = read_catalog_file(catalog_file_name)
         
+        logging.debug("Processing magnitudes file: " + csv_fl)        
+        
         with open(csv_fl, 'rb') as fr:
             reader = csv.reader(fr)
             
-            nrow = 0    
+            nrow = 0
             
             all_mag = []
             time = None
@@ -303,11 +280,15 @@ def get_inst_magnitudes_for_object(rdls_file, path, objects):
             for row in reader:
             
                 # Get a list of values from the CSV row read.
-                fields = str(row).translate(None, "[]\'").split()            
+                fields = str(row).translate(None, "[]\'").split()   
+                
+                current_coor = coordinates[nrow] 
+                
+                current_coor_id = int(current_coor[CAT_ID_COL])
             
                 # If it is the object of interest, add the magnitude to the
-                #  magnitudes list.
-                if nrow == object_index:
+                # magnitudes list.
+                if current_coor_id == object_index:
                     
                     # Add magnitude value to the appropriate row from RDLS file.
                     magnitudes.append([fields[CSV_TIME_COL], 
@@ -320,18 +301,22 @@ def get_inst_magnitudes_for_object(rdls_file, path, objects):
                 time = fields[CSV_TIME_COL]
                     
                 # Add the magnitude to the all magnitudes list.
-                all_mag.append([fields[CSV_X_COOR_COL], \
-                                fields[CSV_Y_COOR_COL], 
-                                fields[CSV_MAG_COL], \
-                                fields[CSV_ERROR_COL]])
-                
-                nrow += 1
+                all_mag.append([fields[CSV_MAG_COL], fields[CSV_ERROR_COL], \
+                                current_coor_id])
+                    
+                nrow += 1     
                 
             # Sort by identifier and add INDEF for lacking objects.
-            all_mag_row = get_all_mag_row(all_mag, coordinates, time, \
-                                          filter_name)
+            all_mag_row = get_all_mag_row(all_mag, time, filter_name, \
+                                          objects_references[object_name])
                 
             all_magnitudes.append(all_mag_row)
+            
+            logging.debug("Processed " + str(nrow) + " objects. " + \
+                          "Magnitudes for object of interest: " + \
+                          str(len(magnitudes)) + \
+                          ". Magnitudes for all the objects: " + \
+                          str(len(magnitudes)))
                 
     return magnitudes, all_magnitudes
 
@@ -379,11 +364,18 @@ def compile_instrumental_magnitudes(objects):
     # using the name of the object.
     objects_index = {}
     
+    objects_references = {}
+    
     for i in range(len(objects)):
         instrumental_magnitudes.append([])
         all_instrumental_magnitudes.append([])
         
-        objects_index[objects[i][OBJ_NAME_COL]] = i
+        object_name = objects[i][OBJ_NAME_COL]
+        
+        objects_index[object_name] = i
+        
+        objects_references[object_name] = \
+            read_references_for_object(object_name)
         
     # Walk all the directories searching for files containing magnitudes.
     # Walk from current directory.
@@ -412,7 +404,8 @@ def compile_instrumental_magnitudes(objects):
                     
                     # Get the magnitudes for this object in current path.
                     im, aim = get_inst_magnitudes_for_object(rdls_file, path, \
-                                                             objects)
+                                                             objects, \
+                                                             objects_references)
                     
                     # If any magnitude has been get.
                     if len(im) > 0:

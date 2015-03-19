@@ -139,6 +139,11 @@ CAT_X_COL = 0
 CAT_Y_COL = 1
 CAT_ID_COL = 2
 
+# Coordinates file
+COO_RA_COL = 0
+COO_DEC_COL = 1
+COO_ID_COL = 2
+
 # Number of the column that contains the magnitude value.
 CSV_ID_COOR_COL = 0
 CSV_X_COOR_COL = 1
