@@ -99,7 +99,7 @@ def get_fwhm(progargs, img_filename):
 
     # Build the command to execute.
     command = "sex -c " + \
-        os.path.join(progargs.sextrator_cfg_path, SEXTRACTOR_CFG_FILENAME) \
+        os.path.join(progargs.sextractor_cfg_path, SEXTRACTOR_CFG_FILENAME) \
         + " " + os.path.join(os.getcwd(), img_filename)
         
     logging.debug("Executing: " + command)

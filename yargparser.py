@@ -69,7 +69,7 @@ class ProgramArguments(object):
         
         self.__parser.add_argument("-x", dest="x", metavar="sex_cfg", \
                                    help="Name for directory where the " + \
-                                   "configuration files for sextrator are")        
+                                   "configuration files for sextractor are")        
         
         self.__parser.add_argument("-no", dest="no", \
                                    metavar="number of objects", type=int, \
@@ -97,7 +97,7 @@ class ProgramArguments(object):
                                    help="Calculate the astrometry")
         
         self.__parser.add_argument("-us", dest="us", action="store_true",  
-                                   help="Use sextrator to calculate the " + \
+                                   help="Use sextractor to calculate the " + \
                                    "astrometry")            
         
         self.__parser.add_argument("-a", dest="a", action="store_true", \
@@ -134,7 +134,7 @@ class ProgramArguments(object):
         return self.__data_directory
     
     @property     
-    def sextrator_cfg_path(self):        
+    def sextractor_cfg_path(self):        
         return self.__sextractor_cfg_path    
          
     @property          
