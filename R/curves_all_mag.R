@@ -151,7 +151,7 @@ plotDiffMagnitudeData <- function(data, mag.cols, filter) {
   # Generate a data frame with the MJD, the magnitude for the object of 
   # interest and a mean of the rest of magnitudes.   
   data.dif <- data.frame(MJD=data$MJD, MAG_0=data$MAG_0, 
-                         MEANS=rowMeans(data[,diff.mag.cols]))
+                         MEANS=rowMeans(data[,diff.mag.cols], na.rm = TRUE))
   
   # Add a column with the difference between the magnitude of the object of
   # interest and the mean of the rest of magnitudes.
@@ -193,7 +193,7 @@ column.names <- c("MJD", "FILTER", interl.col.names)
 names(data) <- column.names
 
 # Sort by MJD.
-data[with(data, order(MJD)), ]
+data <- data[with(data, order(MJD)), ]
 
 # Separate data by filter.
 data.B.filter <- data[data$FILTER=='B',]
@@ -206,6 +206,28 @@ cols.names <- getColsNames(data.B.filter)
 # Convert list to vectors
 cols <- rapply(cols.names[1], c)
 cols.mags <- rapply(cols.names[2], c)
+
+# Plots without average.
+
+# Plot data for each filter.
+data.B.filter <- data.B.filter[with(data.B.filter, order(MJD)), ]
+plotMagnitudeData(data.B.filter, cols.mags)
+
+data.V.filter <- data.V.filter[with(data.V.filter, order(MJD)), ]
+plotMagnitudeData(data.V.filter, cols.mags)
+
+data.R.filter <- data.R.filter[with(data.R.filter, order(MJD)), ]
+plotMagnitudeData(data.R.filter, cols.mags)
+
+# Plot the curve for the difference between the magnitudes of the object of
+# interest and the mean of the rest of objects.
+par(mfrow = c(1, 3))
+
+plotDiffMagnitudeData(data.B.filter, cols.mags, "B")
+plotDiffMagnitudeData(data.V.filter, cols.mags, "V")
+plotDiffMagnitudeData(data.R.filter, cols.mags, "R")
+
+# Plots with average.
 
 # Calculate average data for each filter.
 data.avg.B <- calculateAverageData(data.B.filter, cols)
