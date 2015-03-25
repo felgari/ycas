@@ -280,37 +280,44 @@ def get_inst_magnitudes_for_object(rdls_file, path, objects, \
             for row in reader:
             
                 # Get a list of values from the CSV row read.
-                fields = str(row).translate(None, "[]\'").split()   
+                fields = str(row).translate(None, "[]\'").split() 
                 
-                current_coor = coordinates[nrow] 
+                # Check that MJD has a defined value.
+                if fields[CSV_TIME_COL] != INDEF_VALUE:  
                 
-                current_coor_id = int(current_coor[CAT_ID_COL])
-            
-                # If it is the object of interest, add the magnitude to the
-                # magnitudes list.
-                if current_coor_id == object_index:
+                    current_coor = coordinates[nrow] 
                     
-                    # Add magnitude value to the appropriate row from RDLS file.
-                    magnitudes.append([fields[CSV_TIME_COL], 
-                                         fields[CSV_MAG_COL],
-                                         fields[CSV_AIRMASS_COL], 
-                                         fields[CSV_ERROR_COL],
-                                         filter_name])
-                    
-                # Save the time, it is the same for all the rows. 
-                time = fields[CSV_TIME_COL]
-                    
-                # Add the magnitude to the all magnitudes list.
-                all_mag.append([fields[CSV_MAG_COL], fields[CSV_ERROR_COL], \
-                                current_coor_id])
-                    
-                nrow += 1     
+                    current_coor_id = int(current_coor[CAT_ID_COL])
                 
-            # Sort by identifier and add INDEF for lacking objects.
-            all_mag_row = get_all_mag_row(all_mag, time, filter_name, \
-                                          objects_references[object_name])
+                    # If it is the object of interest, add the magnitude to the
+                    # magnitudes list.
+                    if current_coor_id == object_index:
+                        
+                        # Add magnitude value to the appropriate row from RDLS 
+                        # file.
+                        magnitudes.append([fields[CSV_TIME_COL], 
+                                             fields[CSV_MAG_COL],
+                                             fields[CSV_AIRMASS_COL], 
+                                             fields[CSV_ERROR_COL],
+                                             filter_name])
+                        
+                    # Save the time, it is the same for all the rows. 
+                    time = fields[CSV_TIME_COL]
+                        
+                    # Add the magnitude to the all magnitudes list.
+                    all_mag.append([fields[CSV_MAG_COL], \
+                                    fields[CSV_ERROR_COL], \
+                                    current_coor_id])
+                        
+                    nrow += 1    
+                    
+            if len(all_mag) > 0: 
                 
-            all_magnitudes.append(all_mag_row)
+                # Sort by identifier and add INDEF for lacking objects.
+                all_mag_row = get_all_mag_row(all_mag, time, filter_name, \
+                                              objects_references[object_name])
+                    
+                all_magnitudes.append(all_mag_row)
             
             logging.debug("Processed " + str(nrow) + " objects. " + \
                           "Magnitudes for object of interest: " + \
@@ -320,7 +327,8 @@ def get_inst_magnitudes_for_object(rdls_file, path, objects, \
                 
     return magnitudes, all_magnitudes
 
-def save_magnitudes_to_file(object_name, filename_suffix, inst_magnitudes_obj):
+def save_magnitudes_to_file(object_name, filename_suffix, \
+                            inst_magnitudes_obj):
     """Save the magnitudes to a text file.
     
     Keyword arguments:     
@@ -447,7 +455,7 @@ def get_day_of_measurement(time_jd):
     Returns:        
     The Julian day related to the Julian time received. 
     
-    """    
+    """
     
     day = None
     
