@@ -67,7 +67,7 @@ class ProgramArguments(object):
                                    help="Name for the destiny directory " + \
                                    "name where the data images are stored")
         
-        self.__parser.add_argument("-x", dest="x", metavar="sex_cfg", \
+        self.__parser.add_argument("-x", dest="x", metavar="sex_cfg_path", \
                                    help="Name for directory where the " + \
                                    "configuration files for sextractor are")        
         
