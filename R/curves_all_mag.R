@@ -20,9 +20,12 @@
 # columns.
 #
 
+source("constants.R")
+
 # Constants for the files names that store the data to process.
-sDataFileName <- "data_file.csv"
-sCoordinatesFileName <- "coordinates_file.coo"
+# These constants could be stored in the file constants.R.
+#sDataFileName <- "magnitudes_file.csv"
+#sCoordinatesFileName <- "coordinates_file.coo"
 
 getColsNames <- function(data) {
   # Get the names of all the columns and only the columns that contains
@@ -92,6 +95,31 @@ calculateAverageData <- function(data, data.cols) {
   return (data.avg)
 }
 
+calculatePlotLen <- function(mag.cols) {
+  # Calculate the length for the plots.
+  #
+  # Args:
+  #   mag.cols: Columns that contains magnitudes values.
+  #
+  # Returns:
+  #   The length of the plot.  
+  #
+  # Error handling
+  #  
+  
+  # Calculate the length necessary for the plot from the length of
+  # the list of columns.
+  num.mag <- length(mag.cols)
+  
+  len.plots <- num.mag / 2
+  
+  if (num.mag %% 2 > 0) {
+    len.plots <- len.plots + 1
+  }  
+  
+  return (len.plots)
+}
+
 plotMagnitudeData <- function(data, mag.cols) {
   # Plot all the magnitude values received.
   #
@@ -109,13 +137,7 @@ plotMagnitudeData <- function(data, mag.cols) {
   par(pch = 22, col = "blue")
   
   # Calculate the length necessary for the plot.
-  num.mag <- length(mag.cols)
-  
-  len.plots <- num.mag / 2
-  
-  if (num.mag %% 2 > 0) {
-    len.plots <- len.plots + 1
-  }
+  len.plots <- calculatePlotLen(mag.cols)
   
   # Set the number of plots in the frame.
   par(mfrow = c(2, len.plots))
@@ -167,6 +189,61 @@ plotDiffMagnitudeData <- function(data, mag.cols, filter) {
        ylab="Mean - Mag. of object of interest")
   
   lines(data.dif$MJD, data.dif$dif)  
+}
+
+plotDiffOfMagnitudeCol <- function(data, mag.cols, filter) {
+  # Plot curve with the difference between the magnitude of each
+  # reference star and the mean of magnitudes of the rest of
+  # reference stars.
+  #
+  # Args:
+  #   data: The data whose columns are plotted.
+  #   mag.cols: Columns that contains magnitudes values.
+  #   filter: Name of the filter for these magnitudes.
+  #
+  # Returns:
+  #   Nothing
+  #
+  # Error handling
+  #  
+  
+  # Remove magnitude of the object of interest.
+  ref.mag.cols <- mag.cols[! mag.cols %in% c("MAG_0")] 
+  
+  # Set the plt features.
+  par(pch=22, col="blue")
+  
+  # Calculate the length necessary for the plot.
+  len.plots <- calculatePlotLen(mag.cols)
+  
+  # Set the number of plots in the frame.
+  par(mfrow = c(2, len.plots))
+  
+  # For each reference star plot the difference between its magnitude
+  # and the mean of the magnitudes of the rest of reference stars.
+  for ( i in 1:length(ref.mag.cols) ) {
+    
+    col <- ref.mag.cols[i]
+    
+    rest.mag.cols <- ref.mag.cols[! ref.mag.cols %in% c(col)]
+    
+    # Generate a data frame with the MJD, the magnitude for the object of 
+    # interest and a mean of the rest of magnitudes.   
+    data.dif <- data.frame(MJD=data$MJD, MAG=data[, c(col)], 
+                           MEANS=rowMeans(data[,rest.mag.cols], na.rm = TRUE))
+  
+    # Add a column with the difference between the magnitude of the object of
+    # interest and the mean of the rest of magnitudes.
+    data.dif$dif <- data.dif$MEANS - data.dif$MAG   
+    
+    header = paste(col, paste(" - Mag. diff. for filter ", filter))
+    
+    # Plot the difference calculated.  
+    plot(data.dif$MJD, data.dif$dif, main=header, xlab="MJD", 
+         ylab= paste("Mean - Mag. of reference star", col))
+    
+    lines(data.dif$MJD, data.dif$dif) 
+  }
 }
 
 # Read the data.
@@ -246,3 +323,10 @@ par(mfrow = c(1, 3))
 plotDiffMagnitudeData(data.avg.B, cols.mags, "B")
 plotDiffMagnitudeData(data.avg.V, cols.mags, "V")
 plotDiffMagnitudeData(data.avg.R, cols.mags, "R")
+
+# Plot the differences between reference stars in each filter.
+plotDiffOfMagnitudeCol(data.B.filter, cols.mags, "B")
+plotDiffOfMagnitudeCol(data.V.filter, cols.mags, "V")
+plotDiffOfMagnitudeCol(data.R.filter, cols.mags, "R")
+
+write.csv(data, "VBQCam_all_inst_mag_ord.csv", row.names=FALSE, quote=FALSE)
