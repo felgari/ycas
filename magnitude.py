@@ -231,44 +231,37 @@ def get_inst_magnitudes_for_object(rdls_file, path, objects, \
     
     """
     
-    # Get the index of this object in the files that contains the magnitudes.
-    object_index, object_name = get_object_references(rdls_file, objects)
+    # Get the name of the object related to this RDLS file.
+    object_name = get_object_name_from_rdls(rdls_file)    
     
-    # Get the list of files with magnitudes for the images of this object.
-    # At this point all the csv are related to magnitude values. 
-    csv_files = glob.glob(os.path.join(path, object_name + "*." + CSV_FILE_EXT))
+    cvs_file = rdls_file.replace("." + RDLS_FILE_EXT, MAG_CSV_PATTERN)
     
     # The name of the directory that contains the file is the name of the filter
     path_head, filter_name = os.path.split(path)
     
-    logging.debug("Found " + str(len(csv_files)) + " csv files for object " \
-                 + object_name)
-    
-    # Sort the list of csv files to ensure a right processing.
-    csv_files.sort()
+    logging.debug("Found " + cvs_file + " csv file for rdls file " \
+                 + rdls_file)
     
     # To store the magnitudes.
     magnitudes = list()
     all_magnitudes = list()
+        
+    # Read the catalog file that corresponds to this file.
+    # First get the name of the catalog file from the current CSV file.
+    catalog_file_name = cvs_file.replace(DATA_FINAL_SUFFIX + \
+                                         FILE_NAME_PARTS_DELIM + \
+                                         MAGNITUDE_FILE_EXT + \
+                                         "." + CSV_FILE_EXT, \
+                                         "." + CATALOG_FILE_EXT)
     
-    # Read magnitudes from csv files and add it to RDLS data.
-    # Each csv file contains the magnitudes for all the object of an image.
-    for csv_fl in csv_files:
-        
-        # Read the catalog file that corresponds to this file.
-        # First get the name of the catalog file from the current CSV file.
-        catalog_file_name = csv_fl.replace(DATA_FINAL_SUFFIX + \
-                                           FILE_NAME_PARTS_DELIM + \
-                                           MAGNITUDE_FILE_EXT + \
-                                           "." + CSV_FILE_EXT, \
-                                           "." + CATALOG_FILE_EXT)
-        
+    if os.path.exists(catalog_file_name):
+    
         # The list of coordinates used to calculate the magnitudes of the image.
         coordinates = read_catalog_file(catalog_file_name)
         
-        logging.debug("Processing magnitudes file: " + csv_fl)        
+        logging.debug("Processing magnitudes file: " + cvs_file)        
         
-        with open(csv_fl, 'rb') as fr:
+        with open(cvs_file, 'rb') as fr:
             reader = csv.reader(fr)
             
             nrow = 0
@@ -291,7 +284,7 @@ def get_inst_magnitudes_for_object(rdls_file, path, objects, \
                 
                     # If it is the object of interest, add the magnitude to the
                     # magnitudes list.
-                    if current_coor_id == object_index:
+                    if current_coor_id == OBJ_OF_INTEREST_ID:
                         
                         # Add magnitude value to the appropriate row from RDLS 
                         # file.
@@ -310,6 +303,8 @@ def get_inst_magnitudes_for_object(rdls_file, path, objects, \
                                     current_coor_id])
                         
                     nrow += 1    
+                else:
+                    logging.debug("Found INDEF value for the observation time")
                     
             if len(all_mag) > 0: 
                 
@@ -323,8 +318,11 @@ def get_inst_magnitudes_for_object(rdls_file, path, objects, \
                           "Magnitudes for object of interest: " + \
                           str(len(magnitudes)) + \
                           ". Magnitudes for all the objects: " + \
-                          str(len(magnitudes)))
+                          str(len(all_magnitudes)))
                 
+    else:
+        logging.debug("Catalog file does no exists: " + catalog_file_name)
+        
     return magnitudes, all_magnitudes
 
 def save_magnitudes_to_file(object_name, filename_suffix, \
@@ -405,8 +403,11 @@ def compile_instrumental_magnitudes(objects):
                     if not os.path.basename(f).startswith('.')]
                     
                 logging.debug("Found " + str(len(rdls_files_full_path)) + \
-                             " RDLS files")        
-
+                             " RDLS files")   
+                   
+                # Sort the list of files to ensure a right processing of MJD.
+                rdls_files_full_path.sort()                   
+                
                 # Process the images of each object that has a RDLS file.
                 for rdls_file in rdls_files_full_path:
                     

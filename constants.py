@@ -50,6 +50,7 @@ COORD_FILE_EXT = "coo"
 INDEX_FILE_PATTERN = '-indx.xyls'
 DATA_FINAL_PATTERN = "_final.fit"
 DATA_ALIGN_PATTERN = "_align.fit"
+MAG_CSV_PATTERN = "_mag.csv"
 
 # Directory paths.
 PATH_FROM_FLAT_TO_BIAS = os.path.join("..", "..", BIAS_DIRECTORY)
