@@ -137,20 +137,23 @@ def read_references_for_object(object_name):
     
     logging.debug("Reading coordinates from: " + file_name)
     
-    # Read the coordinates from the file.
-    with open(file_name, 'rb') as fr:
-        reader = csv.reader(fr, delimiter=' ')        
-        
-        included_cols = [2, 5, 6]
+    try:
+        # Read the coordinates from the file.
+        with open(file_name, 'rb') as fr:
+            reader = csv.reader(fr, delimiter=' ')        
             
-        for row in reader:
-            if len(row) > max(included_cols):
-                content = list(row[i] for i in included_cols)
-                ra, dec, id = get_coordinates(content)
+            included_cols = [2, 5, 6]
                 
-                references.append([ra, dec, id])    
-
-    logging.debug("Coordinates read: " + str(references))
+            for row in reader:
+                if len(row) > max(included_cols):
+                    content = list(row[i] for i in included_cols)
+                    ra, dec, id = get_coordinates(content)
+                    
+                    references.append([ra, dec, id])    
+    
+        logging.debug("Coordinates read: " + str(references))
+    except IOError:
+        logging.error("Reading coordinates file: " + file_name)
 
     return references
 
