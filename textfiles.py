@@ -151,9 +151,11 @@ def read_references_for_object(object_name):
                     
                     references.append([ra, dec, id])    
     
-        logging.debug("Coordinates read: " + str(references))
-    except IOError:
-        logging.error("Reading coordinates file: " + file_name)
+        logging.debug("Coordinates read for filename " + \
+                      file_name + ": "+ str(references))
+    except IOError as ioe:
+        logging.error("Error reading coordinates file: '" + file_name + \
+                      "' error is: " + str(ioe))
 
     return references
 

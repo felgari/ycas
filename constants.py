@@ -87,11 +87,11 @@ ASTROMETRY_NUM_OBJS = 20
 # Overwrite previous files and limit the number of objects to look at"
 ASTROMETRY_PARAMS = "--overwrite -d "
 # Radius of the field to solve.
-SOLVE_FIELD_RADIUS = 0.5
+SOLVE_FIELD_RADIUS = 1.0
 # Identifier for object of interest in the coordinates list of a field.
 OBJ_OF_INTEREST_ID = 0
 # Error margin when assigning astrometry coordinates.
-ASTROMETRY_COORD_RANGE = 0.005
+ASTROMETRY_COORD_RANGE = 0.08
 
 # First index for a FIT table.
 FIT_FIRST_TABLE_INDEX = 1
@@ -127,7 +127,8 @@ COLS_MAG = [0,3,4,6]
 JD_TIME_COL = 0
 INST_MAG_COL = 1
 AIRMASS_COL = 2
-FILTER_COL = 3
+ERR_COL = 3
+FILTER_COL = 4
 
 # Parameters for the T150 CCD of the OSN.
 # http://www.osn.iaa.es/content/CCDT150-Camera

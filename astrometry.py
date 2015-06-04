@@ -154,7 +154,9 @@ def get_rd_index(rd_data, ra, dec):
     # Default values for the data to return.
     index = -1    
     ra_diff = 1000.0
-    dec_diff = 1000.0 
+    dec_diff = 1000.0
+    ra_min_diff = 1000.0
+    dec_min_diff = 1000.0    
     
     # Iterate over the whole list to search for the nearest values to those
     # received.
@@ -182,8 +184,18 @@ def get_rd_index(rd_data, ra, dec):
                 ra_diff = temp_ra_diff
                 dec_diff = temp_dec_diff
                 index = i
+                
+        # Collect the minimum difference found to debug the process in case
+        # of no matching.
+        if temp_ra_diff + temp_dec_diff < ra_min_diff + dec_min_diff:
+            ra_min_diff = temp_ra_diff
+            dec_min_diff = temp_dec_diff
     
         i += 1
+        
+    if index == -1:
+        logging.debug("No match for object coordinates, min. diff. are: " + \
+                      str(ra_min_diff) + " " + str(dec_min_diff))
         
     return index
 
@@ -432,19 +444,27 @@ def write_coord_catalogues(image_file_name, catalog_full_file_name, \
         # Get the indexes for x,y and ra,dec data related to the
         # objects received.
         indexes, identifiers = \
-            get_indexes_for_obj_cood(rd_data, object, object_references)        
-        
-        # Check if the coordinates complies with the 
-        # coordinates validation criteria.
-        if check_celestial_coordinates(image_file_name, object, indexes, \
-                                       identifiers, rd_data, xy_data):
-
-            # Write catalog file with the x,y coordinate to do the
-            # photometry.
-            write_catalog_file(catalog_full_file_name, indexes, xy_data, \
-                               identifiers)        
+            get_indexes_for_obj_cood(rd_data, object, object_references)  
             
-            success = True
+        # Check if any object has been found in the image.
+        if len(indexes) > 0:              
+            # Check if the coordinates complies with the 
+            # coordinates validation criteria.
+            if check_celestial_coordinates(image_file_name, object, indexes, \
+                                           identifiers, rd_data, xy_data):
+    
+                # Write catalog file with the x,y coordinate to do the
+                # photometry.
+                write_catalog_file(catalog_full_file_name, indexes, xy_data, \
+                                   identifiers)        
+                
+                success = True
+            else:
+                logging.debug("Catalog file not saved, " + \
+                              "coordinates do not pass validation criteria.")
+        else:
+            logging.debug("Catalog file not saved, " + \
+                          "no objects found by astrometry")
     else:
         logging.debug("X,Y coordinates file '" + xyls_file_name + \
                       "' does not exists so catalog file could not be created.")

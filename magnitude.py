@@ -780,7 +780,7 @@ def get_extinction_corrected_mag(obj, \
                     slope * float(im[AIRMASS_COL])
                     
                 magnitudes.append([im[JD_TIME_COL], day, calc_mag, \
-                                   im[INST_MAG_COL], filter])
+                                   im[INST_MAG_COL], im[ERR_COL], filter])
             else:
                 logging.debug("Found an instrumental magnitude undefined " + \
                               "for object " + obj[OBJ_NAME_COL])
