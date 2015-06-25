@@ -147,7 +147,7 @@ def normalize_flats(files):
         # Getting statistics for flat file.
         try:
             flat_stats = iraf.imstat(work_file, fields='mean', Stdout=1)
-            flat_stats = flat_stats[1]    
+            flat_stats = flat_stats[IMSTAT_FIRST_VALUE]    
             
             try:
                 mean_value = float(flat_stats)
