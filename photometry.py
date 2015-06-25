@@ -86,9 +86,10 @@ def set_image_specific_phot_pars(fwhm, datamin):
     fwhm -- FWHM value.
     datamin - datamin value to set.
     
-    """        
+    """       
     
     # Set photometry parameters.
+    iraf.datapars.fwhmpsf = fwhm
     iraf.photpars.apertures = APERTURE_MULT * fwhm
     iraf.fitskypars.annulus = ANNULUS_MULT * fwhm
     
@@ -131,6 +132,9 @@ def calculate_datamin(image_file_name):
                       image_file_name)
         logging.error("mean is: " + values[0] + " stddev is: " + values[1])
         logging.error("Value Error is: " + str(ve))
+        
+    if datamin < DATAMIN_VALUE:
+        datamin = DATAMIN_VALUE
         
     return datamin
 
