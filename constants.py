@@ -134,7 +134,7 @@ FILTER_COL = 4
 # http://www.osn.iaa.es/content/CCDT150-Camera
 OSN_CCD_T150_READNOISE = 8.23
 OSN_CCD_T150_GAIN = 1.5
-OSN_CCD_T150_DATAMAX = 65536
+OSN_CCD_T150_DATAMAX = 60000
 
 # Columns in catalog file.
 CAT_X_COL = 0
