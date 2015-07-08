@@ -146,7 +146,9 @@ plotMagnitudeData <- function(data, mag.cols) {
   for ( co in mag.cols ) {
     heading = paste("Star ", substr(co, 5, 10))
     
-    plot(data$MJD, data[, co], main=heading, xlab="MJD", ylab="mag.")
+    plot(data$MJD, data[, co], 
+         ylim = rev(range(na.omit(data[, co]))),
+         main=heading, xlab="MJD", ylab="mag.")
     
     lines(data$MJD, data[, co])
   }    
@@ -177,7 +179,7 @@ plotDiffMagnitudeData <- function(data, mag.cols, filter) {
   
   # Add a column with the difference between the magnitude of the object of
   # interest and the mean of the rest of magnitudes.
-  data.dif$dif <- data.dif$MEANS - data.dif$MAG_0
+  data.dif$dif <- data.dif$MAG_0 - data.dif$MEANS
   
   # Set the plt features.
   par(pch=22, col="blue")
@@ -185,8 +187,9 @@ plotDiffMagnitudeData <- function(data, mag.cols, filter) {
   header = paste("Mag. diff. for filter ", filter)
 
   # Plot the difference calculated.  
-  plot(data.dif$MJD, data.dif$dif, main=header, xlab="MJD", 
-       ylab="Mean - Mag. of object of interest")
+  plot(data.dif$MJD, data.dif$dif, main=header, 
+       ylim = rev(range(na.omit(data.dif$dif))),
+       xlab="MJD", ylab="Mag. of object of interest - Mean")
   
   lines(data.dif$MJD, data.dif$dif)  
 }
@@ -240,38 +243,66 @@ plotDiffOfMagnitudeCol <- function(data, mag.cols, filter) {
     
     # Plot the difference calculated.  
     plot(data.dif$MJD, data.dif$dif, main=header, xlab="MJD", 
+         ylim = rev(range(na.omit(data.dif$dif))),
          ylab= paste("Mean - Mag. of reference star", col))
     
     lines(data.dif$MJD, data.dif$dif) 
   }
 }
 
-# Read the data.
-data <- read.csv(sDataFileName, sep = "\t", header = FALSE,
-                 numerals = "no.loss")
+converFactorToNumeric <- function (df) {
+  return (as.numeric(levels(df))[df])
+}
 
-coor <- read.csv(sCoordinatesFileName, sep = ",", header=FALSE)
+readAndPrepareDataToPlot <- function() {
+  # Read the data and prepare the data to plot.
+  #
+  # Args:
+  #   None.
+  #
+  # Returns:
+  #   The data just prepared.
+  #
+  # Error handling
+  #  
 
-# Get the list of identifiers.
-identifiers <- coor[, 3]
+  # Read the data.
+  data <- read.csv(sDataFileName, sep = ",", header = FALSE,
+                   numerals = "no.loss")
+  
+  coor <- read.csv(sCoordinatesFileName, sep = ",", header=FALSE)
+  
+  # Get the list of identifiers.
+  identifiers <- coor[, 3]
+  
+  # Get the names of the columns to be used.
+  mag.column.names <- paste("MAG_", identifiers, sep = "")
+  err.column.names <- paste("ERR_", identifiers, sep = "")
+  
+  # Interleave the names of the columns for magnitudes and errors, 
+  # as the data use this order for the columns.
+  idx <- order(c(seq_along(mag.column.names), seq_along(err.column.names)))
+  interl.col.names <- unlist(c(mag.column.names, err.column.names))[idx]
+  
+  column.names <- c("MJD", "FILTER", interl.col.names)
+  
+  # Set the names to the columns.
+  names(data) <- column.names
+  
+  # Convert MJD to numeric.
+  data$MJD <- converFactorToNumeric(data$MJD)
+  
+  # Sort by MJD.
+  data <- data[with(data, order(MJD)), ]
+  
+  # Convert magnitude and error from factor to numeric.
+  data[interl.col.names] <- lapply(data[interl.col.names], converFactorToNumeric)
+  
+  return (data)
+}
 
-# Get the names of the columns to be used.
-mag.column.names <- paste("MAG_", identifiers, sep = "")
-err.column.names <- paste("ERR_", identifiers, sep = "")
-
-# Interleave the names of the columns for magnitudes and errors, 
-# as the data use this order for the columns.
-idx <- order(c(seq_along(mag.column.names), seq_along(err.column.names)))
-interl.col.names <- unlist(c(mag.column.names, err.column.names))[idx]
-
-column.names <- c("MJD", "FILTER", interl.col.names)
-
-# Set the names to the columns.
-names(data) <- column.names
-
-# Sort by MJD.
-data <- data[with(data, order(MJD)), ]
-
+data <- readAndPrepareDataToPlot()
+  
 # Separate data by filter.
 data.B.filter <- data[data$FILTER=='B',]
 data.V.filter <- data[data$FILTER=='V',]
@@ -324,9 +355,25 @@ plotDiffMagnitudeData(data.avg.B, cols.mags, "B")
 plotDiffMagnitudeData(data.avg.V, cols.mags, "V")
 plotDiffMagnitudeData(data.avg.R, cols.mags, "R")
 
+# Remove columns with any NA value.
+data.avg.B.noNA <- data.avg.B[ , colSums(is.na(data.avg.B)) == 0]
+data.avg.V.noNA <- data.avg.V[ , colSums(is.na(data.avg.V)) == 0]
+data.avg.R.noNA <- data.avg.R[ , colSums(is.na(data.avg.R)) == 0]
+
+# Get the names of the columns.
+cols.names.noNA <- getColsNames(data.avg.B.noNA)
+
+# Convert list to vectors
+cols.noNA <- rapply(cols.names.noNA[1], c)
+cols.mags.noNA <- rapply(cols.names.noNA[2], c)
+
+par(mfrow = c(1, 2))
+
+plotDiffMagnitudeData(data.avg.B.noNA, cols.mags.noNA, "B")
+plotDiffMagnitudeData(data.avg.V.noNA, cols.mags.noNA, "V")
+plotDiffMagnitudeData(data.avg.R.noNA, cols.mags.noNA, "R")
+
 # Plot the differences between reference stars in each filter.
 plotDiffOfMagnitudeCol(data.B.filter, cols.mags, "B")
 plotDiffOfMagnitudeCol(data.V.filter, cols.mags, "V")
 plotDiffOfMagnitudeCol(data.R.filter, cols.mags, "R")
-
-write.csv(data, "VBQCam_all_inst_mag_ord.csv", row.names=FALSE, quote=FALSE)
