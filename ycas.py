@@ -105,8 +105,8 @@ def main(progargs):
     # Initializes logging.
     init_log(progargs)
         
-    # This step organizes the images in directories depending on the type of image:
-    # bias, flat or data.
+    # This step organizes the images in directories depending on the type of 
+    # image: bias, flat or data.
     if progargs.organization_requested:
         logging.info("* Step 1 * Organizing image files in directories.")
         orgfits.organize_files(progargs)
