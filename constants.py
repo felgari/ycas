@@ -19,18 +19,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import logging
-
-# Log levels, taken from logging.
-LOG_LEVELS = { "CRITICAL" : logging.CRITICAL,
-              "ERROR": logging.ERROR,
-              "WARNING": logging.WARNING,
-              "INFO": logging.INFO,
-              "DEBUG": logging.DEBUG }
-
-DEFAULT_LOG_LEVEL_NAME = "WARNING"
-
-DEFAULT_LOG_FILE_NAME = "ycas_log.txt"
 
 DEFAULT_DIFF_PHOT_FILE_NAME_PREFIX = "diff_mag"
 
@@ -217,7 +205,12 @@ JD_TIME_CEM_COL = 0
 DAY_CEM_COL = 1
 CE_MAG_CEM_COL = 2
 INST_MAG_CEM_COL = 3
-FILTER_CEM_COL = 4
+ERR_CEM_COL = 4
+FILTER_CEM_COL = 5
+
+# Minimum number of measures of standard objects to calculate extinction 
+# coefficients.
+MIN_NUM_STD_MEASURES = 4
 
 # Columns of the transforming coefficients.
 DAY_TRANS_COEF_COL = 0
