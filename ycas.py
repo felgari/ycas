@@ -29,6 +29,7 @@ the photometric magnitude of the objects.
 
 import sys
 import logging
+import logutil
 import yargparser
 import orgfits
 import reduce
@@ -37,53 +38,6 @@ import astrometry
 import photometry
 import magnitude
 from constants import *
-
-def convert_logging_level(level):
-    """ Convert the log level received to one of the loogging module. "
-    
-    Keyword arguments:
-    level -- Level to convert.
-    
-    """
-    
-    try:
-        logging_level = LOG_LEVELS[level]
-    except KeyError as ke:
-        # If no valid log level is indicated use the default level.
-        logging_level = LOG_LEVELS[DEFAULT_LOG_LEVEL_NAME]
-        
-        print "No valid log level has been indicated using default level: " + \
-                DEFAULT_LOG_LEVEL_NAME
-    
-    return logging_level
-
-def init_log(progargs):
-    """ Initializes the file log and messages format. 
-    
-    Keyword arguments:
-    progargs - ProgramArguments object, it contains the information of all 
-        program arguments received.
-    
-    """    
-    
-    # If no log level is indicated use the default level.
-    if progargs.log_level_provided:
-        logging_level = LOG_LEVELS[progargs.log_level]
-    else:
-        logging_level = LOG_LEVELS[DEFAULT_LOG_LEVEL_NAME]
-    
-    # If a file name has been provided as program argument use it.
-    if progargs.log_file_provided:
-        log_file = progargs.log_file_name
-    else:
-        log_file = DEFAULT_LOG_FILE_NAME
-    
-    # Set the file, format and level of logging output.
-    logging.basicConfig(filename=log_file, \
-                        format="%(asctime)s:%(levelname)s:%(message)s", \
-                        level=logging_level)
-    
-    logging.debug("Logging initialized.")
 
 def main(progargs):
     """ Main function.
@@ -103,7 +57,10 @@ def main(progargs):
     progargs.parse()           
         
     # Initializes logging.
-    init_log(progargs)
+    logutil.init_log(progargs)
+    
+    # Check the request of the arguments related to the task that could be
+    # performed in the order that these tasks must be done by the pipeline.
         
     # This step organizes the images in directories depending on the type of 
     # image: bias, flat or data.
