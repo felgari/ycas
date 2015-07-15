@@ -178,13 +178,19 @@ def main(progargs):
 # Where all begins ...
 if __name__ == "__main__":
 
-    # Create object to process program arguments.
+    # Create object to process the program arguments.
     progargs = yargparser.ProgramArguments()    
     
-    # If no arguments are provided, show help and exit.
-    if len(sys.argv) <= yargparser.ProgramArguments.MIN_NUM_ARGVS:
-        print "The number of program arguments are not enough."        
+    # Check the number of arguments received.
+    if len(sys.argv) <= progargs.min_number_args:
+        
+        # If no arguments are provided show help and exit.
+        print "The number of program arguments are not enough."   
+             
         progargs.print_help()
+        
         sys.exit(1)
+        
     else: 
+        # Number of arguments is fine, execute main function.
         sys.exit(main(progargs))

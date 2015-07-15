@@ -31,8 +31,6 @@ from constants import *
 class ProgramArguments(object):
     """ Encapsulates the definition and processing of program arguments. """
     
-    MIN_NUM_ARGVS = 1
-    
     def __init__(self):
         """ Initializes parser. 
         
@@ -40,6 +38,8 @@ class ProgramArguments(object):
         with the definition of arguments to use.
 
         """   
+        
+        self.__min_number_of_args = 1
         
         # Initializes variables with default values.        
         self.__bias_directory = BIAS_DIRECTORY
@@ -119,7 +119,11 @@ class ProgramArguments(object):
                                    help="Use header information to get " + \
                                    "the type of the image")                     
         
-        self.__args = None    
+        self.__args = None   
+        
+    @property
+    def min_number_args(self):
+        return self.__min_number_of_args
         
     @property    
     def bias_directory(self):        
