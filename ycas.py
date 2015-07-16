@@ -123,7 +123,7 @@ def main(progargs):
     # generates a file that associate to each object all its measures.
     if progargs.magnitudes_requested:
         logging.info("* Step 7 * Processing magnitudes of each object.")     
-        magnitude.calculate_magnitudes(progargs)
+        magnitude.process_magnitudes(progargs)
         anything_done = True        
     else:
         logging.info("* Step 7 * Skipping processing magnitudes of each " + \

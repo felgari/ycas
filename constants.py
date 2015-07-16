@@ -183,6 +183,11 @@ B_FILTER_NAME = "B"
 V_FILTER_NAME = "V"
 R_FILTER_NAME = "R"
 
+# Columns for magnitude tuples.
+MAG_COL = 0
+MAG_ERR_COL = 1
+MAG_ID_COL = 2 
+
 # Columns for the data used to calculate extinction coefficients.
 DAY_CE_CALC_DATA = 0
 JD_TIME_CE_CALC_DATA = 1

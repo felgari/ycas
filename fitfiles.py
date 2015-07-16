@@ -376,3 +376,39 @@ def get_file_binning(fit_file_name):
         logging.error("Unknown error reading fit file: " + fit_file_name)             
     
     return bin
+
+def get_rdls_data(rdls_file):
+    """Returns the AR, DEC values stores in a RDLS file.
+    
+    This file is a FIT file that contains a table and this function returns
+    the coordinates values in a list.
+    
+    Keyword arguments:
+    rdls_file -- RDLS file where to look for the coordinates. 
+    
+    Returns:
+    A list containing in each item an index, and the AR, DEC for all the 
+    coordinates read form the RDLA file.    
+    
+    """
+    
+    # Open the FITS file received.
+    fits_file = pyfits.open(rdls_file) 
+
+    # Assume the first extension is a table.
+    tbdata = fits_file[1].data       
+    
+    fits_file.close
+    
+    # Convert data from fits table to a list.
+    ldata = list()
+    
+    # To add an index to the rows.
+    n = 1
+    
+    # Iterate over the table read from the RDLS file.
+    for row in tbdata:
+        ldata.append([n, row[0], row[1]])
+        n += 1
+    
+    return ldata  
