@@ -147,7 +147,7 @@ class ProgramArguments(object):
     
     @property    
     def log_file_provided(self): 
-        return self.__args.l <> None      
+        return self.__args.l is not None      
     
     @property
     def log_file_name(self):
@@ -155,7 +155,7 @@ class ProgramArguments(object):
     
     @property    
     def interest_object_file_provided(self): 
-        return self.__args.i <> None      
+        return self.__args.i is not None      
     
     @property
     def interest_object_file_name(self):
@@ -163,7 +163,7 @@ class ProgramArguments(object):
 
     @property    
     def log_level_provided(self): 
-        return self.__args.v <> None     
+        return self.__args.v is not None     
     
     @property
     def log_level(self):
@@ -218,22 +218,22 @@ class ProgramArguments(object):
             
         # Update variables if a program argument has been received
         # for their value.
-        if self.__args.b <> None:
+        if self.__args.b is not None:
             self.__bias_directory = self.__args.b
             
-        if self.__args.f <> None:
+        if self.__args.f is not None:
             self.__flat_directory = self.__args.f
             
-        if self.__args.d <> None:
+        if self.__args.d is not None:
             self.__data_directory = self.__args.d
             
-        if self.__args.x <> None:
+        if self.__args.x is not None:
             self.__sextractor_cfg_path = self.__args.x
             
-        if self.__args.no <> None:
+        if self.__args.no is not None:
             self.__astrometry_num_of_objects = self.__args.no
             
-        if self.__args.i <> None:
+        if self.__args.i is not None:
             self.__objects_of_interest_file = self.__args.i       
             
     def print_usage(self):

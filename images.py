@@ -87,7 +87,7 @@ class ImagesArguments(object):
     
     @property    
     def destiny_dir_provided(self): 
-        return self.__args.d <> None     
+        return self.__args.d is not None     
     
     @property
     def destiny_dir(self):
@@ -95,7 +95,7 @@ class ImagesArguments(object):
     
     @property    
     def source_dir_provided(self): 
-        return self.__args.s <> None     
+        return self.__args.s is not None     
     
     @property
     def source_dir(self):
@@ -120,7 +120,7 @@ class ImagesArguments(object):
         # Parse program arguments.
         self.__args = self.__parser.parse_args()
             
-        if self.__args.o <> None:
+        if self.__args.o is not None:
             self.__objects_of_interest_file = self.__args.o    
             
     def print_usage(self):
