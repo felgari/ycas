@@ -153,13 +153,13 @@ class SummaryArguments(object):
         # Parse program arguments.
         self.__args = self.__parser.parse_args()
             
-        if self.__args.d == None:
+        if self.__args.d is None:
             self.__args.d = SummaryArguments.DEFAULT_DESTINY_FILE 
             
-        if self.__args.i == None:
+        if self.__args.i is None:
             self.__args.i = SummaryArguments.DEFAULT_OBJ_FILE   
             
-        if self.__args.l == None:
+        if self.__args.l is None:
             self.__args.l = DEFAULT_LOG_FILE_NAME  
             
     def args_summary(self):
@@ -300,7 +300,7 @@ def sum_org_images_of_type(messages, has_filters, type_name, dir_name, \
 
     # Apply the following statistics if these files are used to create a mater
     # file (i.e. bias or flats).
-    if master_file_name != None:
+    if master_file_name is not None:
         # Summary: Number of master files created.
         master = [fb for fb in files if fb[FILE_NAME_COL] == master_file_name]
         num_master = len(master)

@@ -186,7 +186,7 @@ def get_binnings_of_images(data_path):
                 bin = get_file_binning(path_file)
     
             # If the binning has been read.
-            if bin != None:
+            if bin is not None:
                 # If this binning has not been found yet, add it.
                 if not bin in binnings:
                     binnings.extend([bin])
@@ -219,7 +219,7 @@ def remove_images_with_diff_binning(data_path, binnings):
                 bin = get_file_binning(path_file)
     
                 # If the binning has been read.
-                if bin != None:
+                if bin is not None:
                     # If this binning has not been in the list of binnings,
                     # remove the image.
                     if not bin in binnings:

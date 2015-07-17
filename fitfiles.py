@@ -87,14 +87,14 @@ def get_image_filter(header_fields, filename):
     field_processed = False
         
     # Check if any header field has been found.
-    if header_fields != None and len(header_fields) > 0:
+    if header_fields is not None and len(header_fields) > 0:
         
         # The header field could not have found.
         try:    
             # Retrieve the filter from the header field.
             field_value = header_fields[FILTER_FIELD_NAME]
             
-            if field_value != None and field_value != "":
+            if field_value is not None and field_value != "":
                 field_processed = True
                 
                 # Remove white spaces.
@@ -253,14 +253,14 @@ def file_is_type(header_fields, filename_path, field_type, type_string):
     field_processed = False
     
     # Check if any header field has been found.
-    if header_fields != None and len(header_fields) > 0:
+    if header_fields is not None and len(header_fields) > 0:
         
         # The header field could not have found.
         try:    
             # Retrieve the image type from the header field.
             field_value = header_fields[IMAGE_TYPE_FIELD_NAME]
             
-            if field_value != None and field_value != "":
+            if field_value is not None and field_value != "":
                 field_processed = True
                 
                 if field_value == field_type:

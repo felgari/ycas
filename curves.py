@@ -100,7 +100,7 @@ class CurvesArguments(object):
         # Parse program arguments.
         self.__args = self.__parser.parse_args()
             
-        if self.__args.o == None:
+        if self.__args.o is None:
             self.__args.o = CurvesArguments.OUTPUT_FILE    
             
     def print_usage(self):
