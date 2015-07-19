@@ -36,8 +36,8 @@ DEFAULT_LOG_FILE_NAME = "ycas_log.txt"
 def convert_logging_level(level):
     """ Convert the log level received to one of the logging module. "
     
-    Keyword arguments:
-    level -- Level to convert.
+    Args:
+    level: Level to convert.
     
     """
     
@@ -55,8 +55,8 @@ def convert_logging_level(level):
 def init_log(progargs):
     """ Initializes the file log and messages format. 
     
-    Keyword arguments:
-    progargs - ProgramArguments object, it contains the information of all 
+    Args:
+    progargs: ProgramArguments object, it contains the information of all 
         program arguments received.
     
     """    

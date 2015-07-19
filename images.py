@@ -139,8 +139,8 @@ def get_filename_start(path_file):
     This starting word indicates the file type or the name of the object
     related to this image.
     
-    Keyword arguments:
-    path_file -- File name with the complete path.
+    Args:
+    path_file: File name with the complete path.
     
     Returns:      
     The first part of the file name.
@@ -162,9 +162,9 @@ def get_files_of_interest(obj_names, files):
     If the images for an object are found also returns the bias and flat
     images related. 
     
-    Keyword arguments:
-    obj_names -- Names of the objects whose images are of interest.
-    files -- List of files that could contain images related to the objects.
+    Args:
+    obj_names: Names of the objects whose images are of interest.
+    files: List of files that could contain images related to the objects.
     
     Returns:    
     Set of files related to the objects indicated.
@@ -238,9 +238,9 @@ def get_files_of_interest(obj_names, files):
 def copy_files_of_interest(destiny_path, files_of_interest):
     """Creates a directory in the path indicated and copy the files received.
     
-    Keyword arguments:
-    destiny_path -- Destiny path to create and where to copy the files.
-    files_of_interest -- Files to copy.  
+    Args:
+    destiny_path: Destiny path to create and where to copy the files.
+    files_of_interest: Files to copy.  
             
     """
     
@@ -259,10 +259,10 @@ def copy_files_of_interest(destiny_path, files_of_interest):
 def copy_images(destiny_path, source_path, objects_file):
     """Searches files related to the object and copy them to the path indicated.
     
-    Keyword arguments:
-    destiny_path -- Destiny path to create and where to copy the files.
-    source_path -- Source where to look for files.
-    objects_file -- Objects whose related files are searched.
+    Args:
+    destiny_path: Destiny path to create and where to copy the files.
+    source_path: Source where to look for files.
+    objects_file: Objects whose related files are searched.
             
     """
     
@@ -297,8 +297,8 @@ def copy_images(destiny_path, source_path, objects_file):
 def list_objects_in_files(source_dir):
     """Walks the directory and create a list of the objects with images.
     
-    Keyword arguments:
-    source_dir -- Source directory where to search for files.
+    Args:
+    source_dir: Source directory where to search for files.
             
     """
     
@@ -341,8 +341,8 @@ def list_objects_in_files(source_dir):
 def main(progargs):
     """Configure logging, check arguments and read objects of interest. 
 
-    Keyword arguments:
-    progargs -- Program arguments.    
+    Args:
+    progargs: Program arguments.    
         
     """  
     

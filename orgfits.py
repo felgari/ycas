@@ -44,9 +44,9 @@ def create_directory(path, dirname):
     This function creates a directory with the given name located in the
     path received.
     
-    Keyword arguments: 
-    path -- Path where the directory is created.
-    dirname -- Name of the directory to create.
+    Args: 
+    path: Path where the directory is created.
+    dirname: Name of the directory to create.
     
     """
 
@@ -70,10 +70,10 @@ def analyze_and_organize_dir(filename, path, progargs):
     First try, is to establish the type of each file looking the file header,
     of not possible the name of the file is used.
     
-    Keyword arguments:     
-    filename  -- Name of the file to analyze.
-    path -- Path where is the file.
-    progargs -- Program arguments.
+    Args:     
+    filename: Name of the file to analyze.
+    path: Path where is the file.
+    progargs: Program arguments.
     	
     """
 
@@ -140,9 +140,9 @@ def ignore_current_directory(dir, progargs):
     as this directory could be a directory created in a previous run and a new
     bias/flat/data and redundant directory should be created for it.
     
-    Keyword arguments:
-    dir -- Directory to process.
-    progargs -- Program arguments.  
+    Args:
+    dir: Directory to process.
+    progargs: Program arguments.  
     
     """
     ignore  = False
@@ -162,8 +162,8 @@ def ignore_current_directory(dir, progargs):
 def get_binnings_of_images(data_path):
     """Returns the binnings used for the images in the path indicated.
     
-    Keyword arguments:    
-    data_path -- Directory with full path with images to analyze.
+    Args:    
+    data_path: Directory with full path with images to analyze.
     
     Returns:
     The list of binning used for the data images in the directory indicated.
@@ -199,9 +199,9 @@ def get_binnings_of_images(data_path):
 def remove_images_with_diff_binning(data_path, binnings):
     """Remove images with a binning not included in the binnings received.
     
-    Keyword arguments:    
-    data_path -- Path that contains the images to analyze.
-    binnings -- List of binnings to consider.
+    Args:    
+    data_path: Path that contains the images to analyze.
+    binnings: List of binnings to consider.
     
     """
     
@@ -234,8 +234,8 @@ def remove_images_with_diff_binning(data_path, binnings):
 def remove_dir_if_empty(source_path):
     """Check if the directory is empty and in that case is removed.
     
-    Keyword arguments:    
-    source_path -- Path to analyze.
+    Args:    
+    source_path: Path to analyze.
         
     """
     
@@ -261,8 +261,8 @@ def remove_images_according_to_binning(path):
     Analyzes the binning of the bias and flat images and remove those whose 
     binning does not match that of the data images.
     
-    Keyword arguments:    
-    path -- Path where the analysis of the images should be done.
+    Args:    
+    path: Path where the analysis of the images should be done.
         
     """
     
@@ -304,8 +304,8 @@ def organize_files(progargs):
     when a directory with image files is found the directory contents
     are analyzed and organized.
     
-    Keyword arguments:    
-    progargs -- Program arguments.
+    Args:    
+    progargs: Program arguments.
     
     Returns:    
         

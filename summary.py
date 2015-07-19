@@ -204,7 +204,11 @@ def walk_directories(root_dir, file_pattern, dir_name = None, \
     for directories and files that match the patterns received and
     return the files matching these criteria.
     
-    Keyword arguments: 
+    Args: 
+    root_dir: Root directory to search files.
+    file_pattern: Pattern of the file to search. 
+    dir_name: Name of the directory to look for, if any.
+    dir_for_images: Indicates it it is a directory with images.
     
     Returns:        
     
@@ -257,12 +261,12 @@ def sum_org_images_of_type(messages, has_filters, type_name, dir_name, \
                            master_file_name = None):
     """Generates a summary for the images.
     
-    Keyword arguments:    
-    messages -- List where the messages are added.
-    has_filters -- Indicates if the directories are organized by filters.
-    type_name -- Name of the type of image analyzed.
-    dir_name -- Directory to walk to search for images.
-    master_file_name -- Name of the master file, if any.
+    Args:    
+    messages: List where the messages are added.
+    has_filters: Indicates if the directories are organized by filters.
+    type_name: Name of the type of image analyzed.
+    dir_name: Directory to walk to search for images.
+    master_file_name: Name of the master file, if any.
                 
     """
     
@@ -583,8 +587,8 @@ def summary_magnitude():
 def init_log(progargs):
     """ Initializes the file log and messages format. 
     
-    Keyword arguments: 
-    progargs - Program arguments.
+    Args: 
+    progargs: Program arguments.
     
     """    
     
@@ -616,7 +620,7 @@ SUMMARY_PROCESS = [
 def main(progargs):
     """ Generates the summaries requested.
     
-    Keyword arguments: 
+    Args: 
     progargs - Program arguments.
         
     """

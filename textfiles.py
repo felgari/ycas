@@ -35,8 +35,8 @@ def read_objects_of_interest(objects_file):
     This file contains the name of the object and the AR, DEC 
     coordinates of each object.
     
-    Keyword arguments:
-    objects_file -- Name of the file that contains the information of objects.
+    Args:
+    objects_file: Name of the file that contains the information of objects.
     
     """
     
@@ -60,9 +60,9 @@ def read_objects_of_interest(objects_file):
 def convert_deg_to_dec_deg(str_degress, is_ra = False):
     """Convert the coordinate in degrees received to decimal degrees.
     
-    Keyword arguments:
-    str_degress -- A string containing a value in degrees, minutes and seconds.
-    is_ra -- Indicates if the value received is right ascension and so it
+    Args:
+    str_degress: A string containing a value in degrees, minutes and seconds.
+    is_ra: Indicates if the value received is right ascension and so it
         should be multiplied to scale it from 24 to 360.
     
     Returns:    
@@ -90,8 +90,8 @@ def get_coordinates(content):
     in degrees stored in the list received
     converted to a pair RA, DEC in decimal degrees.
     
-    Keyword arguments:
-    content -- String of coordinates of RA and DEC in degrees, minutes and 
+    Args:
+    content: String of coordinates of RA and DEC in degrees, minutes and 
         seconds.
     
     Returns:    
@@ -121,8 +121,8 @@ def read_references_for_object(object_name):
     Return a list of lists, each list contains the coordinates for the field 
     of an object
         
-    Keyword arguments:
-    object_name -- The name of the object.
+    Args:
+    object_name: The name of the object.
     
     Returns:    
     The coordinates read from the file indicated.
@@ -165,8 +165,8 @@ def read_catalog_file(file_name):
     Read a file containing in each file a x,y coordinate pair and a numeric 
     identifier for each coordinate.
         
-    Keyword arguments:
-    file_name -- The name of the file to read.
+    Args:
+    file_name: The name of the file to read.
     
     Returns:    
     The list of coordinates read from the file indicated.
@@ -198,10 +198,10 @@ def save_magnitudes_to_file(object_name, filename_suffix, \
                             inst_magnitudes_obj):
     """Save the magnitudes to a text file.
     
-    Keyword arguments:     
-    object_name -- Name of the object that corresponds to the magnitudes.
-    filename_suffix -- Suffix to add to the file name.
-    inst_magnitudes_obj -- List of magnitudes.
+    Args:     
+    object_name: Name of the object that corresponds to the magnitudes.
+    filename_suffix: Suffix to add to the file name.
+    inst_magnitudes_obj: List of magnitudes.
     
     """
     
@@ -223,10 +223,10 @@ def save_magnitudes(objects, instrumental_magnitudes, \
                     all_instrumental_magnitudes):
     """ Save the magnitudes received.
         
-    Keyword arguments:
-    objects -- List of objects.
-    instrumental_magnitudes - Instrumental magnitudes of objects of interest.
-    all_instrumental_magnitudes -- List of magnitudes for all the objects.    
+    Args:
+    objects: List of objects.
+    instrumental_magnitudes: Instrumental magnitudes of objects of interest.
+    all_instrumental_magnitudes: List of magnitudes for all the objects.    
     
     """
     

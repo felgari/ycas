@@ -49,8 +49,8 @@ def process_sextractor_output(command_out):
     The mode is the statistics considered to get the best representation
     of the FWHM of the image.
     
-    Keyword arguments:
-    command_out -- The output of the sextractor execution.
+    Argss:
+    command_out: The output of the sextractor execution.
     
     Returns:
     The mode of the all the FWHM values received.
@@ -87,9 +87,9 @@ def process_sextractor_output(command_out):
 def get_fwhm(progargs, img_filename):
     """Execute sextractor on the image received to get its fwhm. 
     
-    Keyword arguments:
-    progargs -- Program arguments.
-    img_filename -- Name of the file with image whose FWHM is calculated.
+    Args:
+    progargs: Program arguments.
+    img_filename: Name of the file with image whose FWHM is calculated.
     
     Returns:    
     The FWHM value calculated for the image indicated.

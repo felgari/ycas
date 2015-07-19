@@ -81,8 +81,8 @@ def set_common_phot_pars():
 def set_image_specific_phot_pars(fwhm, datamin):
     """Sets the pyraf parameters in photometry that changes for each image.
     
-    Keyword arguments: 
-    fwhm -- FWHM value.
+    Args: 
+    fwhm: FWHM value.
     datamin - datamin value to set.
     
     """       
@@ -108,8 +108,8 @@ def save_parameters():
 def calculate_datamin(image_file_name):
     """ Calculate a datamin value for the image received using imstat. 
     
-    Keyword arguments: 
-    image_file_name -- Name of the file with the image. 
+    Args: 
+    image_file_name: Name of the file with the image. 
     
     """
     
@@ -143,11 +143,11 @@ def do_phot(image_file_name, catalog_file_name, output_mag_file_name, progargs):
     Receives the image to use, a catalog with the position of the objects
     contained in the image and the name of the output file.
     
-    Keyword arguments:     
-    image_file_name -- Name of the file with the image. 
-    catalog_file_name -- File with the X, Y coordinates to do phot.
-    output_mag_file_name -- Name of the output file with the magnitudes.
-    progargs -- Program arguments.
+    Args:     
+    image_file_name: Name of the file with the image. 
+    catalog_file_name: File with the X, Y coordinates to do phot.
+    output_mag_file_name: Name of the output file with the magnitudes.
+    progargs: Program arguments.
     
     """
     
@@ -185,8 +185,8 @@ def do_photometry(progargs):
     along with the catalog to a function that calculates the photometry
     of the objects in the catalog file.
     
-    Keyword arguments:     
-    progargs -- Program arguments.    
+    Args:     
+    progargs: Program arguments.    
     
     """
     
@@ -290,8 +290,8 @@ def txdump_photometry_info():
 def calculate_photometry(progargs):
     """ Calculates the photometry for all the data images found.
     
-    Keyword arguments:    
-    progargs -- Program arguments.
+    Args:    
+    progargs: Program arguments.
     """
 
     # Init iraf package.
@@ -313,9 +313,9 @@ def get_object_final_name(object_name, objects_final_names):
     the final name given to that object according to the final
     name indicated in the objects file.
     
-    Keyword arguments:
-    object_name -- Name of the object.
-    objects_final_names -- Names to use for the objects.
+    Args:
+    object_name: Name of the object.
+    objects_final_names: Names to use for the objects.
     
     Returns:    
     Final name for the object. 
@@ -333,9 +333,9 @@ def get_object_final_name(object_name, objects_final_names):
 def write_manitudes_diff_file(diff_mags, file_name):
     """Write the magnitudes received in a text file with the name indicated.
     
-    Keyword arguments:
-    diff_mags -- List of differential magnitudes.
-    file_name -- Name of the file to write.
+    Args:
+    diff_mags: List of differential magnitudes.
+    file_name: Name of the file to write.
 
     """
     
@@ -356,11 +356,11 @@ def save_manitudes_diff(all_magnitudes, objects, filters, max_index):
     and filter. Only are saved the magnitudes with an index smaller than 
     received
     
-    Keyword arguments:
-    all_magnitudes -- All the magnitudes.
-    objects -- The objects related to the magnitudes.
-    filters -- The filters related to the magnitudes.
-    max_index -- The maximum index that the magnitude may have to be saved.
+    Args:
+    all_magnitudes: All the magnitudes.
+    objects: The objects related to the magnitudes.
+    filters: The filters related to the magnitudes.
+    max_index: The maximum index that the magnitude may have to be saved.
         
     """
     
@@ -410,8 +410,8 @@ def differential_photometry(progargs):
     The objects used to calculate the difference are objects that exists in
     the same image.    
 
-    Keyword arguments:
-    progargs -- Program arguments.
+    Args:
+    progargs: Program arguments.
     
     """
     

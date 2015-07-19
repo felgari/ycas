@@ -118,9 +118,9 @@ def write_data(data, output_file_name):
     
     The data to write is a list and each row is written in a line.
     
-    Keyword arguments:
-    data -- Data to write.
-    output_file_name -- Name of the file where the data will be written.
+    Args:
+    data: Data to write.
+    output_file_name: Name of the file where the data will be written.
         
     """
     
@@ -141,8 +141,8 @@ def get_unique_ind_values_sorted(files_data):
     The values received may be duplicated. This function eliminates duplicates
     and sort the result list.
     
-    Keyword arguments:    
-    files_data -- List of data from files containing the values.
+    Args:    
+    files_data: List of data from files containing the values.
     
     Returns:
     A sorted list with the values received without duplicates.
@@ -167,8 +167,8 @@ def get_unique_ind_values_sorted(files_data):
 def avg(items):
     """Calculate the average of values received. 
     
-    Keyword arguments:
-    items -- The items whose average is calculated.
+    Args:
+    items: The items whose average is calculated.
     
     Returns:
     The average of the values received.
@@ -189,7 +189,7 @@ def calculate_data_median(files_data):
     have the same MJD. For these values a median value is calculated and used
     instead this set of values.
     
-    Keyword arguments:
+    Args:
     files_data - List of sublist with the values.
     
     Returns:    
@@ -252,9 +252,9 @@ def process_data(files_data, progargs):
     to a common numeric domain, i.e. MJD as the independent variable.
     The following fields should be the dependent variable and error.    
     
-    Keyword arguments:
-    files_data --
-    progargs -- Program arguments.
+    Args:
+    files_data: List of file names with data.
+    progargs: Program arguments.
         
     """
     
@@ -307,9 +307,9 @@ def read_input_files(file_names, calculate_median):
     All the data read from the files is returned as a list that contains
     lists, each of these lists with data read from a file.
         
-    Keyword arguments:
-    file_names -- The names of the files to read.
-    calculate_median -- True if the median may be calculated.
+    Args:
+    file_names: The names of the files to read.
+    calculate_median: True if the median may be calculated.
     
     Returns:  
     The data read in the files.  
@@ -364,8 +364,8 @@ def read_input_files(file_names, calculate_median):
 def main(progargs):
     """Main function.
     
-    Keyword arguments:
-    progargs -- Program arguments.
+    Args:
+    progargs: Program arguments.
         
     Returns:    
     Exit value.

@@ -60,16 +60,16 @@ def get_object(objects, filename):
     file name and searched in the list of objects received.
     The object found and its position in the list are returned.
     
-    Keyword arguments:
-    objects -- List of objects of interest.
-    filename -- Filename related to an object to search in the set of objects.
+    Args:
+    objects: List of objects of interest.
+    filename: Filename related to an object to search in the set of objects.
     
     Returns:
-    object -- The object found.
-    index -- The index of the object in the list.
+    object: The object found.
+    index: The index of the object in the list.
     
     Raises:
-    ObjectNotFound -- If the object corresponding to the file name is nor found.
+    ObjectNotFound: If the object corresponding to the file name is nor found.
     
     """
     
@@ -105,8 +105,8 @@ def get_object(objects, filename):
 def get_fit_table_data(fit_table_file_name):
     """Get the data of a the first table contained in the fit file indicated.
     
-    Keyword arguments:
-    fit_table_file_name -- File name of the fit file that contains the table.
+    Args:
+    fit_table_file_name: File name of the fit file that contains the table.
     
     Returns:
     The table contained in the fit file.
@@ -138,11 +138,11 @@ def get_rd_index(rd_data, ra, dec):
     """ Get the index of the RA, DEC pair whose values are more
     close to those received.
     
-    Keyword arguments:
-    rd_data -- List of ra, dec values. The closest pair of this list to the
+    Args:
+    rd_data: List of ra, dec values. The closest pair of this list to the
     ra,dec values are returned.
-    ra -- RA value to search.
-    dec -- DEC value to search.
+    ra: RA value to search.
+    dec: DEC value to search.
     
     Returns:
     A pair RA,DEC of the list received with the nearest values to those
@@ -202,11 +202,11 @@ def get_indexes_for_obj_cood(rd_data, object, object_references):
     """ Get the indexes of the ra,dec coordinates nearest to those of the 
     objects received.
     
-    Keyword arguments:
-    rd_data --  List of ra, dec values. The closest pair of this list to the
+    Args:
+    rd_data: List of ra, dec values. The closest pair of this list to the
     ra,dec values are returned.
-    object -- Object of interest whose coordinates are searched.
-    object_references -- List of other object whose coordinates are also 
+    object: Object of interest whose coordinates are searched.
+    object_references: List of other object whose coordinates are also 
     searched.
     
     Returns:
@@ -260,12 +260,12 @@ def write_catalog_file(catalog_file_name, indexes, xy_data, identifiers):
     The coordinates written are related to the x,y data and indexes set 
     received.
     
-    Keyword arguments:
-    catalog_file_name -- File name o
-    indexes -- List of indexes corresponding to the coordinates to write.
-    xy_data -- List of the X, Y coordinates that are referenced by X, Y
+    Args:
+    catalog_file_name: File name o
+    indexes: List of indexes corresponding to the coordinates to write.
+    xy_data: List of the X, Y coordinates that are referenced by X, Y
     coordinates.    
-    identifiers -- Identifiers of the objects found.    
+    identifiers: Identifiers of the objects found.    
     
     """
     
@@ -296,14 +296,14 @@ def check_celestial_coordinates(image_file_name, object, indexes, \
     - Checks that the X,Y coordinates for the object of interest are into a 
     distance from the center of the image.
     
-    Keyword arguments:
-    image_file_name -- Name of the file to the image whose coordinates are 
+    Args:
+    image_file_name: Name of the file to the image whose coordinates are 
     checked.
-    object -- Data of the object whose image has been analyzed to get the 
+    object: Data of the object whose image has been analyzed to get the 
     astrometry.
-    indexes -- Indexes to the coordinates of the objects found in this image.
-    rd_data -- List of RA, DEC coordinates calculated by the astrometry.
-    xy_data -- list of X, Y coordinates calculated by the astrometry.
+    indexes: Indexes to the coordinates of the objects found in this image.
+    rd_data: List of RA, DEC coordinates calculated by the astrometry.
+    xy_data: list of X, Y coordinates calculated by the astrometry.
     
     Returns:    
     True if checks are ok, False otherwise.
@@ -400,11 +400,11 @@ def write_coord_catalogues(image_file_name, catalog_full_file_name, \
     contains this x,y values. This text file will be used later to calculate
     the photometry of the objects on these coordinates.
     
-    Keyword arguments:
-    image_file_name -- Name of the file of the image.
-    catalog_full_file_name -- Name of the catalog to write
-    object -- Data of the object corresponding to the image.
-    object_references -- Coordinates for other objects in the field of the 
+    Args:
+    image_file_name: Name of the file of the image.
+    catalog_full_file_name: Name of the catalog to write
+    object: Data of the object corresponding to the image.
+    object_references: Coordinates for other objects in the field of the 
         object of interest.
                            
     Returns:    
@@ -478,8 +478,8 @@ def read_objects_references(objects):
     This function received a set of objects of interest and for each object 
     returns the coordinates of all the reference objects it has.
     
-    Keyword arguments:
-    objects -- Objects for which the coordinates of its reference objects are
+    Args:
+    objects: Objects for which the coordinates of its reference objects are
     returned.
     
     Returns:    
@@ -505,8 +505,8 @@ def do_astrometry(progargs):
     The x,y positions calculated are stored to a file that contains only 
     those x and y position to be used later in photometry.
     
-    Keyword arguments:
-    progargs -- Program arguments. 
+    Args:
+    progargs: Program arguments. 
         
     """
     
@@ -576,7 +576,10 @@ def do_astrometry(progargs):
                             use_sextractor = ""
                             
                             if progargs.use_sextractor_for_astrometry:
-                                use_sextractor = ASTROMETRY_OPT_USE_SEXTRACTOR
+                                use_sextractor = \
+                                    ASTROMETRY_OPT_USE_SEXTRACTOR + " " + \
+                                    progargs.sextractor_cfg_path
+                                
     
                             command = ASTROMETRY_COMMAND + " " + \
                                 ASTROMETRY_PARAMS + \

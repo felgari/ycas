@@ -42,8 +42,8 @@ XY_CENTER_FIT_HEADER_FIELDS = [CRPIX1, CRPIX2]
 def search_filter_from_set_in_file_name(filename):
     """ Get from a file name, a filter name belonging to the set filters used. 
     
-    Keyword arguments:
-    filename -- File name where the filter name is extracted.
+    Args:
+    filename: File name where the filter name is extracted.
     
     Returns:    
     The filter name extracted from the file name, if any.
@@ -73,9 +73,9 @@ def get_image_filter(header_fields, filename):
     of the file name and is located in a concrete position.
     If it is not found there, the filter is extracted from the file name.
     
-    Keyword arguments:
-    header_fields -- Header fields of the file. 
-    filename -- Name of the file.
+    Args:
+    header_fields: Header fields of the file. 
+    filename: Name of the file.
     
     Returns:    
     The filter name, if it is identified.
@@ -124,8 +124,8 @@ def get_image_filter_from_file(filename):
     This function get the header fields and pass them and the file name to
     another function that actually gets the filter name.
     
-    Keyword arguments:
-    filename -- Name of the file whose filter is requested.
+    Args:
+    filename: Name of the file whose filter is requested.
     
     Returns:    
     The filter name, if it is identified.
@@ -143,9 +143,9 @@ def get_image_filter_from_file(filename):
 def get_fit_fields(fit_file_name, fields = ORG_FIT_HEADER_FIELDS):
     """Retrieves the fields of the fit header from the file indicated.
     
-    Keyword arguments:
-    fit_file_name -- Name of the fit file
-    fields -- The fields to return.
+    Args:
+    fit_file_name: Name of the fit file
+    fields: The fields to return.
     
     Returns:    
     The requested fields found in the file name indicated. 
@@ -190,8 +190,8 @@ def remove_prefixes(file_name):
     
     The numeric prefixes should be separated by dots.
     
-    Keyword arguments:
-    file_name -- Name of the file to process.
+    Args:
+    file_name: Name of the file to process.
     
     Returns:    
     The name of the file without prefixes.
@@ -238,11 +238,11 @@ def file_is_type(header_fields, filename_path, field_type, type_string):
     part that indicates the ordinal number of the image and optionally a filter,
     only bias has no filter.     
     
-    Keyword arguments:
-    header_fields -- The headers of the file.
-    filename_path -- The path of the file.
-    field_type -- The value to compare with that of the fields.
-    type_string -- The value expected in the file name to check the type.
+    Args:
+    header_fields: The headers of the file.
+    filename_path: The path of the file.
+    field_type: The value to compare with that of the fields.
+    type_string: The value expected in the file name to check the type.
     
     Returns:    
         
@@ -298,9 +298,9 @@ def file_is_type(header_fields, filename_path, field_type, type_string):
 def file_is_bias(header_fields, filename):    
     """Determines if the data received are related to a bias file. 
     
-    Keyword arguments:
-    header_fields -- Fields from the file header to check if it is a bias.
-    filename -- Name of the file.
+    Args:
+    header_fields: Fields from the file header to check if it is a bias.
+    filename: Name of the file.
     
     Returns:    
     True if the file is for a bias, False otherwise.
@@ -317,9 +317,9 @@ def file_is_bias(header_fields, filename):
 def file_is_flat(header_fields, filename):    
     """Determine if the data received are related to a flat file. 
     
-    Keyword arguments:
-    header_fields -- Fields from the file header to check if it is a flat.
-    filename -- Name of the file.
+    Args:
+    header_fields: Fields from the file header to check if it is a flat.
+    filename: Name of the file.
     
     Returns:    
     True if the file is for a flat, False otherwise.  
@@ -338,8 +338,8 @@ def get_file_binning(fit_file_name):
     
     The return format is: 1x1, 2x2, and so on.
     
-    Keyword arguments:
-    fit_file_name -- Name of the fit file.
+    Args:
+    fit_file_name: Name of the fit file.
     
     Returns:    
     The binning value, if found.
@@ -382,8 +382,8 @@ def get_rdls_data(rdls_file):
     This file is a FIT file that contains a table and this function returns
     the coordinates values in a list.
     
-    Keyword arguments:
-    rdls_file -- RDLS file where to look for the coordinates. 
+    Args:
+    rdls_file: RDLS file where to look for the coordinates. 
     
     Returns:
     A list containing in each item an index, and the AR, DEC for all the 
