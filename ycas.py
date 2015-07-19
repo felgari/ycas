@@ -32,7 +32,7 @@ import logging
 import logutil
 import yargparser
 import orgfits
-import reduce
+import reduction
 import align
 import astrometry
 import photometry
@@ -75,7 +75,7 @@ def main(progargs):
     # This step reduces the data images applying the bias and flats.
     if progargs.reduction_requested:
         logging.info("* Step 2 * Reducing images.") 
-        reduce.reduce_images()
+        reduction.reduce_images()
         anything_done = True        
     else:
         logging.info("* Step 2 * Skipping reducing images. Not requested.")
