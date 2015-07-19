@@ -207,8 +207,7 @@ class ProgramArguments(object):
     def parse(self):
         """ Parse program arguments.
         
-        Performs the parsing of program arguments using the
-        'ArgumentParser' object created.
+        Parse the program arguments using the 'ArgumentParser' object created.
         
         """
         
