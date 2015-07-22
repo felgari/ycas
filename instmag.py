@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # Copyright (c) 2014 Felipe Gallego. All rights reserved.
@@ -23,273 +22,261 @@ to the objects of interest and compile all then in files with csv format.
 
 """
 
-import glob
 from textfiles import *
 from constants import *
 
-def get_object_name_from_rdls(rdls_file):
-    """ Get the name of the object contained in the file name.
-    
-    Keyword arguments:
-    rdls_file -- RDLS file where to look for the object name. 
-    
-    Returns:
-    The name of the object.
-    
+class InstrumentalMagnitude(object):
+    """ Stores the instrumental magnitudes of a star and the reference stars
+        contained in the same field, if any.
     """
     
-    # From the file name get the name of the object.
-    object_name_with_path = rdls_file[0:rdls_file.find(DATANAME_CHAR_SEP)]
-     
-    return os.path.basename(object_name_with_path)  
-
-def get_all_mag_row(magnitudes, time, filter_name, references):
-    """Create a row containing all the magnitudes received sorted by id.
-    
-    Keyword arguments:
-    magnitudes -- The magnitudes with the x,y coordinate and the error.
-    time -- The time of the measurement.
-    filter_name -- The filter used for these measurements. 
-    references -- References objects for the object of interest processed.
-    
-    Returns:        
-    A row with the magnitudes sorted and completed with INDEF.    
-    
-    """
-    
-    # The row to return. Time and filter to the beginning of the row.
-    mag_row = [time, filter_name]
-    
-    n_mag = 0
-    
-    # For each references a magnitude is added to the row, if the magnitude
-    # does not exists, INDEF values are added.
-    for i in range(len(references)):
-        # Get current object of reference.
-        ref = references[i]
+    def __init__(self, stars):
+        """Constructor.
         
-        # Get current magnitude to process.
-        current_mag = magnitudes[n_mag]
+            Args:
+            stars: The stars whose magnitudes are read.
+        """
         
-        #print str(ref[COO_ID_COL]) + " " + str(current_mag[MAG_ID_COL])
+        self._stars = stars
         
-        if int(ref[COO_ID_COL]) == current_mag[MAG_ID_COL]:
-            # If there is a magnitude for this reference, add the magnitude.
-            mag_row.extend([current_mag[MAG_COL], current_mag[MAG_ERR_COL]])
+        # To store the instrumental magnitudes of the star of interest.
+        self._instrumental_magnitudes = []
+        # To store the instrumental magnitudes of the star of interest and the
+        # stars of reference.
+        self._all_instrumental_magnitudes = []    
+        
+        # Create a dictionary to retrieve easily the appropriate list
+        # using the name of the object.
+        self._stars_index = {}
+        
+        self._stars_references = {}
+       
+        # For each star add a list in each list to contain the data of the star.
+        for i in range(len(stars)):
+            self._instrumental_magnitudes.append([])
+            self._all_instrumental_magnitudes.append([])
             
-            # Next magnitude if there is more magnitude values.
-            if n_mag < len(magnitudes) - 1:
-                n_mag += 1
-        else:
-            # There is no magnitude for this reference, add INDEF values.
-            mag_row.extend([INDEF_VALUE, INDEF_VALUE])                        
-    
-    return mag_row
+            star_name = stars[i][OBJ_NAME_COL]
+            
+            self._stars_index[star_name] = i
+            
+            self._stars_references[star_name] = \
+                read_references_for_object(star_name)   
+                
+    def get_star_name_from_file_name(mag_file):
+        """ Get the name of the object contained in the file name.
+        
+        Args:
+        mag_file: Magnitude file where to extract the star name. 
+        
+        Returns:
+        The name of the star.
+        
+        """
+        
+        # From the file name get the name of the object.
+        star_name_with_path = mag_file[0:mag_file.find(DATANAME_CHAR_SEP)]
+         
+        return os.path.basename(star_name_with_path)
+                
 
-def get_inst_magnitudes_for_object(rdls_file, path, objects, \
-                                   objects_references):
-    """Searches in a given path all the files related to an object.
-    
-    Keyword arguments:
-    rdls_file -- RDLS file where to look for the coordinates. The name of the
-    object is retrieved from the file name.
-    path -- Path where to search the files.
-    objects -- List of all objects of interest.
-    objects_references -- Objects of reference for each object of interest.
-    
-    Returns:        
-    All the magnitudes read from the files found related to the object of 
-    interest.
-    
-    """
-    
-    # Get the name of the object related to this RDLS file.
-    object_name = get_object_name_from_rdls(rdls_file)    
-    
-    cvs_file = rdls_file.replace("." + RDLS_FILE_EXT, MAG_CSV_PATTERN)
-    
-    # The name of the directory that contains the file is the name of the filter
-    path_head, filter_name = os.path.split(path)
-    
-    logging.debug("Found " + cvs_file + " csv file for rdls file " \
-                 + rdls_file)
-    
-    # To store the magnitudes.
-    magnitudes = list()
-    all_magnitudes = list()
+    def get_catalog_file_name(self, mag_file):
+        # Read the catalog file that corresponds to this file.
+        # First get the name of the catalog file from the current CSV file.
+        catalog_file_name = mag_file.replace(
+            DATA_FINAL_SUFFIX + FILE_NAME_PARTS_DELIM + MAGNITUDE_FILE_EXT + "." + CSV_FILE_EXT, 
+            "." + CATALOG_FILE_EXT)
+        return catalog_file_name
+
+
+    def get_filter_name(self, path):
+        """ The name of the directory that contains the file is the name of 
+        the filter
         
-    # Read the catalog file that corresponds to this file.
-    # First get the name of the catalog file from the current CSV file.
-    catalog_file_name = cvs_file.replace(DATA_FINAL_SUFFIX + \
-                                         FILE_NAME_PARTS_DELIM + \
-                                         MAGNITUDE_FILE_EXT + \
-                                         "." + CSV_FILE_EXT, \
-                                         "." + CATALOG_FILE_EXT)
-    
-    if os.path.exists(catalog_file_name):
-    
-        # The list of coordinates used to calculate the magnitudes of the image.
-        coordinates = read_catalog_file(catalog_file_name)
+        """
         
-        logging.debug("Processing magnitudes file: " + cvs_file)        
+        path_head, filter_name = os.path.split(path)
+        
+        return filter_name
+
+    def add_all_mags(self, magnitudes, time, filter_name):
+        """Add all the magnitudes sorted by id.
+        
+        Args:
+        magnitudes: The magnitudes with the x,y coordinate and the error.
+        time: The time of the measurement.
+        filter_name: The filter used for these measurements. 
+        
+        Returns:        
+        A row with the magnitudes sorted and completed with INDEF.    
+        
+        """
+        
+        # The row to return. Time and filter to the beginning of the row.
+        mag_row = [time, filter_name]
+        
+        n_mag = 0
+        
+        # For each references a magnitude is added to the row, if the magnitude
+        # does not exists, INDEF values are added.
+        for i in range(len(self._stars_references)):
+            # Get current object of reference.
+            ref = references[i]
+            
+            # Get current magnitude to process.
+            current_mag = magnitudes[n_mag]
+            
+            #print str(ref[COO_ID_COL]) + " " + str(current_mag[MAG_ID_COL])
+            
+            if int(ref[COO_ID_COL]) == current_mag[MAG_ID_COL]:
+                # If there is a magnitude for this reference, add the magnitude.
+                mag_row.extend([current_mag[MAG_COL], current_mag[MAG_ERR_COL]])
+                
+                # Next magnitude if there is more magnitude values.
+                if n_mag < len(magnitudes) - 1:
+                    n_mag += 1
+            else:
+                # There is no magnitude for this reference, add INDEF values.
+                mag_row.extend([INDEF_VALUE, INDEF_VALUE])                        
+        
+        all_magnitudes.append(mag_row)
+
+    def read_mag_file(self, filter_name, star_name, coordinates):
+        """Read the magnitudes from the file.
+        
+        Args:
+        filter_name: Name of the filter for these magnitudes.
+        star_name: Name of the star whose magnitudes are read.
+        coordinates: List of X, Y coordinates of the stars in the image. 
+        
+        """
+        
+        logging.debug("Processing magnitudes file: " + cvs_file)
         
         with open(cvs_file, 'rb') as fr:
             reader = csv.reader(fr)
-            
             nrow = 0
-            
             all_mag = []
             time = None
             
             # Process all the instrumental magnitudes in the file.
             for row in reader:
-            
                 # Get a list of values from the CSV row read.
-                fields = str(row).translate(None, "[]\'").split() 
+                fields = str(row).translate(None, "[]\'").split()            
                 
                 # Check that MJD has a defined value.
-                if fields[CSV_TIME_COL] != INDEF_VALUE:  
-                
-                    current_coor = coordinates[nrow] 
+                if fields[CSV_TIME_COL] != INDEF_VALUE:
                     
+                    # Save the time, it is the same for all the rows.
+                    time = fields[CSV_TIME_COL]                        
+                    
+                    # Get the identifier for current coordinate.
+                    current_coor = coordinates[nrow]
                     current_coor_id = int(current_coor[CAT_ID_COL])
-                
+                    
                     # If it is the object of interest, add the magnitude to the
                     # magnitudes list.
                     if current_coor_id == OBJ_OF_INTEREST_ID:
-                        
-                        # Add magnitude value to the appropriate row from RDLS 
-                        # file.
-                        magnitudes.append([fields[CSV_TIME_COL], 
-                                             fields[CSV_MAG_COL],
-                                             fields[CSV_AIRMASS_COL], 
-                                             fields[CSV_ERROR_COL],
-                                             filter_name])
-                        
-                    # Save the time, it is the same for all the rows. 
-                    time = fields[CSV_TIME_COL]
-                        
+                        self._magnitudes.append([fields[CSV_TIME_COL], \
+                                                 fields[CSV_MAG_COL], \
+                                                 fields[CSV_AIRMASS_COL], \
+                                                 fields[CSV_ERROR_COL], \
+                                                 filter_name])
+                    
                     # Add the magnitude to the all magnitudes list.
                     all_mag.append([fields[CSV_MAG_COL], \
                                     fields[CSV_ERROR_COL], \
                                     current_coor_id])
-                        
-                    nrow += 1    
+                    
+                    nrow += 1
                 else:
                     logging.debug("Found INDEF value for the observation time")
-                    
-            if len(all_mag) > 0: 
-                
-                # Sort by identifier and add INDEF for lacking objects.
-                all_mag_row = get_all_mag_row(all_mag, time, filter_name, \
-                                              objects_references[object_name])
-                    
-                all_magnitudes.append(all_mag_row)
             
+            if len(all_mag) > 0:
+                # Sort by identifier and add INDEF for lacking objects.
+                all_mag_row = self.sort_all_mags_in_a_row(all_mag, \
+                                                          time, \
+                                                          filter_name)                
+                
             logging.debug("Processed " + str(nrow) + " objects. " + \
                           "Magnitudes for object of interest: " + \
                           str(len(magnitudes)) + \
                           ". Magnitudes for all the objects: " + \
                           str(len(all_magnitudes)))
-                
-    else:
-        logging.debug("Catalog file does no exists: " + catalog_file_name)
-        
-    return magnitudes, all_magnitudes
 
-def get_instrumental_magnitudes(objects):
-    """Receives a list of object and compiles the magnitudes for each object.
-    
-    Keyword arguments:
-    objects -- The list of objects.
-    
-    Returns:        
-    A list containing the magnitudes found for each object.
-    
-    """
-    
-    # For each object a list is created to store its magnitudes.
-    # In turn, all these lists are grouped in a list. 
-    instrumental_magnitudes = list()
-    all_instrumental_magnitudes = list()    
-    
-    # Create a dictionary to retrieve easily the appropriate list
-    # using the name of the object.
-    objects_index = {}
-    
-    objects_references = {}
-    
-    for i in range(len(objects)):
-        instrumental_magnitudes.append([])
-        all_instrumental_magnitudes.append([])
+    def read_inst_magnitudes(self, mag_file, path):
+        """Searches in a given path all the magnitudes files.
         
-        object_name = objects[i][OBJ_NAME_COL]
+        Args:
+        mag_file: File where to look for the magnitudes.
+        path: Path where to search the files.
         
-        objects_index[object_name] = i
+        """         
         
-        objects_references[object_name] = \
-            read_references_for_object(object_name)
+        # Filter for the magnitudes of this file.
+        filter_name = self.get_filter_name(path)
         
-    # Walk all the directories searching for files containing magnitudes.
-    # Walk from current directory.
-    for path,dirs,files in os.walk('.'):
-
-        # Inspect only directories without subdirectories.
-        if len(dirs) == 0:
-            split_path = path.split(os.sep)
-
-            # Check if current directory is for data.
-            if split_path[-2] == DATA_DIRECTORY:
-               
-                logging.debug("Found a directory with data images: " + path)
-
-                # Get the list of RDLS files ignoring hidden files.
-                rdls_files_full_path = \
-                    [f for f in glob.glob(os.path.join(path, "*." + \
-                                                       RDLS_FILE_EXT)) \
-                    if not os.path.basename(f).startswith('.')]
-                    
-                logging.debug("Found " + str(len(rdls_files_full_path)) + \
-                             " RDLS files")   
-                   
-                # Sort the list of files to ensure a right processing of MJD.
-                rdls_files_full_path.sort()                   
-                
-                # Process the images of each object that has a RDLS file.
-                for rdls_file in rdls_files_full_path:
-                    
-                    # Get the magnitudes for this object in current path.
-                    im, aim = get_inst_magnitudes_for_object(rdls_file, path, \
-                                                             objects, \
-                                                             objects_references)
-                    
-                    # If any magnitude has been get.
-                    if len(im) > 0:
-                        # Get the name of the object.
-                        object_name = get_object_name_from_rdls(rdls_file)                    
-                        
-                        try:
-                            # Retrieve the list that contains the magnitudes 
-                            # for this object.
-                            magnitudes_index = objects_index[object_name]
-                        
-                            object_mea_list = \
-                                instrumental_magnitudes[magnitudes_index]
-                        
-                            # Add the magnitude to the object.
-                            object_mea_list.append(im)
-                            
-                            # The same for all the instrumental magnitudes.
-                            object_all_mea_list = \
-                                all_instrumental_magnitudes[magnitudes_index]
-                        
-                            # Add the magnitude to the object.
-                            object_all_mea_list.append(aim)                            
-                        except KeyError as ke:
-                            logging.error("RDLS file with no object of " + \
-                                          "interest: " + object_name)
-                            
-    save_magnitudes(objects, instrumental_magnitudes, \
-                    all_instrumental_magnitudes)                            
-                        
-    return instrumental_magnitudes
+        # Get the name of the object related to this file.
+        star_name = self.get_star_name_from_file_name(mag_file)          
+            
+        catalog_file_name = self.get_catalog_file_name(mag_file)
+        
+        # Look for the catalog file that contains the x,y coordinates of each
+        # star.
+        if os.path.exists(catalog_file_name):
+        
+            # The list of coordinates used to calculate the magnitudes of the image.
+            coordinates = read_catalog_file(catalog_file_name)
+            
+            self.read_mag_file(filter_name, star_name, coordinates)
+            
+        return magnitudes, all_magnitudes
+    
+    def save_magnitudes_to_file(self, star_name, filename_suffix, \
+                                    inst_magnitudes_obj):
+        """Save the magnitudes to a text file.
+        
+        Args:     
+        star_name: Name of the object that corresponds to the magnitudes.
+        filename_suffix: Suffix to add to the file name.
+        inst_magnitudes_obj: List of magnitudes.
+        
+        """
+        
+        # Get the name of the output file.
+        output_file_name = star_name + filename_suffix + "." + TSV_FILE_EXT
+    
+        with open(output_file_name, 'w') as fw:
+            
+            writer = csv.writer(fw, delimiter='\t')
+    
+            # It is a list that contains sublists, each sublist is
+            # a different magnitude, so each one is written as a row.
+            for imag in inst_magnitudes_obj:
+            
+                # Write each magnitude in a row.
+                writer.writerows(imag)  
+    
+    def save_magnitudes(self):
+        """ Save the magnitudes received.
+            
+        Args:
+        objects: List of objects.
+        instrumental_magnitudes: Instrumental magnitudes of objects of interest.
+        all_instrumental_magnitudes: List of magnitudes for all the objects.    
+        
+        """
+        
+        # For each object. The two list received contains the same 
+        # number of objects.
+        for i in range(len(self._stars)):
+            
+            # Save instrumental magnitudes of objects of interest to a file.
+            self.save_magnitudes_to_file(self._stars[i][OBJ_NAME_COL], \
+                                         INST_MAG_SUFFIX, \
+                                         self._instrumental_magnitudes[i])      
+            
+            # Save all the magnitudes to a file.
+            self.save_magnitudes_to_file(self._stars[i][OBJ_NAME_COL], \
+                                         ALL_INST_MAG_SUFFIX, \
+                                         self._all_instrumental_magnitudes[i])
