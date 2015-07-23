@@ -145,9 +145,13 @@ class Star(object):
         
         """
         
-        self._reference_stars.append(ref_star)                         
+        self._reference_stars.append(ref_star) 
+        
+    @property
+    def is_std(self):
+        return self._std_measures is not None and len(self._std_measures) > 0                       
             
-class StarStuff(object):
+class StarsSet(object):
     """Stores the data of the stars whose measures are processed.
     
     The data of the stars is read from a file passed as argument when 
@@ -190,7 +194,21 @@ class StarStuff(object):
         
         self._stars = []        
         
-        self.read_stars(file_name)       
+        self.read_stars(file_name)    
+        
+    @property
+    def has_any_std_star(self):
+        """ Returns True id the set contains at least one no standard star.
+        
+        """
+        has_std = False
+        
+        for s in self._stars:
+            if s.is_std:
+                has_std = True
+                break
+        
+        return has_std   
         
     def create_star(self, line):
         """Create an object for a star with the data contained in the line

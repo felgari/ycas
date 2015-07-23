@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # Copyright (c) 2014 Felipe Gallego. All rights reserved.
@@ -29,76 +28,121 @@ import logging
 import yargparser
 import pyfits
 import csv
+import glob
 import math
+import numpy as np
 from constants import *
 from textfiles import *
 from fitfiles import get_rdls_data
-from instmag import get_instrumental_magnitudes
-from extcorrmag import get_extinction_corrected_magnitudes
+from instmag import InstrumentalMagnitude
+from extcorrmag import ExtCorrMagnitudes
 from calibmag import get_calibrated_magnitudes
 
-def get_indexes_of_std_and_no_std(objects):
-    """ Returns the indexes for the standard and no standard objects.
+def get_instrumental_magnitudes(stars):
+    """Receives a list of object and compiles the magnitudes for each object.
     
-    Keyword arguments:
-    objects -- List of objects to process.
+    Args:
+    stars: The list of stars.
     
     Returns:        
-    The indexes for the standard and no standard objects.
+    A list containing the magnitudes found for each object.
+    
     """
     
-    standard_obj_index = []
-    no_standard_obj_index = []
-    
-    # For each object. The two list received contains the same 
-    # number of objects.
-    for i in range(len(objects)):     
-        # Check if it is a standard object to put the object in
-        # the right list.
-        if objects[i][OBJ_STANDARD_COL] == STANDARD_VALUE:
-            standard_obj_index.extend([i])
-        else:
-            no_standard_obj_index.extend([i])     
+    ins_mag = InstrumentalMagnitude(stars)
+        
+    # Walk directories searching for files containing magnitudes.
+    for path,dirs,files in os.walk('.'):
+
+        # Inspect only directories without subdirectories.
+        if len(dirs) == 0:
+            split_path = path.split(os.sep)
+
+            # Check if current directory is for data.
+            if split_path[-2] == DATA_DIRECTORY:
+               
+                logging.debug("Found a directory for data images: " + path)
+
+                # Get the list of RDLS files ignoring hidden files 
+                # (starting with dot).
+                mag_files_full_path = \
+                    [f for f in glob.glob(os.path.join(path, "*" + \
+                                                       MAG_CSV_PATTERN)) \
+                    if not os.path.basename(f).startswith('.')]
+                    
+                logging.debug("Found " + str(len(mag_files_full_path)) + \
+                             " files with magnitudes.")    
                 
-    return standard_obj_index, no_standard_obj_index
+                # Sort the list of files to ensure a right processing of MJD.
+                mag_files_full_path.sort()               
+                
+                # Process the images of each object that has a RDLS file.
+                for mag_file in mag_files_full_path:
+                    
+                    # Get the magnitudes for this object in current path.
+                    ins_mag.read_inst_magnitudes(mag_file, path)
+                            
+    ins_mag.save_magnitudes()                            
+                        
+    return ins_mag
+
+def get_extinction_corrected_magnitudes(stars, inst_mag):
+    """Returns the magnitudes corrected taking into account the atmospheric
+    extinction, when possible.
+    
+    Args:
+    stars: List of stars to process.    
+    inst_mag: Instrumental magnitudes for all the stars.
+    
+    Returns:        
+    The magnitudes corrected taking into account the atmospheric extinction.
+    
+    """
+    
+    # Creates an object that calculates and applies the extinction coefficients.
+    ecm = ExtCorrMagnitudes(stars, inst_mag)                   
+            
+    # First, calculate the extinction coefficients.
+    ecm.calculate_extinction_coefficients()
+    
+    # Get the corrected magnitudes of stars applying the extinction coefficients
+    # calculated.
+    ext_corr_mags = ecm.get_corrected_magnitudes()           
+
+    return ext_corr_mags, days, filters
                                        
 def process_magnitudes(progargs):
-    """ 
-
-    Collect the instrumental magnitudes of all the objects of interest.
+    """Collect the instrumental magnitudes of all the objects of interest.
     Correct the magnitudes taking into account the atmospheric extinction.
     Get a calibrated magnitude for the objects of interest according to the
     standard magnitudes of the Landolt catalog.
 
-    Keyword arguments:
-    progargs -- program arguments.        
+    Args:
+    progargs: program arguments.        
     
     """
     
     # Read the list of objects whose magnitudes are needed.
-    objects = read_objects_of_interest(progargs.interest_object_file_name)
+    stars = StarsSet("stars_BQCam.csv")
     
     # Get the instrumental magnitudes for the objects indicated.
-    inst_mag = get_instrumental_magnitudes(objects)
+    inst_mag = get_instrumental_magnitudes(stars)
     
-    # Get the indexes for standard (if any) and no standard objects.
-    std_obj_idxs, no_std_obj_idxs = get_indexes_of_std_and_no_std(objects)
+    old_settings = np.seterr(all='ignore', over='warn')
     
-    # If there is any no standard object try the correction of atmospheric
+    # If there is any standard star try the correction of atmospheric
     # extinction and the calibration of magnitudes.
-    if len(no_std_obj_idxs) > 0:    
+    if stars.has_any_std_star:    
     
         # Get the magnitudes that have been extinction corrected.
         ext_corrected_mag, days, filters = \
-            get_extinction_corrected_magnitudes(objects, \
-                                                std_obj_idxs, \
-                                                no_std_obj_idxs, \
-                                                inst_mag)
+            get_extinction_corrected_magnitudes(stars, inst_mag)
         
         # Get calibrated magnitudes.
-        get_calibrated_magnitudes(objects, std_obj_idxs, no_std_obj_idxs, \
-                                  ext_corrected_mag, days, filters)
+        get_calibrated_magnitudes(stars, ext_corrected_mag, days, filters)
     else:
         logging.warning("There is not any no standard object, " + \
                         "so there is no extinction corrected magnitudes " + \
                         "nor calibrated ones.")
+        
+    np.seterr(**old_settings)
