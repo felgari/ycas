@@ -52,18 +52,21 @@ class InstrumentalMagnitude(object):
         self._stars_references = {}
        
         # For each star add a list in each list to contain the data of the star.
-        for i in range(len(stars)):
+        i = 0
+        for s in stars:
             self._instrumental_magnitudes.append([])
             self._all_instrumental_magnitudes.append([])
             
-            star_name = stars[i][OBJ_NAME_COL]
+            star_name = s.name
             
             self._stars_index[star_name] = i
             
             self._stars_references[star_name] = \
                 read_references_for_object(star_name)   
                 
-    def get_star_name_from_file_name(mag_file):
+            i = i + 1
+                
+    def get_star_name_from_file_name(self, mag_file):
         """ Get the name of the object contained in the file name.
         
         Args:
@@ -121,7 +124,7 @@ class InstrumentalMagnitude(object):
         # does not exists, INDEF values are added.
         for i in range(len(self._stars_references)):
             # Get current object of reference.
-            ref = references[i]
+            ref = self._stars_references[i]
             
             # Get current magnitude to process.
             current_mag = magnitudes[n_mag]
@@ -141,19 +144,20 @@ class InstrumentalMagnitude(object):
         
         all_magnitudes.append(mag_row)
 
-    def read_mag_file(self, filter_name, star_name, coordinates):
+    def read_mag_file(self, mag_file, filter_name, star_name, coordinates):
         """Read the magnitudes from the file.
         
         Args:
+        mag_file: The name of the file to read.
         filter_name: Name of the filter for these magnitudes.
         star_name: Name of the star whose magnitudes are read.
         coordinates: List of X, Y coordinates of the stars in the image. 
         
         """
         
-        logging.debug("Processing magnitudes file: " + cvs_file)
+        logging.debug("Processing magnitudes file: " + mag_file)
         
-        with open(cvs_file, 'rb') as fr:
+        with open(mag_file, 'rb') as fr:
             reader = csv.reader(fr)
             nrow = 0
             all_mag = []
@@ -177,11 +181,12 @@ class InstrumentalMagnitude(object):
                     # If it is the object of interest, add the magnitude to the
                     # magnitudes list.
                     if current_coor_id == OBJ_OF_INTEREST_ID:
-                        self._magnitudes.append([fields[CSV_TIME_COL], \
-                                                 fields[CSV_MAG_COL], \
-                                                 fields[CSV_AIRMASS_COL], \
-                                                 fields[CSV_ERROR_COL], \
-                                                 filter_name])
+                        self._instrumental_magnitudes.append(\
+                                                [fields[CSV_TIME_COL], \
+                                                fields[CSV_MAG_COL], \
+                                                fields[CSV_AIRMASS_COL], \
+                                                fields[CSV_ERROR_COL], \
+                                                filter_name])
                     
                     # Add the magnitude to the all magnitudes list.
                     all_mag.append([fields[CSV_MAG_COL], \
@@ -194,9 +199,7 @@ class InstrumentalMagnitude(object):
             
             if len(all_mag) > 0:
                 # Sort by identifier and add INDEF for lacking objects.
-                all_mag_row = self.sort_all_mags_in_a_row(all_mag, \
-                                                          time, \
-                                                          filter_name)                
+                all_mag_row = self.add_all_mags(all_mag, time, filter_name)                
                 
             logging.debug("Processed " + str(nrow) + " objects. " + \
                           "Magnitudes for object of interest: " + \
@@ -228,7 +231,7 @@ class InstrumentalMagnitude(object):
             # The list of coordinates used to calculate the magnitudes of the image.
             coordinates = read_catalog_file(catalog_file_name)
             
-            self.read_mag_file(filter_name, star_name, coordinates)
+            self.read_mag_file(mag_file, filter_name, star_name, coordinates)
             
         return magnitudes, all_magnitudes
     

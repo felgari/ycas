@@ -34,11 +34,12 @@ import numpy as np
 from constants import *
 from textfiles import *
 from fitfiles import get_rdls_data
+import starsset
 from instmag import InstrumentalMagnitude
 from extcorrmag import ExtCorrMagnitudes
 from calibmag import get_calibrated_magnitudes
 
-def get_instrumental_magnitudes(stars):
+def get_instrumental_magnitudes(stars_set):
     """Receives a list of object and compiles the magnitudes for each object.
     
     Args:
@@ -49,7 +50,7 @@ def get_instrumental_magnitudes(stars):
     
     """
     
-    ins_mag = InstrumentalMagnitude(stars)
+    ins_mag = InstrumentalMagnitude(stars_set)
         
     # Walk directories searching for files containing magnitudes.
     for path,dirs,files in os.walk('.'):
@@ -123,7 +124,7 @@ def process_magnitudes(progargs):
     """
     
     # Read the list of objects whose magnitudes are needed.
-    stars = StarsSet("stars_BQCam.csv")
+    stars = starsset.StarsSet("stars_BQCam.csv")
     
     # Get the instrumental magnitudes for the objects indicated.
     inst_mag = get_instrumental_magnitudes(stars)
