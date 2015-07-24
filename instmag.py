@@ -272,14 +272,12 @@ class InstrumentalMagnitude(object):
         i = 0
         for s in self._stars:
             if self._instrumental_magnitudes[i]:
-                print self._instrumental_magnitudes[i]
                 # Save instrumental magnitudes of objects of interest to a file.
                 self.save_magnitudes_file(s.name, \
                                           INST_MAG_SUFFIX, \
                                           self._instrumental_magnitudes[i])   
                
             if self._all_instrumental_magnitudes[i]:
-                print self._all_instrumental_magnitudes[i]
                 # Save all the magnitudes to a file.
                 self.save_magnitudes_file(s.name, \
                                           ALL_INST_MAG_SUFFIX, \
