@@ -24,7 +24,7 @@
 import logging
 import csv
 
-class ReferenceStar(object):
+class FieldStar(object):
     """A class to store the data for a related object in the same field 
     of the object of interest.
     
@@ -111,10 +111,10 @@ class Star(object):
         
         if is_std:
             self._std_measures = []
-            self._reference_stars = None
+            self._field_stars = None
         else: 
             self._std_measures = None
-            self._reference_stars = []    
+            self._field_stars = []    
             
     def __str__(self):
         add_info = None
@@ -124,7 +124,7 @@ class Star(object):
             add_info =self._std_measures
             type = "STD"
         else:
-            add_info = self._reference_stars
+            add_info = self._field_stars
             type = "REF"
             
         rest_info = [ str(x) for x in add_info ]
@@ -156,12 +156,16 @@ class Star(object):
         
         self._std_measures.append(std_mag)
         
-    def add_reference_star(self, ref_star):
-        """Add a reference star.
+    def add_field_star(self, ref_star):
+        """Add a field star.
         
         """
         
-        self._reference_stars.append(ref_star)                      
+        self._field_stars.append(ref_star)   
+        
+    @property
+    def field_stars(self):
+        return self._field_stars                   
             
 class StarsSet(object):
     """Stores the data of the stars whose measures are processed.
@@ -281,6 +285,17 @@ class StarsSet(object):
         """
         
         self._stars.append(star)
+        
+    def get_star(self, name):
+        
+        star = None
+        
+        for s in self._stars:
+            if s.name == name:
+                star = s
+                break
+        
+        return star
     
     def number_of_fields_to_process(self, line, group_length):
         """Determines the number of fields to read from a line depending on the
@@ -372,9 +387,9 @@ class StarsSet(object):
             ra = line[base_index + self.OBJ_RELATED_RA]
             dec = line[base_index + self.OBJ_RELATED_DEC]            
             
-            ref_star = ReferenceStar(id, ra, dec)
+            ref_star = FieldStar(id, ra, dec)
             
-            star.add_reference_star(ref_star)
+            star.add_field_star(ref_star)
             
             i = i + 1                 
         
