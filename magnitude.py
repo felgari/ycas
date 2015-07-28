@@ -35,7 +35,7 @@ from constants import *
 from textfiles import *
 from fitfiles import get_rdls_data
 import starsset
-from instmag import InstrumentalMagnitude
+from instmag import InstrumentalMagnitudes
 from extcorrmag import ExtCorrMagnitudes
 from calibmag import get_calibrated_magnitudes
 
@@ -43,14 +43,14 @@ def get_instrumental_magnitudes(stars_set):
     """Receives a list of object and compiles the magnitudes for each object.
     
     Args:
-    stars: The list of stars.
+        stars: The list of stars.
     
     Returns:        
-    A list containing the magnitudes found for each object.
+        A list containing the magnitudes found for each object.
     
     """
     
-    ins_mag = InstrumentalMagnitude(stars_set)
+    ins_mag = InstrumentalMagnitudes(stars_set)
         
     # Walk directories searching for files containing magnitudes.
     for path,dirs,files in os.walk('.'):
@@ -83,34 +83,32 @@ def get_instrumental_magnitudes(stars_set):
                     # Get the magnitudes for this object in current path.
                     ins_mag.read_inst_magnitudes(mag_file, path)
                             
-    ins_mag.save_magnitudes()                            
+    ins_mag.save_all_inst_mag()                            
                         
     return ins_mag
 
-def get_extinction_corrected_magnitudes(stars, inst_mag):
+def correct_extinction_in_magnitudes(inst_mag):
     """Returns the magnitudes corrected taking into account the atmospheric
     extinction, when possible.
     
     Args:
-    stars: List of stars to process.    
-    inst_mag: Instrumental magnitudes for all the stars.
+        stars: List of stars to process.    
+        inst_mag: Instrumental magnitudes for all the stars.
     
     Returns:        
-    The magnitudes corrected taking into account the atmospheric extinction.
+        The magnitudes corrected taking into account the atmospheric extinction.
     
     """
     
     # Creates an object that calculates and applies the extinction coefficients.
-    ecm = ExtCorrMagnitudes(stars, inst_mag)                   
+    ecm = ExtCorrMagnitudes(inst_mag)                   
             
     # First, calculate the extinction coefficients.
     ecm.calculate_extinction_coefficients()
     
-    # Get the corrected magnitudes of stars applying the extinction coefficients
-    # calculated.
-    ext_corr_mags = ecm.get_corrected_magnitudes()           
-
-    return ext_corr_mags, days, filters
+    # Return the corrected magnitudes of stars applying the extinction 
+    # coefficients calculated.
+    ecm.correct_magnitudes()
                                        
 def process_magnitudes(progargs):
     """Collect the instrumental magnitudes of all the objects of interest.
@@ -119,7 +117,7 @@ def process_magnitudes(progargs):
     standard magnitudes of the Landolt catalog.
 
     Args:
-    progargs: program arguments.        
+        progargs: program arguments.        
     
     """
     
@@ -127,7 +125,7 @@ def process_magnitudes(progargs):
     stars = starsset.StarsSet("stars_BQCam.csv")
     
     # Get the instrumental magnitudes for the objects indicated.
-    inst_mag = get_instrumental_magnitudes(stars)
+    magnitudes = get_instrumental_magnitudes(stars)
     
     old_settings = np.seterr(all='ignore', over='warn')
     
@@ -136,14 +134,16 @@ def process_magnitudes(progargs):
     if stars.has_any_std_star:    
     
         # Get the magnitudes that have been extinction corrected.
-        ext_corrected_mag, days, filters = \
-            get_extinction_corrected_magnitudes(stars, inst_mag)
+        correct_extinction_in_magnitudes(magnitudes)
         
         # Get calibrated magnitudes.
-        get_calibrated_magnitudes(stars, ext_corrected_mag, days, filters)
+        get_calibrated_magnitudes(magnitudes)
     else:
         logging.warning("There is not any no standard object, " + \
                         "so there is no extinction corrected magnitudes " + \
                         "nor calibrated ones.")
         
     np.seterr(**old_settings)
+    
+    # Save magnitudes.
+    magnitudes.save_magnitudes()

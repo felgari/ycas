@@ -61,7 +61,7 @@ class FieldStar(object):
         self._dec = dec
         
     def __str__(self):
-        return "ID: %d RA: %.5g DEC: %.5g" % (self._id, self._ra, self._dec)
+        return "ID: %d RA: %.10g DEC: %.10g" % (self._id, self._ra, self._dec)
         
     @property
     def id(self):
@@ -256,8 +256,9 @@ class StarsSet(object):
         
         """
         
-        for star in self._stars:
-            print star 
+        star_names = [ s.name for s in self._stars ]
+        
+        return str(star_names) 
             
     def __iter__(self):
         self.__iter_idx = 0
@@ -306,8 +307,8 @@ class StarsSet(object):
         """
         
         name = line[self.OBJ_NAME_COL]
-        ra = line[self.OBJ_RA_COL]
-        dec = line[self.OBJ_DEC_COL]        
+        ra = locale.atof(line[self.OBJ_RA_COL])
+        dec = locale.atof(line[self.OBJ_DEC_COL])     
         type = line[self.OBJ_STANDARD_COL]
         
         is_std = True if type == self.STANDARD_STAR else False
@@ -420,9 +421,9 @@ class StarsSet(object):
             base_index = self.OBJ_ADDITIONAL_DATA + \
                 ( self.OBJ_RELATED_NUM_FIELDS * ( i - 1 ))
             
-            id = line[base_index + self.OBJ_RELATED_ID]
-            ra = line[base_index + self.OBJ_RELATED_RA]
-            dec = line[base_index + self.OBJ_RELATED_DEC]            
+            id = int(line[base_index + self.OBJ_RELATED_ID])
+            ra = locale.atof(line[base_index + self.OBJ_RELATED_RA])
+            dec = locale.atof(line[base_index + self.OBJ_RELATED_DEC])          
             
             ref_star = FieldStar(id, ra, dec)
             
@@ -447,8 +448,8 @@ class StarsSet(object):
         
         # Check the line has a minimum number of fields.
         if len(line) < self.MIN_NUM_OF_FIELDS_IN_LINE:
-            logging.error('In the file of stars, the line {line} does not '
-                          'contain enough values.'.format(line=str(line_number)))
+            logging.error("In the file of stars, the line %d does not " +
+                          "contain enough values." % (line_number))
         else:
             # Create the object for the star filling the basic data for it.
             star = self.create_star(line)

@@ -24,17 +24,109 @@ to the objects of interest and compile all then in files with csv format.
 
 from textfiles import *
 from constants import *
+from utility import get_day_from_mjd
 
-class InstrumentalMagnitude(object):
-    """ Stores the instrumental magnitudes of a star and the reference stars
-        contained in the same field, if any.
+class Magnitude(object):
+    """ Stores a instrumental magnitude and the associated values.
+    
     """
+    
+    def __init__(self, star_name, mjd, filter, mag, mag_error, airmass):
+        self._star_name = star_name
+        self._mjd = mjd
+        self._day = mjd
+        self._filter = filter
+        self._mag = mag
+        self._mag_error = mag_error          
+        self._airmass = airmass
+        # Used when calculating extinction coefficient.
+        self._std_mag = None
+        # Extinction corrected magnitude.
+        self._ext_cor_mag = None
+        # Calibrated magnitude.
+        self._calib_mag = None 
+        
+    def __str__(self):
+        return "%s %s %s %s %s %s" % \
+            (self._star_name, self._mjd, self._filter, \
+             self._mag, self._mag_error, self._airmass)
+        
+    @property
+    def star_name(self):
+        return self._star_name
+        
+    @property
+    def mjd(self):
+        return self._mjd    
+    
+    @property
+    def day(self):
+        return self._day      
+    
+    @day.setter
+    def day(self, day):
+        self._day = day
+            
+    @property
+    def filter(self):
+        return self._filter   
+    
+    @property
+    def mag(self):
+        return self._mag    
+    
+    @property
+    def mag_error(self):
+        return self._mag_error 
+        
+    @property
+    def airmass(self):
+        return self._airmass  
+    
+    @property  
+    def std_mag(self):
+        return self._std_mag
+    
+    @std_mag.setter
+    def std_mag(self, mag):
+        self._std_mag = mag
+        
+    @property  
+    def ext_cor_mag(self):
+        return self._ext_cor_mag
+    
+    @ext_cor_mag.setter
+    def ext_cor_mag(self, ext_cor_mag):
+        self._ext_cor_mag = ext_cor_mag
+        
+    @property  
+    def calib_mag(self):
+        return self._calib_mag
+    
+    @calib_mag.setter
+    def calib_mag(self, calib_mag):
+        self._calib_mag = calib_mag                
+
+class InstrumentalMagnitudes(object):
+    """ Read and stores the values of the instrumental magnitudes of stars.
+    
+    """
+    
+    # Number of the column that contains the magnitude value.
+    CSV_ID_COOR_COL = 0
+    CSV_X_COOR_COL = 1
+    CSV_Y_COOR_COL = 2
+    CSV_TIME_COL = 3 
+    CSV_MAG_COL = 4
+    CSV_AIRMASS_COL = 5
+    CSV_ERROR_COL = 6
     
     def __init__(self, stars):
         """Constructor.
         
-            Args:
+        Args:
             stars: The stars whose magnitudes are read.
+            
         """
         
         self._stars = stars
@@ -53,15 +145,48 @@ class InstrumentalMagnitude(object):
             
             self._instrumental_magnitudes.append([])
             self._all_instrumental_magnitudes.append([])
+            
+        # Sets of filters and days of the magnitudes.
+        self._filter = set()
+        self._day = set()   
+        
+    @property  
+    def stars(self):
+        return self._stars
+    
+    @property
+    def std_stars(self):
+        return [s for s in self._stars if s.is_std]
+    
+    @property
+    def no_std_stars(self):
+        return [s for s in self._stars if not s.is_std]    
+        
+    @property
+    def days(self):
+        return self._day
+    
+    @property
+    def filters(self):
+        return self._filter  
+    
+    def get_std_mag(self, name, filter):      
+        std_mag = None
+                
+        for s in self._stars:
+            if s.name == name:
+                std_mag = s.get_std_mag(filter)
+                
+        return std_mag
                 
     def get_star_name_from_file_name(self, mag_file):
         """ Get the name of the object contained in the file name.
         
         Args:
-        mag_file: Magnitude file where to extract the star name. 
+            mag_file: Magnitude file where to extract the star name. 
         
         Returns:
-        The name of the star.
+            The name of the star.
         
         """
         
@@ -75,7 +200,8 @@ class InstrumentalMagnitude(object):
         # Read the catalog file that corresponds to this file.
         # First get the name of the catalog file from the current CSV file.
         catalog_file_name = mag_file.replace(
-            DATA_FINAL_SUFFIX + FILE_NAME_PARTS_DELIM + MAGNITUDE_FILE_EXT + "." + CSV_FILE_EXT, 
+            DATA_FINAL_SUFFIX + FILE_NAME_PARTS_DELIM + MAGNITUDE_FILE_EXT + 
+            "." + CSV_FILE_EXT, 
             "." + CATALOG_FILE_EXT)
         return catalog_file_name
 
@@ -89,24 +215,46 @@ class InstrumentalMagnitude(object):
         path_head, filter_name = os.path.split(path)
         
         return filter_name
+    
+    def get_mags_of_star(self, star_name):
+        """Returns the instrumental magnitudes of the star name received
+        
+        Args:
+            star_name: Name of the star whose inst. magnitudes are requested.
+            
+        Returns:
+            The instrumental magnitudes of the star if available.
+        """
+        
+        inst_mag = None
+        
+        i = 0
+        
+        for sn in self._star_names:
+            if sn == star_name:
+                inst_mag = self._instrumental_magnitudes[i]
+                break
+            i = i + 1
+                        
+        return inst_mag    
 
-    def add_all_mags(self, star_name, star_index, magnitudes, time, filter_name):
+    def add_all_mags(self, star_name, star_index, magnitudes, time, filter):
         """Add all the magnitudes sorted by id.
         
         Args:
-        stgar_name: Name of the star.
-        star_index: Index used to add these magnitudes.
-        magnitudes: The magnitudes with the x,y coordinate and the error.
-        time: The time of the measurement.
-        filter_name: The filter used for these measurements. 
+            stgar_name: Name of the star.
+            star_index: Index used to add these magnitudes.
+            magnitudes: The magnitudes with the x,y coordinate and the error.
+            time: The time of the measurement.
+            filter: The filter used for these measurements. 
         
         Returns:        
-        A row with the magnitudes sorted and completed with INDEF.    
+            A row with the magnitudes sorted and completed with INDEF.    
         
         """
         
         # The row to return. Time and filter to the beginning of the row.
-        mag_row = [time, filter_name]
+        mag_row = [time, filter]
         
         n_mag = 0
         
@@ -135,16 +283,16 @@ class InstrumentalMagnitude(object):
                     # There is no magnitude for this reference, add INDEF values.
                     mag_row.extend([INDEF_VALUE, INDEF_VALUE])                     
             
-        self._all_instrumental_magnitudes[star_index].append([mag_row])
+        self._all_instrumental_magnitudes[star_index].append(mag_row)
 
     def read_mag_file(self, mag_file, filter_name, star_name, coordinates):
         """Read the magnitudes from the file.
         
         Args:
-        mag_file: The name of the file to read.
-        filter_name: Name of the filter for these magnitudes.
-        star_name: Name of the star whose magnitudes are read.
-        coordinates: List of X, Y coordinates of the stars in the image. 
+            mag_file: The name of the file to read.
+            filter_name: Name of the filter for these magnitudes.
+            star_name: Name of the star whose magnitudes are read.
+            coordinates: List of X, Y coordinates of the stars in the image. 
         
         """
         
@@ -155,18 +303,24 @@ class InstrumentalMagnitude(object):
             nrow = 0
             mag = []
             all_mag = []
-            time = None
+            mjd = None
             
             # Process all the instrumental magnitudes in the file.
             for row in reader:
                 # Get a list of values from the CSV row read.
-                fields = str(row).translate(None, "[]\'").split()            
+                fields = str(row).translate(None, "[]\'").split()                            
                 
                 # Check that MJD has a defined value.
-                if fields[CSV_TIME_COL] != INDEF_VALUE:
+                if fields[self.CSV_TIME_COL] != INDEF_VALUE:                
                     
-                    # Save the time, it is the same for all the rows.
-                    time = fields[CSV_TIME_COL]                        
+                    # Save the mjd, it is the same for all the rows.
+                    mjd = fields[self.CSV_TIME_COL]    
+                    
+                    day = get_day_from_mjd(mjd)  
+                    
+                    # Add day and filter.
+                    self._day.add(day)
+                    self._filter.add(filter_name)                      
                     
                     # Get the identifier for current coordinate.
                     current_coor = coordinates[nrow]
@@ -175,44 +329,47 @@ class InstrumentalMagnitude(object):
                     # If it is the object of interest, add the magnitude to the
                     # magnitudes list.
                     if current_coor_id == OBJ_OF_INTEREST_ID:
-                        mag.append([fields[CSV_TIME_COL], \
-                                    fields[CSV_MAG_COL], \
-                                    fields[CSV_AIRMASS_COL], \
-                                    fields[CSV_ERROR_COL], \
-                                    filter_name])
+                        im = Magnitude(star_name,
+                                       mjd,
+                                       filter_name,
+                                       fields[self.CSV_MAG_COL],
+                                       fields[self.CSV_ERROR_COL],
+                                       fields[self.CSV_AIRMASS_COL])
+                        
+                        im.day = day
+                        
+                        mag.append(im)
                     
                     # Add the magnitude to the all magnitudes list.
-                    all_mag.append([fields[CSV_MAG_COL], \
-                                    fields[CSV_ERROR_COL], \
+                    all_mag.append([fields[self.CSV_MAG_COL], \
+                                    fields[self.CSV_ERROR_COL], \
                                     current_coor_id])
                     
                     nrow += 1
                 else:
-                    logging.debug("Found INDEF value for the observation time")
+                    logging.warning("Found INDEF value for the observation " + 
+                                    "in file %s" % (mag_file))
             
             star_index = self._star_names.index(star_name)       
             
             if star_index >= 0: 
                 
-                self._instrumental_magnitudes[star_index].append(mag)
+                self._instrumental_magnitudes[star_index].extend(mag)
 
                 if len(all_mag) > 0:
                     # Add all the magnitudes in the image sorted by identifier.
-                    self.add_all_mags(star_name,star_index, \
-                                      all_mag, time, filter_name)                
+                    self.add_all_mags(star_name, star_index, \
+                                      all_mag, mjd, filter_name)                
                 
-            logging.debug("Processed " + str(nrow) + " objects. " + \
-                          "Magnitudes for object of interest: " + \
-                          str(len(self._instrumental_magnitudes)) + \
-                          ". Magnitudes for all the objects: " + \
-                          str(len(self._all_instrumental_magnitudes)))
+            logging.info("Processed instrumental magnitudes of%d stars." % 
+                         (nrow))
 
     def read_inst_magnitudes(self, mag_file, path):
         """Searches in a given path all the magnitudes files.
         
         Args:
-        mag_file: File where to look for the magnitudes.
-        path: Path where to search the files.
+            mag_file: File where to look for the magnitudes.
+            path: Path where to search the files.
         
         """         
         
@@ -224,46 +381,16 @@ class InstrumentalMagnitude(object):
             
         catalog_file_name = self.get_catalog_file_name(mag_file)
         
-        # Look for the catalog file that contains the x,y coordinates of each
-        # star.
+        # Search the catalog file containing the x,y coordinates of each star.
         if os.path.exists(catalog_file_name):
         
-            # The list of coordinates used to calculate the magnitudes of the image.
+            # List of coordinates used to calculate the magnitudes of the image.
             coordinates = read_catalog_file(catalog_file_name)
             
             self.read_mag_file(mag_file, filter_name, star_name, coordinates)
     
-    def save_magnitudes_file(self, star_name, filename_suffix, magnitudes):
-        """Save the magnitudes to a text file.
-        
-        Args:     
-        star_name: Name of the object that corresponds to the magnitudes.
-        filename_suffix: Suffix to add to the file name.
-        magnitudes: List of magnitudes.
-        
-        """
-        
-        # Get the name of the output file.
-        output_file_name = star_name + filename_suffix + "." + TSV_FILE_EXT
-    
-        with open(output_file_name, 'w') as fw:
-            
-            writer = csv.writer(fw, delimiter='\t')
-    
-            # It is a list that contains sublists, each sublist is
-            # a different magnitude, so each one is written as a row.
-            for imag in magnitudes:
-            
-                # Write each magnitude in a row.
-                writer.writerows(imag)  
-    
-    def save_magnitudes(self):
-        """ Save the magnitudes received.
-            
-        Args:
-        objects: List of objects.
-        instrumental_magnitudes: Instrumental magnitudes of objects of interest.
-        all_instrumental_magnitudes: List of magnitudes for all the objects.    
+    def save_all_inst_mag(self):
+        """ Save the magnitudes received.   
         
         """
         
@@ -271,16 +398,64 @@ class InstrumentalMagnitude(object):
         # number of objects.
         i = 0
         for s in self._stars:
-            if self._instrumental_magnitudes[i]:
-                # Save instrumental magnitudes of objects of interest to a file.
-                self.save_magnitudes_file(s.name, \
-                                          INST_MAG_SUFFIX, \
-                                          self._instrumental_magnitudes[i])   
-               
-            if self._all_instrumental_magnitudes[i]:
-                # Save all the magnitudes to a file.
-                self.save_magnitudes_file(s.name, \
-                                          ALL_INST_MAG_SUFFIX, \
-                                          self._all_instrumental_magnitudes[i])
+            # Save only no standard stars.
+            if not s.is_std:
+                # Check not empty.
+                if self._all_instrumental_magnitudes[i]:                    
+                    # Get the name of the output file.
+                    output_file_name = "%s%s%s%s" % \
+                        (s.name, ALL_INST_MAG_SUFFIX, ".", TSV_FILE_EXT)
+                
+                    with open(output_file_name, 'w') as fw:
+                        
+                        writer = csv.writer(fw, delimiter='\t')
+                
+                        # It is a list that contains sublists, each sublist is
+                        # a different magnitude, so each one is written as a row.
+                        for imag in self._all_instrumental_magnitudes[i]:
+                        
+                            # Write each magnitude in a row.
+                            writer.writerow(imag)                     
             
-            i = i + 1
+            i = i + 1    
+            
+    def save_magnitudes(self):
+        """Save the magnitudes to a text file.
+        
+        Args:     
+            star_name: Name of the object that corresponds to the magnitudes.
+            magnitudes: List of magnitudes.
+        
+        """
+        
+        # For each object. The two list received contains the same 
+        # number of objects.
+        i = 0
+        for s in self._stars:                        
+            # Get the name of the output file.
+            output_file_name = "%s%s%s%s" % \
+                (s.name, INST_MAG_SUFFIX, ".", TSV_FILE_EXT)      
+                
+            print output_file_name      
+    
+            with open(output_file_name, 'w') as fw:
+                
+                writer = csv.writer(fw, delimiter='\t')
+                
+                # Retrieve the magnitudes of current star.
+                mags = self._instrumental_magnitudes[i]
+                
+                # Check not empty.
+                if mags:        
+                    # It is a list that contains sublists, each sublist is
+                    # a different magnitude, so each one is written as a row.
+                    for m in mags:
+                        
+                        m_to_row = [m.mjd, m.filter, m.airmass, \
+                                    m.mag, m.mag_error, \
+                                    m.ext_cor_mag, m.calib_mag]                  
+                    
+                        # Write each magnitude in a row.
+                        writer.writerow(m_to_row) 
+                    
+            i = i + 1                   
