@@ -46,4 +46,4 @@ def get_day_from_mjd(mjd_time):
     else:
         day = mjd_time[:dot_pos]
     
-    return day
+    return int(day)
