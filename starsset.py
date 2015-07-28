@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2014 Felipe Gallego. All rights reserved.
+# Copyright (c) 2015 Felipe Gallego. All rights reserved.
 #
 # This file is part of ycas: https://github.com/felgari/ycas
 #
@@ -21,9 +21,34 @@
 
 """
 
+import locale
 import logging
 import csv
 
+class NoStdStarException(Exception):
+    """Raised when a star no standard is used as standard.
+    
+    """
+    
+    def __init__(self, name):
+        self._name = name
+        
+    def __str__(self):
+        return "Star with name %s is not standard" % (self._name)
+                
+class NoFilterFoundForStdStarException(Exception):    
+    """Raised when a standard star has not a filter.
+    
+    """
+    
+    def __init__(self, star_name, filter):
+        self._star_name = star_name
+        self._filter = filter
+        
+    def __str__(self):
+        return "Standard star with name %s has not the filter %s" % \
+                (self._star_name, self._filter)
+                
 class FieldStar(object):
     """A class to store the data for a related object in the same field 
     of the object of interest.
@@ -36,9 +61,7 @@ class FieldStar(object):
         self._dec = dec
         
     def __str__(self):
-        return 'ID: {id} RA: {ra} DEC: {dec}'.format(id=str(self._id), \
-                                                     ra=str(self._ra), \
-                                                     dec=str(self._dec))
+        return "ID: %d RA: %.5g DEC: %.5g" % (self._id, self._ra, self._dec)
         
     @property
     def id(self):
@@ -74,8 +97,7 @@ class StandardStarMagitude(object):
         self._mag = mag
         
     def __str__(self):
-        return 'FILTER: {filter} MAG: {mag}'.format(filter=self._filter, \
-                                                    mag=self._mag)
+        return "Filter: %s Mag: %.5g" % (self._filter, self._mag)
         
     @property
     def filter(self):
@@ -129,9 +151,8 @@ class Star(object):
             
         rest_info = [ str(x) for x in add_info ]
             
-        return '{name} RA: {ra} DEC: {dec} TYPE: {tp} -> {rest}'. \
-            format(name=self._name, ra=self._ra, dec=self._dec, tp=type, \
-                   rest=str(rest_info))
+        return "%s RA: %.5g DEC: %.5g TYPE: %s -> %s" % \
+            (self._name, self._ra, self._dec, type, rest_info)
             
     @property
     def name(self):
@@ -165,7 +186,23 @@ class Star(object):
         
     @property
     def field_stars(self):
-        return self._field_stars                   
+        return self._field_stars  
+    
+    def get_std_mag(self, filter):                 
+        
+        mag = None
+        
+        if self.is_std:
+            for sm in self._std_measures:
+                if sm.filter == filter:
+                    mag = sm.mag
+        else:
+            raise NoStdStarException(self._name)
+        
+        if mag is None:
+            raise NoFilterFoundForStdStarException(self._name, filter)
+            
+        return mag
             
 class StarsSet(object):
     """Stores the data of the stars whose measures are processed.
@@ -302,11 +339,11 @@ class StarsSet(object):
         length of the group to read completely.
     
         Args:
-        line: A line read from the file.        
-        group_length: Length of the group of data to read each time.
+            line: A line read from the file.        
+            group_length: Length of the group of data to read each time.
         
         Return:
-        The length of the line to read to ensure the reading of full groups.
+            The length of the line to read to ensure the reading of full groups.
             
         """
         
@@ -325,9 +362,9 @@ class StarsSet(object):
         If successful the star is stored.
 
         Args:
-        star: A star object with the basic data.
-        line: A line read from the file.
-        line_number: The number of the line in the file. 
+            star: A star object with the basic data.
+            line: A line read from the file.
+            line_number: The number of the line in the file. 
                    
         """      
 
@@ -341,14 +378,14 @@ class StarsSet(object):
         i = 1
 
         # Walk the list while the number of fields allow reading data.
-        while self.OBJ_ADDITIONAL_DATA + ( self.OBJ_STD_NUM_FIELDS * i ) < \
+        while self.OBJ_ADDITIONAL_DATA + ( self.OBJ_STD_NUM_FIELDS * i ) <= \
             fields_limit:
             # Calculate the base index to read this group of data.
             base_index = self.OBJ_ADDITIONAL_DATA + \
                 ( self.OBJ_STD_NUM_FIELDS * ( i - 1 ))
             
             filter = line[base_index + self.OBJ_STD_FILTER]
-            mag = line[base_index + self.OBJ_STD_MAG]
+            mag = locale.atof(line[base_index + self.OBJ_STD_MAG])
             
             std_star_mag = StandardStarMagitude(filter, mag)
             
@@ -362,8 +399,8 @@ class StarsSet(object):
         star.
 
         Args:
-        line: A line read from the file.
-        line_number: The number of the line in the file. 
+            line: A line read from the file.
+            line_number: The number of the line in the file. 
                    
         """   
         
@@ -398,11 +435,11 @@ class StarsSet(object):
         star whose information must be included in this line.
         
         Args:
-        line: A line read from the file.
-        line_number: The number of the line in the file.
+            line: A line read from the file.
+            line_number: The number of the line in the file.
         
         Return:
-        The star with the data read from the line.
+            The star with the data read from the line.
         
         """
         
@@ -432,7 +469,7 @@ class StarsSet(object):
         coordinates of each object.
         
         Args:
-        file_name: Name of the file that contains the information of the stars.
+            file_name: Name of the file that contains the data of the stars.
         
         """
         
