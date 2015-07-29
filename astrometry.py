@@ -46,35 +46,34 @@ RA_POS = 0
 DEC_POS = 1
 ID_POS = 2
     
-class ObjectNotFound(StandardError):
+class StarNotFound(Exception):
     """Raised if object is not found from file name. """
     
     def __init__(self, filename):
         self.filename = filename
 
-def get_object(objects, filename):
+def get_star_of_filename(stars, filename):
     """Returns the object indicated by the file name received.
     
-    The filename should corresponds to an object and the name of this objects
-    should be part of the name. The name of the object is extracted from this
-    file name and searched in the list of objects received.
-    The object found and its position in the list are returned.
+    The filename should corresponds to an star and the name of this stars
+    should be part of the name. The name of the star is extracted from this
+    file name and searched in the list of stars received.
+    The star found and its position in the list are returned.
     
     Args:
-    objects: List of objects of interest.
-    filename: Filename related to an object to search in the set of objects.
+        stars: List of stars of interest.
+        filename: Filename related to an star to search in the set of objects.
     
     Returns:
-    object: The object found.
-    index: The index of the object in the list.
+        The star found.
     
     Raises:
-    ObjectNotFound: If the object corresponding to the file name is nor found.
+        StarNotFound: If the star corresponding to the file name is nor found.
     
     """
     
     # Default values for the variables returned.
-    object = None
+    star = None
     index = -1
     
     # Split file name from path.
@@ -82,34 +81,31 @@ def get_object(objects, filename):
     
     # Get the object name from the filename, the name is at the beginning
     # and separated by a special character.
-    obj_name = file.split(DATANAME_CHAR_SEP)[0]
+    star_name = file.split(DATANAME_CHAR_SEP)[0]
     
-    logging.debug("In astrometry, searching coordinates for object: " + \
-                  obj_name)
+    logging.debug("In astrometry, searching coordinates for star: %s" %
+                  (star_name))
     
-    # Look for an object of the list whose name matches that of the filename.
-    for i in range(len(objects)):
-        obj = objects[i]
-        # If an object with the same name is found, assign the values to the
-        # returned variables. 
-        if obj[OBJ_NAME_COL] == obj_name:
-            object = obj
-            index = i
+    # Look for an star of the list whose name matches that of the filename.
+    for s in stars:
+        if s.name == star_name:
+            star = s
+            break
     
-    # If the object is not found raise an exception,
-    if object is None:
-        raise ObjectNotFound(filename)
+    # If the star is not found raise an exception,
+    if star is None:
+        raise StarNotFound(filename)
     
-    return object, index
+    return star
 
 def get_fit_table_data(fit_table_file_name):
     """Get the data of a the first table contained in the fit file indicated.
     
     Args:
-    fit_table_file_name: File name of the fit file that contains the table.
+        fit_table_file_name: File name of the fit file that contains the table.
     
     Returns:
-    The table contained in the fit file.
+        The table contained in the fit file.
         
     """
     
@@ -139,14 +135,14 @@ def get_rd_index(rd_data, ra, dec):
     close to those received.
     
     Args:
-    rd_data: List of ra, dec values. The closest pair of this list to the
-    ra,dec values are returned.
-    ra: RA value to search.
-    dec: DEC value to search.
+        rd_data: List of ra, dec values. The closest pair of this list to the
+        ra,dec values are returned.
+        ra: RA value to search.
+        dec: DEC value to search.
     
     Returns:
-    A pair RA,DEC of the list received with the nearest values to those
-    RA, DEC parameters received.
+        A pair RA,DEC of the list received with the nearest values to those
+        RA, DEC parameters received.
         
     """
     
@@ -198,20 +194,18 @@ def get_rd_index(rd_data, ra, dec):
         
     return index
 
-def get_indexes_for_obj_cood(rd_data, object, object_references):
+def get_indexes_for_obj_cood(rd_data, star):
     """ Get the indexes of the ra,dec coordinates nearest to those of the 
     objects received.
     
     Args:
-    rd_data: List of ra, dec values. The closest pair of this list to the
-    ra,dec values are returned.
-    object: Object of interest whose coordinates are searched.
-    object_references: List of other object whose coordinates are also 
-    searched.
+        rd_data: List of ra, dec values. The closest pair of this list to the
+        ra,dec values are returned.
+        star: The star.
     
     Returns:
-    List of the indexes of coordinates of the list nearest to those of the
-    objects received. 
+        List of the indexes of coordinates of the list nearest to those of the
+        objects received. 
     
     """
     
@@ -226,31 +220,28 @@ def get_indexes_for_obj_cood(rd_data, object, object_references):
     
     # If the object has been found.
     if new_index >= 0:
-        logging.debug("Index for object '" + object[OBJ_NAME_COL] + \
-                      "' is " +  str(new_index))
+        logging.debug("Index for object '%s' is %d" % (star.name, new_index))
         
         # Get the indexes for the objects references.
-        for obj_ref in object_references:
-            new_index = get_rd_index(rd_data, 
-                                     float(obj_ref[RA_POS]), \
-                                     float(obj_ref[DEC_POS]))
+        for star_of_field in star.field_stars:
+            new_index = get_rd_index(rd_data, star_of_field.ra, \
+                                     star_of_field.dec)
             
             # Check that an index has been found for this object.
             if new_index >= 0:
-                logging.debug("Index for references " + str(obj_ref[RA_POS]) + \
-                              "," + str(obj_ref[DEC_POS]) + " with id " +
-                              obj_ref[ID_POS]+ " is " + str(new_index))        
+                logging.debug("Index for reference %.10g,%.10g with id %d is %d" %
+                              (star_of_field.ra, star_of_field.dec,
+                              star_of_field.id, new_index))        
                                          
                 indexes.extend([new_index])  
                 
-                identifiers.extend([obj_ref[ID_POS]])    
+                identifiers.extend([star_of_field.id])    
             else:
-                logging.debug("Index for references " + str(obj_ref[RA_POS]) + \
-                              "," + str(obj_ref[DEC_POS]) + " with id " + \
-                              obj_ref[ID_POS]+ " not found")
+                logging.debug("Index for reference %.10g,%.10g with id %d not found" %
+                              (star_of_field.ra, star_of_field.dec, 
+                               star_of_field.id))
     else:
-        logging.debug("Index for object " + object[OBJ_NAME_COL] + \
-                      " not found")
+        logging.debug("Index for star %s not found" % star.name)
 
     return indexes, identifiers
 
@@ -261,11 +252,11 @@ def write_catalog_file(catalog_file_name, indexes, xy_data, identifiers):
     received.
     
     Args:
-    catalog_file_name: File name o
-    indexes: List of indexes corresponding to the coordinates to write.
-    xy_data: List of the X, Y coordinates that are referenced by X, Y
-    coordinates.    
-    identifiers: Identifiers of the objects found.    
+        catalog_file_name: File name o
+        indexes: List of indexes corresponding to the coordinates to write.
+        xy_data: List of the X, Y coordinates that are referenced by X, Y
+        coordinates.    
+        identifiers: Identifiers of the objects found.    
     
     """
     
@@ -297,16 +288,16 @@ def check_celestial_coordinates(image_file_name, object, indexes, \
     distance from the center of the image.
     
     Args:
-    image_file_name: Name of the file to the image whose coordinates are 
-    checked.
-    object: Data of the object whose image has been analyzed to get the 
-    astrometry.
-    indexes: Indexes to the coordinates of the objects found in this image.
-    rd_data: List of RA, DEC coordinates calculated by the astrometry.
-    xy_data: list of X, Y coordinates calculated by the astrometry.
+        image_file_name: Name of the file to the image whose coordinates are 
+        checked.
+        object: Data of the object whose image has been analyzed to get the 
+        astrometry.
+        indexes: Indexes to the coordinates of the objects found in this image.
+        rd_data: List of RA, DEC coordinates calculated by the astrometry.
+        xy_data: list of X, Y coordinates calculated by the astrometry.
     
     Returns:    
-    True if checks are ok, False otherwise.
+        True if checks are ok, False otherwise.
     
     """
     
@@ -391,8 +382,7 @@ def check_celestial_coordinates(image_file_name, object, indexes, \
     
     return success    
 
-def write_coord_catalogues(image_file_name, catalog_full_file_name, \
-                           object, object_references):
+def write_coord_catalogues(image_file_name, catalog_full_file_name, star):
     """Writes the x,y coordinates of a FITS file to a text file.    
     
     This function opens the FITS file that contains the table of x,y 
@@ -401,14 +391,12 @@ def write_coord_catalogues(image_file_name, catalog_full_file_name, \
     the photometry of the objects on these coordinates.
     
     Args:
-    image_file_name: Name of the file of the image.
-    catalog_full_file_name: Name of the catalog to write
-    object: Data of the object corresponding to the image.
-    object_references: Coordinates for other objects in the field of the 
-        object of interest.
+        image_file_name: Name of the file of the image.
+        catalog_full_file_name: Name of the catalog to write
+        star: The star.
                            
     Returns:    
-    True if the file is written successfully.
+        True if the file is written successfully.
     
     """
     
@@ -434,7 +422,7 @@ def write_coord_catalogues(image_file_name, catalog_full_file_name, \
         object_name = \
             catalog_file_name[:catalog_file_name.find(DATANAME_CHAR_SEP)]
         
-        logging.debug("Object name: " + object_name)
+        logging.debug("Star name: %s" + star.name)
 
         # Read x,y and ra,dec data from fit table.
         xy_data = get_fit_table_data(xyls_file_name)
@@ -442,8 +430,7 @@ def write_coord_catalogues(image_file_name, catalog_full_file_name, \
         
         # Get the indexes for x,y and ra,dec data related to the
         # objects received.
-        indexes, identifiers = \
-            get_indexes_for_obj_cood(rd_data, object, object_references)  
+        indexes, identifiers = get_indexes_for_obj_cood(rd_data, star)  
             
         # Check if any object has been found in the image.
         if len(indexes) > 0:              
@@ -462,41 +449,14 @@ def write_coord_catalogues(image_file_name, catalog_full_file_name, \
                 logging.debug("Catalog file not saved, " + \
                               "coordinates do not pass validation criteria.")
         else:
-            logging.debug("Catalog file not saved, " + \
-                          "no objects found by astrometry")
+            logging.debug("Catalog file not saved, no objects found by astrometry")
     else:
         logging.debug("X,Y coordinates file '" + xyls_file_name + \
                       "' does not exists so catalog file could not be created.")
         
-    return success
+    return success  
         
-def read_objects_references(objects):
-    """Get RA, DEC coordinates for the reference objects of those received.
-    
-    For each object of interest received there are several objects (reference
-    objects) in the field used to calculate differential photometry.
-    This function received a set of objects of interest and for each object 
-    returns the coordinates of all the reference objects it has.
-    
-    Args:
-    objects: Objects for which the coordinates of its reference objects are
-    returned.
-    
-    Returns:    
-    List of sublists. Each sublist contains the coordinates of the reference 
-    objects for an object received. These sublists follow the same order that
-    the objects received.    
-    """        
-    
-    objects_references = []
-    
-    # For each object get the coordinates of its reference objects.
-    for obj in objects:
-        objects_references.append(read_references_for_object(obj[OBJ_NAME_COL]))
-    
-    return objects_references    
-        
-def do_astrometry(progargs):
+def do_astrometry(progargs, stars):
     """ Get the astrometry for all the images found from the current directory.
         
     This function searches directories that contains files of data images.
@@ -507,6 +467,7 @@ def do_astrometry(progargs):
     
     Args:
         progargs: Program arguments. 
+        stars: Stars of interest.
         
     """
     
@@ -514,15 +475,8 @@ def do_astrometry(progargs):
 
     # Initializes images that store summary information of the whole process.
     number_of_images = 0
-    number_of_successfull_images = 0    
+    number_of_successful_images = 0    
     images_without_astrometry = []
-    
-    # Read the list of objects of interest.
-    objects = read_objects_of_interest(progargs.interest_object_file_name)
-    
-    # Read the coordinates of the reference objects that has each object of
-    # interest.
-    objects_references = read_objects_references(objects)
 
     # Walk from current directory.
     for path,dirs,files in os.walk('.'):
@@ -533,7 +487,7 @@ def do_astrometry(progargs):
 
             # Check if current directory is for data.
             if split_path[-2] == progargs.data_directory:             
-                logging.debug("Found a directory for data: " + path)
+                logging.info("Found a directory for data: %s" % (path))
 
                 # Get the list of files ignoring hidden files.
                 files_to_catalog = \
@@ -541,86 +495,76 @@ def do_astrometry(progargs):
                                                          DATA_FINAL_PATTERN)) \
                     if not os.path.basename(fn).startswith('.')]
                     
-                logging.debug("Found " + str(len(files_to_catalog)) + \
-                              " files to catalog: " + str(files_to_catalog))
+                logging.debug("Found %d files to catalog: %s " % \
+                              (len(files_to_catalog), 
+                               str(files_to_catalog)))
 
                 # Get the astrometry for each file found.
-                for fl in files_to_catalog:
+                for file in files_to_catalog:
                     
                     number_of_images += 1
                     
-                    # Try to get RA and DEC for the object to solve the 
-                    # field only around these coordinates.
-                    ra_dec_param = ""
-                    
-                    try:
-                        obj, obj_idx = get_object(objects, fl)
-                        
-                        # Get the RA, DEC coordinates where to center the
-                        # astrometry.
-                        ra = str(obj[OBJ_RA_COL])
-                        dec = str(obj[OBJ_DEC_COL])
-                        
-                        ra_dec_param =" --ra " + ra + " --dec " + dec + \
-                            " --radius " + str(SOLVE_FIELD_RADIUS)
-                        
+                    try:                        
                         # Get the catalog name where the coordinates are
                         # written.
-                        catalog_file_name = fl.replace(DATA_FINAL_PATTERN, \
+                        catalog_file_name = file.replace(DATA_FINAL_PATTERN, \
                                                        "." + CATALOG_FILE_EXT)
 
                         # Check if the catalog file already exists.
                         # If it already exists the astrometry is not calculated.
                         if os.path.exists(catalog_file_name) == False :
+                            
+                            star = get_star_of_filename(stars, file)
     
                             use_sextractor = ""
                             
                             if progargs.use_sextractor_for_astrometry:
-                                use_sextractor = \
-                                    ASTROMETRY_OPT_USE_SEXTRACTOR + " " + \
-                                    progargs.sextractor_cfg_path
-                                
+                                use_sextractor = "%s %s" % \
+                                    (ASTROMETRY_OPT_USE_SEXTRACTOR,
+                                    progargs.sextractor_cfg_path)                              
     
-                            command = ASTROMETRY_COMMAND + " " + \
-                                ASTROMETRY_PARAMS + \
-                                str(progargs.number_of_objects_for_astrometry) + \
-                                " " + use_sextractor + ra_dec_param + " " + fl
+                            command = "%s %s %d %s %s --ra %.10g --dec %.10g --radius %.10g %s" % \
+                                (ASTROMETRY_COMMAND, ASTROMETRY_PARAMS,
+                                progargs.number_of_objects_for_astrometry,
+                                use_sextractor, ra_dec_param, 
+                                star.ra, star.dec,
+                                SOLVE_FIELD_RADIUS, file)
                                 
-                            logging.debug("Executing: " + command)
+                            logging.debug("Executing: %s" % (command))
     
                             # Executes astrometry.net solver to get the 
                             # astrometry of the image.
-                            return_code = subprocess.call(command, \
-                                shell=True, stdout=subprocess.PIPE, \
+                            return_code = subprocess.call(command,
+                                shell=True, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
     
-                            logging.debug("Astrometry execution return code: " \
-                                          + str(return_code))                            
+                            logging.debug("Astrometry execution return code: %d" %
+                                          (return_code))                            
                         else:
-                            logging.debug("Catalog file already exists: " + \
-                                          catalog_file_name)
+                            logging.debug("Catalog file already exists: %s" %
+                                          (catalog_file_name))
+                            
                             return_code = 0
                             
                         if return_code == 0:
                             # Generates catalog files with x,y and ra,dec values 
                             # and if it successfully count it. 
-                            if write_coord_catalogues(fl, catalog_file_name, \
-                                                      obj, \
-                                                      objects_references[obj_idx]):
-                                number_of_successfull_images = \
-                                    number_of_successfull_images + 1
+                            if write_coord_catalogues(file, catalog_file_name, \
+                                                      star):
+                                number_of_successful_images = \
+                                    number_of_successful_images + 1
                             else:
-                                images_without_astrometry.extend([fl])
+                                images_without_astrometry.extend([file])
                             
-                    except ObjectNotFound as onf:
-                        logging.debug("Object not found related to file: " + \
-                                      onf.filename)
+                    except StarNotFound as onf:
+                        logging.debug("Object not found related to file: %s" % \
+                                      (onf.filename))
 
     logging.info("Astrometry results:")
-    logging.info("- Number of images processed: " + str(number_of_images))
-    logging.info("- Images processed successfully: " + \
-                 str(number_of_successfull_images))
-    logging.info("- Number of images without astrometry: " + \
-                 str(len(images_without_astrometry)))    
-    logging.info("- List of images without astrometry: " + \
-                 str(images_without_astrometry))
+    logging.info("- Number of images processed: %d" % (number_of_images))
+    logging.info("- Images processed successfully: %d" % \
+                 (number_of_successful_images))
+    logging.info("- Number of images without astrometry: %d" % \
+                 (len(images_without_astrometry)))    
+    logging.info("- List of images without astrometry: %s" % \
+                 (str(images_without_astrometry)))

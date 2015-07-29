@@ -202,7 +202,7 @@ class Star(object):
         if mag is None:
             raise NoFilterFoundForStdStarException(self._name, filter)
             
-        return mag
+        return mag    
             
 class StarsSet(object):
     """Stores the data of the stars whose measures are processed.

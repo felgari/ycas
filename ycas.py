@@ -75,7 +75,7 @@ def pipeline(progargs):
     # AR,DEC coordinates.
     if progargs.astrometry_requested or progargs.all_steps_requested:
         logging.info("* Step 3 * Performing astrometry of the images.")
-        astrometry.do_astrometry(progargs)
+        astrometry.do_astrometry(progargs, stars)
         anything_done = True
     else:
         logging.info("* Step 3 * Skipping performing astrometry. " + \
