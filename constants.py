@@ -33,7 +33,6 @@ MAGNITUDE_FILE_EXT = "mag"
 CSV_FILE_EXT = "csv"
 TSV_FILE_EXT = "tsv"
 RDLS_FILE_EXT = "rdls"
-COORD_FILE_EXT = "coo"
 INDEX_FILE_PATTERN = '-indx.xyls'
 DATA_FINAL_PATTERN = "_final.fit"
 DATA_ALIGN_PATTERN = "_align.fit"
