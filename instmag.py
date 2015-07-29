@@ -431,22 +431,23 @@ class InstrumentalMagnitudes(object):
         # For each object. The two list received contains the same 
         # number of objects.
         i = 0
-        for s in self._stars:                        
-            # Get the name of the output file.
-            output_file_name = "%s%s%s%s" % \
-                (s.name, INST_MAG_SUFFIX, ".", TSV_FILE_EXT)      
-                
-            print output_file_name      
-    
-            with open(output_file_name, 'w') as fw:
-                
-                writer = csv.writer(fw, delimiter='\t')
-                
-                # Retrieve the magnitudes of current star.
-                mags = self._instrumental_magnitudes[i]
-                
-                # Check not empty.
-                if mags:        
+        for s in self._stars:          
+            
+            # Retrieve the magnitudes of current star.
+            mags = self._instrumental_magnitudes[i]
+            
+            # Check not empty.
+            if mags:                
+                          
+                # Get the name of the output file.
+                output_file_name = "%s%s%s" % (s.name, ".", TSV_FILE_EXT)      
+                    
+                print output_file_name      
+        
+                with open(output_file_name, 'w') as fw:
+                    
+                    writer = csv.writer(fw, delimiter='\t')
+
                     # It is a list that contains sublists, each sublist is
                     # a different magnitude, so each one is written as a row.
                     for m in mags:
