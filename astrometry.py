@@ -20,7 +20,7 @@
 """This module calculates the astrometry for a set of data images.
 
 The astrometry is calculated with a external program from 'astrometry.net', in
-turn, the objects in the images are identified using sextractor.
+turn, the stars in the images are identified using sextractor.
 """
 
 import sys
@@ -41,19 +41,19 @@ else:
     
 XY_PERCENT_DEV_FROM_CENTER = 0.7
 
-# Positions for the values of the objects coordinates. 
+# Positions for the values of the stars coordinates. 
 RA_POS = 0
 DEC_POS = 1
 ID_POS = 2
     
 class StarNotFound(Exception):
-    """Raised if object is not found from file name. """
+    """Raised if star is not found from file name. """
     
     def __init__(self, filename):
         self.filename = filename
 
 def get_star_of_filename(stars, filename):
-    """Returns the object indicated by the file name received.
+    """Returns the star indicated by the file name received.
     
     The filename should corresponds to an star and the name of this stars
     should be part of the name. The name of the star is extracted from this
@@ -62,7 +62,7 @@ def get_star_of_filename(stars, filename):
     
     Args:
         stars: List of stars of interest.
-        filename: Filename related to an star to search in the set of objects.
+        filename: Filename related to an star to search in the set of stars.
     
     Returns:
         The star found.
@@ -79,7 +79,7 @@ def get_star_of_filename(stars, filename):
     # Split file name from path.
     path, file = os.path.split(filename)
     
-    # Get the object name from the filename, the name is at the beginning
+    # Get the star name from the filename, the name is at the beginning
     # and separated by a special character.
     star_name = file.split(DATANAME_CHAR_SEP)[0]
     
@@ -158,7 +158,7 @@ def get_rd_index(rd_data, ra, dec):
     i = 0
     for rd in rd_data:
         # Compute the difference between the coordinates of the
-        # object in this row and the object received.  
+        # star in this row and the star received.  
         temp_ra_diff = abs(float(rd[RD_DATA_RA_COL]) - ra)
         
         # If RA is close to 360 or 0, the differences could be close
@@ -174,7 +174,7 @@ def get_rd_index(rd_data, ra, dec):
         if temp_ra_diff < ASTROMETRY_COORD_RANGE and \
             temp_dec_diff < ASTROMETRY_COORD_RANGE:
             # If current row coordinates are smaller than previous this
-            # row is chosen as candidate for the object.
+            # row is chosen as candidate for the star.
             if temp_ra_diff + temp_dec_diff < ra_diff + dec_diff:
                 ra_diff = temp_ra_diff
                 dec_diff = temp_dec_diff
@@ -189,14 +189,14 @@ def get_rd_index(rd_data, ra, dec):
         i += 1
         
     if index == -1:
-        logging.debug("No match for object coordinates, min. diff. are: " + \
+        logging.debug("No match for star coordinates, min. diff. are: " + \
                       str(ra_min_diff) + " " + str(dec_min_diff))
         
     return index
 
-def get_indexes_for_obj_cood(rd_data, star):
+def get_indexes_for_star_cood(rd_data, star):
     """ Get the indexes of the ra,dec coordinates nearest to those of the 
-    objects received.
+    stars received.
     
     Args:
         rd_data: List of ra, dec values. The closest pair of this list to the
@@ -205,29 +205,28 @@ def get_indexes_for_obj_cood(rd_data, star):
     
     Returns:
         List of the indexes of coordinates of the list nearest to those of the
-        objects received. 
+        stars received. 
     
     """
     
-    # Indexes of the objects found.
+    # Indexes of the stars found.
     indexes = []
-    # Identifiers of the objects found.
+    # Identifiers of the stars found.
     identifiers = []
     
-    # Get the index for the object.
-    new_index = get_rd_index(rd_data, float(object[OBJ_RA_COL]), \
-                             float(object[OBJ_DEC_COL]))
+    # Get the index for the star.
+    new_index = get_rd_index(rd_data, star.ra, star.dec)
     
-    # If the object has been found.
+    # If the star has been found.
     if new_index >= 0:
-        logging.debug("Index for object '%s' is %d" % (star.name, new_index))
+        logging.debug("Index for star '%s' is %d" % (star.name, new_index))
         
-        # Get the indexes for the objects references.
+        # Get the indexes for the stars references.
         for star_of_field in star.field_stars:
             new_index = get_rd_index(rd_data, star_of_field.ra, \
                                      star_of_field.dec)
             
-            # Check that an index has been found for this object.
+            # Check that an index has been found for this star.
             if new_index >= 0:
                 logging.debug("Index for reference %.10g,%.10g with id %d is %d" %
                               (star_of_field.ra, star_of_field.dec,
@@ -256,7 +255,7 @@ def write_catalog_file(catalog_file_name, indexes, xy_data, identifiers):
         indexes: List of indexes corresponding to the coordinates to write.
         xy_data: List of the X, Y coordinates that are referenced by X, Y
         coordinates.    
-        identifiers: Identifiers of the objects found.    
+        identifiers: Identifiers of the stars found.    
     
     """
     
@@ -276,23 +275,22 @@ def write_catalog_file(catalog_file_name, indexes, xy_data, identifiers):
     
     catalog_file.close()
     
-def check_celestial_coordinates(image_file_name, object, indexes, \
+def check_celestial_coordinates(image_file_name, star, indexes, \
                                 identifiers, rd_data, xy_data):
     """Check if ra,dec coordinates complies the validation criteria.
     
     These validations are performed to ensure the astrometry coordinates are
     consistent with the expected values.
-    - Checks that the RA,DEC coordinates for the object of interest are 
+    - Checks that the RA,DEC coordinates for the star of interest are 
     contained in the field recognized by the astrometry.
-    - Checks that the X,Y coordinates for the object of interest are into a 
+    - Checks that the X,Y coordinates for the star of interest are into a 
     distance from the center of the image.
     
     Args:
         image_file_name: Name of the file to the image whose coordinates are 
         checked.
-        object: Data of the object whose image has been analyzed to get the 
-        astrometry.
-        indexes: Indexes to the coordinates of the objects found in this image.
+        star: Data of the star whose image is analyzed to get the astrometry.
+        indexes: Indexes to the coordinates of the stars found in this image.
         rd_data: List of RA, DEC coordinates calculated by the astrometry.
         xy_data: list of X, Y coordinates calculated by the astrometry.
     
@@ -327,14 +325,10 @@ def check_celestial_coordinates(image_file_name, object, indexes, \
         if dec > max_dec:
             max_dec = dec       
             
-    # Get RA and DEC values of the object.
-    obj_ra = float(object[OBJ_RA_COL])
-    obj_dec = float(object[OBJ_DEC_COL])
-            
-    # Check that the RA,DEC coordinates for the object of interest
+    # Check that the RA,DEC coordinates for the star of interest
     # are contained in the field recognized by the astrometry.
-    if (obj_ra > min_ra) & (obj_ra < max_ra) & \
-         (obj_dec > min_dec) & (obj_dec < max_dec):
+    if (star.ra > min_ra) and (star.ra < max_ra) and \
+         (star.dec > min_dec) and (star.dec < max_dec):
         
         header_fields = get_fit_fields(image_file_name, \
                                        XY_CENTER_FIT_HEADER_FIELDS)
@@ -344,22 +338,22 @@ def check_celestial_coordinates(image_file_name, object, indexes, \
             y_center = int(header_fields[CRPIX2])
             
             # Retrieve the index in the astrometry list saved as first index.
-            # This index corresponds to the object of interest.
-            first_object = xy_data[indexes[0]] 
+            # This index corresponds to the star of interest.
+            first_star = xy_data[indexes[0]] 
             
-            obj_x = int(first_object[XY_DATA_X_COL])
-            obj_y = int(first_object[XY_DATA_Y_COL])
+            star_x = int(first_star[XY_DATA_X_COL])
+            star_y = int(first_star[XY_DATA_Y_COL])
             
-            # Check that the X,Y coordinates for the object of interest are
+            # Check that the X,Y coordinates for the star of interest are
             # into a distance from the center of the image.
-            if (obj_x < x_center - x_center * XY_PERCENT_DEV_FROM_CENTER) | \
-                (obj_x > x_center + x_center * XY_PERCENT_DEV_FROM_CENTER) | \
-                (obj_y < y_center - y_center * XY_PERCENT_DEV_FROM_CENTER) | \
-                (obj_y > y_center + y_center * XY_PERCENT_DEV_FROM_CENTER):
+            if (star_x < x_center - x_center * XY_PERCENT_DEV_FROM_CENTER) | \
+                (star_x > x_center + x_center * XY_PERCENT_DEV_FROM_CENTER) | \
+                (star_y < y_center - y_center * XY_PERCENT_DEV_FROM_CENTER) | \
+                (star_y > y_center + y_center * XY_PERCENT_DEV_FROM_CENTER):
             
                 success = False             
                 
-                logging.error("X,Y coordinates for object to far from " + \
+                logging.error("X,Y coordinates for star to far from " + \
                               "center in " + image_file_name)
         except KeyError as ke:
             logging.warning("Header field 'for XY center not found in file " + \
@@ -367,17 +361,17 @@ def check_celestial_coordinates(image_file_name, object, indexes, \
         
     else:
         logging.error("RA DEC coordinates given by astrometry does not " + \
-                      "contain object in image: " + \
+                      "contain star in image: " + \
                       image_file_name)
         
         success = False
         
     if len(set(identifiers)) < len(identifiers):
-        logging.error("Duplicated coordinates for some object in: " + \
+        logging.error("Duplicated coordinates for some star in: " + \
                       image_file_name)
         
     if len([x for x in identifiers if x == '0']) == 0:
-        logging.error("No coordinates identified for object of interest in: " + \
+        logging.error("No coordinates identified for star of interest in: " + \
                       image_file_name)        
     
     return success    
@@ -388,7 +382,7 @@ def write_coord_catalogues(image_file_name, catalog_full_file_name, star):
     This function opens the FITS file that contains the table of x,y 
     coordinates and write these coordinates to a text file that only
     contains this x,y values. This text file will be used later to calculate
-    the photometry of the objects on these coordinates.
+    the photometry of the stars on these coordinates.
     
     Args:
         image_file_name: Name of the file of the image.
@@ -413,30 +407,25 @@ def write_coord_catalogues(image_file_name, catalog_full_file_name, star):
     if os.path.exists(xyls_file_name):
 
         logging.debug("X,Y coordinates file exists")
-        logging.debug("xyls file name: " + xyls_file_name)
-        logging.debug("rdls file name: " + rdls_file_name)        
-        logging.debug("Catalog file name: " + catalog_full_file_name)
+        logging.debug("xyls file name: %s" % (xyls_file_name))
+        logging.debug("rdls file name: %s" % (rdls_file_name))      
+        logging.debug("Catalog file name: $s" % (catalog_full_file_name))
         
-        # Get only the file name.
-        catalog_file_name = os.path.split(catalog_full_file_name)[-1]
-        object_name = \
-            catalog_file_name[:catalog_file_name.find(DATANAME_CHAR_SEP)]
-        
-        logging.debug("Star name: %s" + star.name)
+        logging.debug("Star name: %s" % star.name)
 
         # Read x,y and ra,dec data from fit table.
         xy_data = get_fit_table_data(xyls_file_name)
         rd_data = get_fit_table_data(rdls_file_name)
         
         # Get the indexes for x,y and ra,dec data related to the
-        # objects received.
-        indexes, identifiers = get_indexes_for_obj_cood(rd_data, star)  
+        # stars received.
+        indexes, identifiers = get_indexes_for_star_cood(rd_data, star)  
             
-        # Check if any object has been found in the image.
+        # Check if any star has been found in the image.
         if len(indexes) > 0:              
             # Check if the coordinates complies with the 
             # coordinates validation criteria.
-            if check_celestial_coordinates(image_file_name, object, indexes, \
+            if check_celestial_coordinates(image_file_name, star, indexes, \
                                            identifiers, rd_data, xy_data):
     
                 # Write catalog file with the x,y coordinate to do the
@@ -449,10 +438,10 @@ def write_coord_catalogues(image_file_name, catalog_full_file_name, star):
                 logging.debug("Catalog file not saved, " + \
                               "coordinates do not pass validation criteria.")
         else:
-            logging.debug("Catalog file not saved, no objects found by astrometry")
+            logging.debug("Catalog file not saved, no stars found by astrometry")
     else:
-        logging.debug("X,Y coordinates file '" + xyls_file_name + \
-                      "' does not exists so catalog file could not be created.")
+        logging.debug("X,Y coordinates file '%s' does not exists, so catalog file could not be created." %
+                      (xyls_file_name))
         
     return success  
         
