@@ -283,7 +283,7 @@ class ProgramArguments(object):
             not self.photometry_requested and \
             not self.magnitudes_requested and \
             not self.all_steps_requested:
-            raise ProgramArgumentsException(NO_PIPELINE_STEPS_REQUESTED)
+            raise ProgramArgumentsException(self.NO_PIPELINE_STEPS_REQUESTED)
         
         # Check all the conditions required for the program arguments.
         
@@ -294,18 +294,19 @@ class ProgramArguments(object):
         # Check the specification of the file with the stars of interest.
         if self.photometry_requested:
             if not self.sextractor_cfg_file_provided:
-                if not self.file_of_stars_provideds:
-                    raise ProgramArgumentsException(PHOT_REQUIRES_SEX_PATH_AND_STARS_FILE)
+                if not self.file_of_stars_provided:
+                    raise ProgramArgumentsException(
+                                    PHOT_REQUIRES_SEX_PATH_AND_STARS_FILE)
                 else:
                     raise ProgramArgumentsException(self.PHOT_REQUIRES_SEX_PATH)
             elif not self.file_of_stars_provided:
-                raise ProgramArgumentsException(PHOT_REQUIRES_STARS_FILE)
+                raise ProgramArgumentsException(self.PHOT_REQUIRES_STARS_FILE)
             
         if self.astrometry_requested and not self.file_of_stars_provided:
-            raise ProgramArgumentsException(ASTRO_REQUIRES_STARS_FILE)
+            raise ProgramArgumentsException(self.ASTRO_REQUIRES_STARS_FILE)
         
         if self.magnitudes_requested and not self.file_of_stars_provided:
-            raise ProgramArgumentsException(MAG_REQUIRES_STARS_FILE)
+            raise ProgramArgumentsException(self.MAG_REQUIRES_STARS_FILE)
             
     def process_program_arguments(self):
         """ Parse and check coherence of program arguments.

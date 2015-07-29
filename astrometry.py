@@ -194,7 +194,7 @@ def get_rd_index(rd_data, ra, dec):
         
     return index
 
-def get_indexes_for_star_cood(rd_data, star):
+def get_indexes_for_star_coor(rd_data, star):
     """ Get the indexes of the ra,dec coordinates nearest to those of the 
     stars received.
     
@@ -219,8 +219,6 @@ def get_indexes_for_star_cood(rd_data, star):
     
     # If the star has been found.
     if new_index >= 0:
-        logging.debug("Index for star '%s' is %d" % (star.name, new_index))
-        
         # Get the indexes for the stars references.
         for star_of_field in star.field_stars:
             new_index = get_rd_index(rd_data, star_of_field.ra, \
@@ -228,7 +226,7 @@ def get_indexes_for_star_cood(rd_data, star):
             
             # Check that an index has been found for this star.
             if new_index >= 0:
-                logging.debug("Index for reference %.10g,%.10g with id %d is %d" %
+                logging.debug("Index for reference %.10g, %.10g with id %d is %d" %
                               (star_of_field.ra, star_of_field.dec,
                               star_of_field.id, new_index))        
                                          
@@ -236,11 +234,11 @@ def get_indexes_for_star_cood(rd_data, star):
                 
                 identifiers.extend([star_of_field.id])    
             else:
-                logging.debug("Index for reference %.10g,%.10g with id %d not found" %
+                logging.debug("Index for reference %.10g, %.10g with id %d not found" %
                               (star_of_field.ra, star_of_field.dec, 
                                star_of_field.id))
     else:
-        logging.debug("Index for star %s not found" % star.name)
+        logging.warning("Index for star %s not found" % star.name)
 
     return indexes, identifiers
 
@@ -264,14 +262,13 @@ def write_catalog_file(catalog_file_name, indexes, xy_data, identifiers):
     # Open the destiny file.
     catalog_file = open(catalog_file_name, "w")
         
-    # Iterate over the indexes to write them to the file.
+    # Iterate over the range of indexes to write them to the file.
     for i in range(len(indexes)):
         # The indexes corresponds to items in the XY data list.
         ind = indexes[i]
         
-        catalog_file.write(str(xy_data[ind][XY_DATA_X_COL]) + " " + \
-                           str(xy_data[ind][XY_DATA_Y_COL]) + " " + \
-                           identifiers[i] + "\n")
+        catalog_file.write("%d %d %d" % (xy_data[ind][XY_DATA_X_COL],
+                           xy_data[ind][XY_DATA_Y_COL], identifiers[i]))
     
     catalog_file.close()
     
@@ -409,7 +406,7 @@ def write_coord_catalogues(image_file_name, catalog_full_file_name, star):
         logging.debug("X,Y coordinates file exists")
         logging.debug("xyls file name: %s" % (xyls_file_name))
         logging.debug("rdls file name: %s" % (rdls_file_name))      
-        logging.debug("Catalog file name: $s" % (catalog_full_file_name))
+        logging.debug("Catalog file name: %s" % (catalog_full_file_name))
         
         logging.debug("Star name: %s" % star.name)
 
@@ -417,28 +414,33 @@ def write_coord_catalogues(image_file_name, catalog_full_file_name, star):
         xy_data = get_fit_table_data(xyls_file_name)
         rd_data = get_fit_table_data(rdls_file_name)
         
-        # Get the indexes for x,y and ra,dec data related to the
-        # stars received.
-        indexes, identifiers = get_indexes_for_star_cood(rd_data, star)  
-            
-        # Check if any star has been found in the image.
-        if len(indexes) > 0:              
-            # Check if the coordinates complies with the 
-            # coordinates validation criteria.
-            if check_celestial_coordinates(image_file_name, star, indexes, \
-                                           identifiers, rd_data, xy_data):
-    
-                # Write catalog file with the x,y coordinate to do the
-                # photometry.
-                write_catalog_file(catalog_full_file_name, indexes, xy_data, \
-                                   identifiers)        
+        # Only generate catalog file if the star is no standard.
+        if not star.is_std:        
+            # Get the indexes for x,y and ra,dec data related to the
+            # stars received.
+            indexes, identifiers = get_indexes_for_star_coor(rd_data, star)  
                 
-                success = True
+            # Check if any star has been found in the image.
+            if len(indexes) > 0:              
+                # Check if the coordinates complies with the 
+                # coordinates validation criteria.
+                if check_celestial_coordinates(image_file_name, star, indexes, \
+                                               identifiers, rd_data, xy_data):
+        
+                    # Write catalog file with the x,y coordinate to do the
+                    # photometry.
+                    write_catalog_file(catalog_full_file_name, indexes, \
+                                       xy_data, identifiers)        
+                    
+                    success = True
+                else:
+                    logging.debug("Catalog file not saved, coordinates " + \
+                                  "do not pass validation criteria.")
             else:
-                logging.debug("Catalog file not saved, " + \
-                              "coordinates do not pass validation criteria.")
+                logging.debug("Catalog file not saved, no stars found by astrometry")
         else:
-            logging.debug("Catalog file not saved, no stars found by astrometry")
+            logging.debug("Catalog no generated, star is standard: %s" % 
+                          (star.name))
     else:
         logging.debug("X,Y coordinates file '%s' does not exists, so catalog file could not be created." %
                       (xyls_file_name))
@@ -512,11 +514,10 @@ def do_astrometry(progargs, stars):
                                     (ASTROMETRY_OPT_USE_SEXTRACTOR,
                                     progargs.sextractor_cfg_path)                              
     
-                            command = "%s %s %d %s %s --ra %.10g --dec %.10g --radius %.10g %s" % \
+                            command = "%s %s %d %s --ra %.10g --dec %.10g --radius %s %s" % \
                                 (ASTROMETRY_COMMAND, ASTROMETRY_PARAMS,
                                 progargs.number_of_objects_for_astrometry,
-                                use_sextractor, ra_dec_param, 
-                                star.ra, star.dec,
+                                use_sextractor, star.ra, star.dec,
                                 SOLVE_FIELD_RADIUS, file)
                                 
                             logging.debug("Executing: %s" % (command))

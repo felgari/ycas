@@ -31,6 +31,7 @@ import sys
 import logging
 import logutil
 import yargparser
+import starsset
 import orgfits
 import reduction
 import astrometry
@@ -66,7 +67,7 @@ def pipeline(progargs):
     # This step reduces the data images applying the bias and flats.
     if progargs.reduction_requested or progargs.all_steps_requested:
         logging.info("* Step 2 * Reducing images.")
-        reduction.reduce_images()
+        reduction.reduce_images(progargs)
         anything_done = True
     else:
         logging.info("* Step 2 * Skipping reducing images. Not requested.")
@@ -122,9 +123,6 @@ def main(progargs):
 
     """    
     
-    # To check if the arguments received corresponds to any task.
-    anything_done = False    
-    
     try:
         # Process program arguments checking that programs arguments used are
         # coherent.
@@ -137,10 +135,8 @@ def main(progargs):
         pipeline(progargs)
         
     except yargparser.ProgramArgumentsException as pae:
-        print pae   
-        
-    if not anything_done:
-        progargs.print_help()   
+        print pae
+  
 
 # Where all begins ...
 if __name__ == "__main__":
