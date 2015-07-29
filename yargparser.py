@@ -83,7 +83,7 @@ class ProgramArguments(object):
         
         self.__astrometry_num_of_objects = ASTROMETRY_NUM_OBJS
         
-        self.__stars_file_name = STARS_FILE_NAME  
+        self.__stars_file_name = self.STARS_FILE_NAME  
             
         # Initiate arguments of the parser.
         self.__parser = argparse.ArgumentParser()
