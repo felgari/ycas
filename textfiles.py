@@ -23,11 +23,15 @@ import logging
 import csv
 from constants import *
 
-# Functions for text files with objects coordinates: .coo.
+# End of the name of the files that contains coordinates.
+COORD_FILE_END = "_field.coo"
 
+# Column of each data in a coordinate file.
 RA_POS_COO = 0
 DEC_POS_COO = 1
 ID_POS_COO = 2
+
+# Functions for text files with objects coordinates: .coo.
 
 def read_objects_of_interest(objects_file):
     """Read the list of objects of interest from the file indicated.
@@ -112,27 +116,27 @@ def get_coordinates(content):
     
     return ra_dec_deg, dec_dec_deg, id
 
-def read_references_for_object(object_name):
-    """ Read a file with the coordinates of some objects in its field.
+def read_coordinates_file(star_name):
+    """ Read a file with the coordinates of some stars in its field.
     
-    Read a file with the name of the object that contains coordinates
-    of reference objects in its same field to perform differential photometry.
-    The first object object of the file are the coordinate of the proper object.
+    Read a file with the name of the star that contains coordinates
+    of reference stars in its same field to perform differential photometry.
+    The first star of the file are the coordinate of the proper star.
     Return a list of lists, each list contains the coordinates for the field 
-    of an object
+    of an star.
         
     Args:
-    object_name: The name of the object.
+        star_name: The name of the star.
     
     Returns:    
-    The coordinates read from the file indicated.
+        The coordinates read from the file indicated.
     
     """
     
     references = []
     
     # Build the file name.
-    file_name = object_name + "_field." + COORD_FILE_EXT
+    file_name = star_name + COORD_FILE_END
     
     logging.debug("Reading coordinates from: " + file_name)
     
@@ -152,6 +156,7 @@ def read_references_for_object(object_name):
     
         logging.debug("Coordinates read for filename " + \
                       file_name + ": "+ str(references))
+        
     except IOError as ioe:
         logging.error("Error reading coordinates file: '" + file_name + \
                       "' error is: " + str(ioe))
