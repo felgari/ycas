@@ -66,7 +66,7 @@ def show_bias_files_statistics(list_of_files):
         logging.error("Error calculating mean values: " + str(mean_strings))
         logging.error("Error is: " + str(ve))          	
 
-def generate_all_masterbias():
+def generate_all_masterbias(progargs):
     """ Calculation of all the masterbias files.
     
     This function search for bias files from current directory.
@@ -75,6 +75,9 @@ def generate_all_masterbias():
     for bias files is searching these directories.
     Once a directory for bias had been found a masterbias is calculated
     with an average operation using all the bias files.
+    
+    Args:
+        progargs: Program arguments.     
     
     """
 
@@ -85,7 +88,7 @@ def generate_all_masterbias():
     	
         # Check if current directory is for bias fits.
         for dr in dirs:
-            if dr == BIAS_DIRECTORY:
+            if dr == progargs.bias_directory:
     				
                 # Get the full path of the directory.                
                 full_dir = os.path.join(path, dr)
@@ -259,7 +262,7 @@ def generate_masterflat(full_dir, files, masterflat_name):
         
         logging.error("Iraf error is: " + str(exc))
 
-def generate_all_masterflats():
+def generate_all_masterflats(progargs):
     """ Calculation of all the masterflat files.
     
     This function search for flat files from current directory.
@@ -269,6 +272,9 @@ def generate_all_masterflats():
     Once a directory for flat had been found, a bias subtraction is performed
     with each flat image. Finally a masterflat is calculated for each flat 
     directory with an average operation using all the bias files.    
+    
+    Args:
+        progargs: Program arguments.      
         
     """
     
@@ -282,7 +288,7 @@ def generate_all_masterflats():
             split_path = path.split(os.sep)
 
             # Check if current directory is for flats.
-            if split_path[-2] == FLAT_DIRECTORY:
+            if split_path[-2] == progargs.flat_directory:
                 # Get the full path of the directory.                
                 full_dir = path
                 logging.debug("Found a directory for 'flat': " + full_dir)
@@ -364,7 +370,7 @@ def reduce_image(masterbias_name, masterflat_name, source_image, final_image):
         
         logging.error("Iraf error is: " + str(exc))
 
-def reduce_data_images():
+def reduce_data_images(progargs):
     """Reduction all data images.
     
     This function search images from the source directory to reduce then. 
@@ -372,6 +378,9 @@ def reduce_data_images():
     are processed to reduce them.
     The reduced images are saved in the same directory but with a different
     name to keep the original file. 
+    
+    Args:
+        progargs: Program arguments.     
         
     """
     
@@ -385,7 +394,7 @@ def reduce_data_images():
             split_path = path.split(os.sep)
 
             # Check if current directory is for flats.
-            if split_path[-2] == DATA_DIRECTORY:
+            if split_path[-2] == progargs.data_directory:
                 # Get the full path of the directory.                
                 full_dir = path
                 logging.debug("Found a directory for data: " + full_dir)
@@ -443,11 +452,14 @@ def reduce_data_images():
                                      source_image, final_image)
 
                         
-def reduce_images():
+def reduce_images(progargs):
     """Top level function to perform the reduction of data images. 
     
     The tasks are performed sequentially: generate all masterbias, 
     generate all masterflats and finally reduce data images.
+    
+    Args:
+        progargs: Program arguments.     
     
     """
 
@@ -455,10 +467,10 @@ def reduce_images():
     iraf.images(_doprint=0)
 
     # Obtain all the average bias.
-    generate_all_masterbias()
+    generate_all_masterbias(progargs)
 
     # Obtain all the average flat.
-    generate_all_masterflats()
+    generate_all_masterflats(progargs)
 
     # Reduce data images applying bias and flats.
-    reduce_data_images()
+    reduce_data_images(progargs)

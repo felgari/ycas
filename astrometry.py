@@ -506,7 +506,7 @@ def do_astrometry(progargs):
     those x and y position to be used later in photometry.
     
     Args:
-    progargs: Program arguments. 
+        progargs: Program arguments. 
         
     """
     
@@ -532,7 +532,7 @@ def do_astrometry(progargs):
             split_path = path.split(os.sep)
 
             # Check if current directory is for data.
-            if split_path[-2] == DATA_DIRECTORY:             
+            if split_path[-2] == progargs.data_directory:             
                 logging.debug("Found a directory for data: " + path)
 
                 # Get the list of files ignoring hidden files.

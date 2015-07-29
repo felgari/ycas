@@ -105,7 +105,7 @@ def pipeline(progargs):
     # generates a file that associate to each object all its measures.
     if progargs.magnitudes_requested or progargs.all_steps_requested:
         logging.info("* Step 6 * Calculating magnitudes of stars.")
-        magnitude.process_magnitudes(stars)
+        magnitude.process_magnitudes(stars, progargs.data_directory)
         anything_done = True
     else:
         logging.info("* Step 6 * Skipping processing magnitudes of stars. " + \

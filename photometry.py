@@ -198,7 +198,7 @@ def do_photometry(progargs):
             split_path = path.split(os.sep) 
             
             # Check if current directory is for data images.
-            if split_path[-2] == DATA_DIRECTORY:
+            if split_path[-2] == progargs.data_directory:
                 logging.debug("Found a directory for data: " + path)
 
                 # Get the list of catalog files.
@@ -235,12 +235,15 @@ def do_photometry(progargs):
                                       output_mag_file_name + \
                                       " already done.")
                     
-def txdump_photometry_info():
+def txdump_photometry_info(progargs):
     """Extract the results of photometry from files to save them to a text file.
     
     This function search files containing the results of photometry
     and using txdump extracts the coordinates and photometric measure
     to save it to a text file. 
+    
+    Args:    
+       progargs: Program arguments.    
     
     """
     
@@ -252,7 +255,7 @@ def txdump_photometry_info():
             split_path = path.split(os.sep) 
             
             # Check if current directory is for data images.
-            if split_path[-2] == DATA_DIRECTORY:
+            if split_path[-2] == progargs.data_directory:
                 logging.debug("Found a directory for data: " + path)
 
                 # Get the list of magnitude files.
@@ -291,7 +294,8 @@ def calculate_photometry(progargs):
     """ Calculates the photometry for all the data images found.
     
     Args:    
-    progargs: Program arguments.
+       progargs: Program arguments.
+       
     """
 
     # Init iraf package.
@@ -304,7 +308,7 @@ def calculate_photometry(progargs):
     do_photometry(progargs)
     
     # Export photometry info to a text file with only the columns needed.
-    txdump_photometry_info()
+    txdump_photometry_info(progargs)
     
 def get_object_final_name(object_name, objects_final_names):
     """Get the name to use for a the received object name.
@@ -438,7 +442,7 @@ def differential_photometry(progargs):
             split_path = path.split(os.sep)
 
             # Check if current directory is for data.
-            if split_path[-2] == DATA_DIRECTORY:
+            if split_path[-2] == progargs.data_directory:
                 # Get the full path of the directory.                
                 logging.debug("Found a directory for data: " + path)   
                 

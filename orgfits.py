@@ -255,18 +255,19 @@ def remove_dir_if_empty(source_path):
             for d in dirs:
                 remove_dir_if_empty(os.path.join(path,d))
 
-def remove_images_according_to_binning(path):
+def remove_images_according_to_binning(progargs, path):
     """Remove bias and flat whose binning doesn't match that of the data images.
     
     Analyzes the binning of the bias and flat images and remove those whose 
     binning does not match that of the data images.
     
-    Args:    
-    path: Path where the analysis of the images should be done.
+    Args: 
+        progargs: Program arguments.
+        path: Path where the analysis of the images should be done.
         
     """
     
-    data_path = os.path.join(path, DATA_DIRECTORY)
+    data_path = os.path.join(path, progargs.data_directory)
     
     # If current path has data directory, process bias and flats
     if os.path.exists(data_path):
@@ -279,7 +280,7 @@ def remove_images_according_to_binning(path):
         
         # Remove images in bias directory with different binning of that of 
         # images.
-        bias_path = os.path.join(path, BIAS_DIRECTORY)
+        bias_path = os.path.join(path, progargs.bias_directory)
         
         if os.path.exists(bias_path):
             remove_images_with_diff_binning(bias_path, binnings)
@@ -289,7 +290,7 @@ def remove_images_according_to_binning(path):
                 
         # Remove images in flat directory with different binning of that of 
         # images.
-        flat_path = os.path.join(path, FLAT_DIRECTORY)
+        flat_path = os.path.join(path, progargs.flat_directory)
         
         if os.path.exists(flat_path):
             remove_images_with_diff_binning(flat_path, binnings)   
@@ -305,9 +306,7 @@ def organize_files(progargs):
     are analyzed and organized.
     
     Args:    
-    progargs: Program arguments.
-    
-    Returns:    
+        progargs: Program arguments.   
         
     """
     
@@ -334,4 +333,4 @@ def organize_files(progargs):
                     
         # Check the directory to remove bias and flat
         # with a binning differente of that of data images.
-        remove_images_according_to_binning(path)
+        remove_images_according_to_binning(progargs, path)

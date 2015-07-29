@@ -39,8 +39,12 @@ from instmag import InstrumentalMagnitudes
 from extcorrmag import ExtCorrMagnitudes
 from calibmag import get_calibrated_magnitudes
 
-def get_instrumental_magnitudes(stars):
+def get_instrumental_magnitudes(stars, data_directoy_name):
     """Receives a list of object and compiles the magnitudes for each object.
+    
+    Args:
+        stars: Features of the stars.
+        data_directoy_name: Name of the directories that contains data images.     
     
     Returns:        
         A list containing the magnitudes found for each object.
@@ -57,7 +61,7 @@ def get_instrumental_magnitudes(stars):
             split_path = path.split(os.sep)
 
             # Check if current directory is for data.
-            if split_path[-2] == DATA_DIRECTORY:
+            if split_path[-2] == data_directoy_name:
                
                 logging.debug("Found a directory for data images: " + path)
 
@@ -107,19 +111,20 @@ def correct_extinction_in_magnitudes(inst_mag):
     # coefficients calculated.
     ecm.correct_magnitudes()
                                        
-def process_magnitudes(stars):
+def process_magnitudes(stars, data_directoy_name):
     """Collect the instrumental magnitudes of all the objects of interest.
     Correct the magnitudes taking into account the atmospheric extinction.
     Get a calibrated magnitude for the objects of interest according to the
     standard magnitudes of the Landolt catalog.
 
     Args:
-        stars: The list of stars.      
+        stars: The list of stars.     
+        data_directoy_name: Name of the directories that contains data images. 
     
     """
     
     # Get the instrumental magnitudes for the objects indicated.
-    magnitudes = get_instrumental_magnitudes(stars)
+    magnitudes = get_instrumental_magnitudes(stars, data_directoy_name)
     
     old_settings = np.seterr(all='ignore', over='warn')
     
