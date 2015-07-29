@@ -33,11 +33,83 @@ import logutil
 import yargparser
 import orgfits
 import reduction
-import align
 import astrometry
 import photometry
 import magnitude
 from constants import *
+
+def pipeline(progargs):
+    """ Performs sequentially the steps of the pipeline that have been 
+    requested.
+    
+    Args:
+        progargs: The program arguments.
+        
+    """
+    
+    stars = None
+    
+    if progargs.file_of_stars_provided:        
+        # Read the data of the stars of interest.
+        stars = starsset.StarsSet(progargs.stars_file_name)        
+    
+    # This step organizes the images in directories depending on the type of
+    # image: bias, flat or data.
+    if progargs.organization_requested or progargs.all_steps_requested:
+        logging.info("* Step 1 * Organizing image files in directories.")
+        orgfits.organize_files(progargs)
+        anything_done = True
+    else:
+        logging.info("* Step 1 * Skipping organizing image files in " + \
+                     "directories. Not requested.")
+    
+    # This step reduces the data images applying the bias and flats.
+    if progargs.reduction_requested or progargs.all_steps_requested:
+        logging.info("* Step 2 * Reducing images.")
+        reduction.reduce_images()
+        anything_done = True
+    else:
+        logging.info("* Step 2 * Skipping reducing images. Not requested.")
+        
+    # This step find objects in the images. The result is a list of x,y and
+    # AR,DEC coordinates.
+    if progargs.astrometry_requested or progargs.all_steps_requested:
+        logging.info("* Step 3 * Performing astrometry of the images.")
+        astrometry.do_astrometry(progargs)
+        anything_done = True
+    else:
+        logging.info("* Step 3 * Skipping performing astrometry. " + \
+                     "Not requested.")
+
+    # This step calculates the photometry of the objects detected doing the
+    # astrometry.
+    if progargs.photometry_requested or progargs.all_steps_requested:
+        logging.info("* Step 4 * Performing photometry of the stars.")
+        photometry.calculate_photometry(progargs)
+        anything_done = True
+    else:
+        logging.info("* Step 4 * Skipping performing photometry. " + \
+                     "Not requested.")
+        
+    # This step calculates the differental photometry of the objects detected
+    # doing the astrometry.
+    if progargs.diff_photometry_requested or progargs.all_steps_requested:
+        logging.info("* Step 5 * Performing differential photometry.")
+        photometry.differential_photometry(progargs)
+        anything_done = True
+    else:
+        logging.info("* Step 5 * Skipping differential photometry of stars. " + \
+                     "Not requested.")
+        
+    # This step process the magnitudes calculated for each object and
+    # generates a file that associate to each object all its measures.
+    if progargs.magnitudes_requested or progargs.all_steps_requested:
+        logging.info("* Step 6 * Calculating magnitudes of stars.")
+        magnitude.process_magnitudes(stars)
+        anything_done = True
+    else:
+        logging.info("* Step 6 * Skipping processing magnitudes of stars. " + \
+                     "Not requested.")
 
 def main(progargs):
     """ Main function.
@@ -53,81 +125,19 @@ def main(progargs):
     # To check if the arguments received corresponds to any task.
     anything_done = False    
     
-    # Process program arguments.
-    progargs.parse()           
+    try:
+        # Process program arguments checking that programs arguments used are
+        # coherent.
+        progargs.process_program_arguments()           
         
-    # Initializes logging.
-    logutil.init_log(progargs)
-    
-    # Check the request of the arguments related to the task that could be
-    # performed in the order that these tasks must be done by the pipeline.
+        # Initializes logging.
+        logutil.init_log(progargs)
         
-    # This step organizes the images in directories depending on the type of 
-    # image: bias, flat or data.
-    if progargs.organization_requested:
-        logging.info("* Step 1 * Organizing image files in directories.")
-        orgfits.organize_files(progargs)
-        anything_done = True
-    else:
-        logging.info("* Step 1 * Skipping organizing image files in " + \
-                     "directories. Not requested.")
-    
-    # This step reduces the data images applying the bias and flats.
-    if progargs.reduction_requested:
-        logging.info("* Step 2 * Reducing images.") 
-        reduction.reduce_images()
-        anything_done = True        
-    else:
-        logging.info("* Step 2 * Skipping reducing images. Not requested.")
-    
-    # This step find objects in the images. The result is a list of x,y and 
-    # AR,DEC coordinates.
-    if progargs.astrometry_requested:
-        logging.info("* Step 3 * Performing astrometry.")
-        astrometry.do_astrometry(progargs)
-        anything_done = True        
-    else:
-        logging.info("* Step 3 * Skipping performing astrometry. " + \
-                     "Not requested.")
-    
-    # This step aligns the data images of the same object. This step is 
-    # optional as the rest of steps could be performed with images not aligned.
-    if progargs.align_requested:
-        logging.info("* Step 4 * Performing alignment.")    
-        align.align_images()
-        anything_done = True        
-    else:
-        logging.info("* Step 4 * Skipping performing alignment. Not requested.")
+        # Perform the steps requested.
+        pipeline(progargs)
         
-    # This step calculates the photometry of the objects detected doing the 
-    # astrometry.
-    if progargs.photometry_requested:
-        logging.info("* Step 5 * Performing photometry.")     
-        photometry.calculate_photometry(progargs)
-        anything_done = True        
-    else:
-        logging.info("* Step 5 * Skipping performing photometry. " + \
-                     "Not requested.")
-        
-    # This step calculates the differental photometry of the objects detected 
-    # doing the astrometry.        
-    if progargs.diff_photometry_requested:
-        logging.info("* Step 6 * Performing differential photometry.")     
-        photometry.differential_photometry(progargs)
-        anything_done = True        
-    else:
-        logging.info("* Step 6 * Skipping differential magnitudes of " + \
-                     "each object. Not requested.")          
-                
-    # This step process the magnitudes calculated for each object and 
-    # generates a file that associate to each object all its measures.
-    if progargs.magnitudes_requested:
-        logging.info("* Step 7 * Processing magnitudes of each object.")     
-        magnitude.process_magnitudes(progargs)
-        anything_done = True        
-    else:
-        logging.info("* Step 7 * Skipping processing magnitudes of each " + \
-                     "object. Not requested.")     
+    except yargparser.ProgramArgumentsException as pae:
+        print pae   
         
     if not anything_done:
         progargs.print_help()   

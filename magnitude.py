@@ -39,18 +39,15 @@ from instmag import InstrumentalMagnitudes
 from extcorrmag import ExtCorrMagnitudes
 from calibmag import get_calibrated_magnitudes
 
-def get_instrumental_magnitudes(stars_set):
+def get_instrumental_magnitudes(stars):
     """Receives a list of object and compiles the magnitudes for each object.
-    
-    Args:
-        stars: The list of stars.
     
     Returns:        
         A list containing the magnitudes found for each object.
     
     """
     
-    ins_mag = InstrumentalMagnitudes(stars_set)
+    ins_mag = InstrumentalMagnitudes(stars)
         
     # Walk directories searching for files containing magnitudes.
     for path,dirs,files in os.walk('.'):
@@ -110,19 +107,16 @@ def correct_extinction_in_magnitudes(inst_mag):
     # coefficients calculated.
     ecm.correct_magnitudes()
                                        
-def process_magnitudes(progargs):
+def process_magnitudes(stars):
     """Collect the instrumental magnitudes of all the objects of interest.
     Correct the magnitudes taking into account the atmospheric extinction.
     Get a calibrated magnitude for the objects of interest according to the
     standard magnitudes of the Landolt catalog.
 
     Args:
-        progargs: program arguments.        
+        stars: The list of stars.      
     
     """
-    
-    # Read the list of objects whose magnitudes are needed.
-    stars = starsset.StarsSet("stars_BQCam.csv")
     
     # Get the instrumental magnitudes for the objects indicated.
     magnitudes = get_instrumental_magnitudes(stars)

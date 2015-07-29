@@ -88,7 +88,6 @@ FIT_FIRST_TABLE_INDEX = 1
 SEXTACTOR_COMMENT = "#"
 SEXTACTOR_FWHM_COL = 2
 SEXTACTOR_FWHM_MIN_VALUE = 1.2
-SEXTRACTOR_CFG_DEFAULT_PATH = os.getcwd()
 SEXTRACTOR_CFG_FILENAME = "sextractor.sex"
 
 # Photometry parameters
@@ -153,9 +152,6 @@ RD_DATA_DEC_COL = 1
 # Columns in XY coordinates table.
 XY_DATA_X_COL = 0
 XY_DATA_Y_COL = 1
-
-# Name of the file that contains information about the objects of interest.
-INT_OBJECTS_FILE_NAME = "objects.tsv"
 
 # Columns of the file that contains the objects of interest.
 OBJ_NAME_COL = 0
