@@ -45,8 +45,11 @@ def create_directory(path, dirname):
     path received.
     
     Args: 
-    path: Path where the directory is created.
-    dirname: Name of the directory to create.
+        path: Path where the directory is created.
+        dirname: Name of the directory to create.
+        
+    Raises:
+        OSError if the directory could not be created.
     
     """
 
@@ -54,9 +57,11 @@ def create_directory(path, dirname):
 
     # Check if the directory exists.
     if not os.path.exists(complete_dirname):
+        
         try: 
-            logging.debug("Creating directory: " + complete_dirname)
+            logging.debug("Creating directory: %s" % (complete_dirname))
             os.makedirs(complete_dirname)
+            
         except OSError:
             if not os.path.isdir(complete_dirname):
                 raise  
@@ -71,9 +76,9 @@ def analyze_and_organize_dir(filename, path, progargs):
     of not possible the name of the file is used.
     
     Args:     
-    filename: Name of the file to analyze.
-    path: Path where is the file.
-    progargs: Program arguments.
+        filename: Name of the file to analyze.
+        path: Path where is the file.
+        progargs: Program arguments.
     	
     """
 
@@ -93,7 +98,7 @@ def analyze_and_organize_dir(filename, path, progargs):
 
         file_destination = os.path.join(path, progargs.bias_directory, filename)
         
-        logging.debug(full_file_name + " identified as bias.")
+        logging.debug("%s identified as bias." % (full_file_name))
 
     # If the file is a flat.
     elif file_is_flat(header_fields, full_file_name):
@@ -108,7 +113,7 @@ def analyze_and_organize_dir(filename, path, progargs):
         file_destination = os.path.join(path, progargs.flat_directory, \
                                         filtername, filename)
         
-        logging.debug(full_file_name + " identified as flat.")
+        logging.debug("%s identified as flat." % (full_file_name))
 
     # Otherwise the file is considered a data image.
     else:
@@ -124,10 +129,9 @@ def analyze_and_organize_dir(filename, path, progargs):
         file_destination = os.path.join(path, progargs.data_directory, \
                                         filtername, remove_prefixes(filename))
         
-        logging.debug(full_file_name + " identified as data image.")
+        logging.debug("%s identified as data image." % (full_file_name))
 
-    logging.debug("Moving '" + full_file_name + "' to '" + \
-                  file_destination + "'")
+    logging.debug("Moving '%s' to '%s'" %(full_file_name, file_destination))
 
     shutil.move(os.path.abspath(full_file_name),
                 os.path.abspath(file_destination))
@@ -141,8 +145,11 @@ def ignore_current_directory(dir, progargs):
     bias/flat/data and redundant directory should be created for it.
     
     Args:
-    dir: Directory to process.
-    progargs: Program arguments.  
+        dir: Directory to process.
+        progargs: Program arguments.  
+        
+    Returns:
+        True if directory must be ignored, False otherwise.
     
     """
     ignore  = False
@@ -163,10 +170,10 @@ def get_binnings_of_images(data_path):
     """Returns the binnings used for the images in the path indicated.
     
     Args:    
-    data_path: Directory with full path with images to analyze.
+        data_path: Directory with full path with images to analyze.
     
     Returns:
-    The list of binning used for the data images in the directory indicated.
+        The list of binning used for the data images in the directory indicated.
     
     """
     
@@ -191,8 +198,8 @@ def get_binnings_of_images(data_path):
                     binnings.extend([bin])
                     
     if len(binnings) > 1:
-        logging.warning("Images with more that one binning " + \
-                        str(binnings) + " in: " + data_path)
+        logging.warning("Images with different %s binning in '%s'" %
+                        (binnings, data_path))
             
     return binnings
 
@@ -200,8 +207,8 @@ def remove_images_with_diff_binning(data_path, binnings):
     """Remove images with a binning not included in the binnings received.
     
     Args:    
-    data_path: Path that contains the images to analyze.
-    binnings: List of binnings to consider.
+        data_path: Path that contains the images to analyze.
+        binnings: List of binnings to consider.
     
     """
     
@@ -222,31 +229,31 @@ def remove_images_with_diff_binning(data_path, binnings):
                     # If this binning has not been in the list of binnings,
                     # remove the image.
                     if not bin in binnings:
-                        logging.debug("Removing file '" + path_file + \
-                                      "' with binning " + str(bin) + \
-                                      " not needed " + str(binnings))
+                        logging.debug("Removing file '%s' with binning %s not used" % 
+                                      (path_file, bin))
                                                 
                         os.remove(path_file) 
                 else:
-                    logging.warning("Binning not read for: " + path_file)  
+                    logging.warning("Binning not read for: %s" % (path_file))  
     
-
 def remove_dir_if_empty(source_path):
     """Check if the directory is empty and in that case is removed.
     
     Args:    
-    source_path: Path to analyze.
+        source_path: Path to analyze.
         
     """
     
     # If current directory is empty, remove it.
     if os.listdir(source_path) == []:
-        logging.debug("Removing empty directory: " + source_path)
+        logging.debug("Removing empty directory '%s'" % (source_path))
+        
         try:
             os.rmdir(source_path)
+            
         except OSError as oe:
-            logging.error("Removing directory " + source_path)
-            logging.error("Error is: " + str(oe))
+            logging.error("Removing directory '%s'" % (source_path))
+            logging.error("Error is: %s" % (oe))
     else:        
         # Walk from current directory.
         for path,dirs,files in os.walk(source_path):
@@ -272,8 +279,8 @@ def remove_images_according_to_binning(progargs, path):
     # If current path has data directory, process bias and flats
     if os.path.exists(data_path):
     
-        logging.debug("Removing bias and flats with a binning not needed " + \
-                      "in: " + path)
+        logging.debug("Removing bias and flats with a binning not needed in: %s" % 
+                      (path))
         
         # Get the binning of images in data directory.
         binnings = get_binnings_of_images(data_path)
@@ -313,7 +320,7 @@ def organize_files(progargs):
     # Walk from current directory.
     for path,dirs,files in os.walk('.'):
         
-        # Check if current directory could be created previously
+        # Check if current directory was created previously
         # to contain bias or flat, in that case the directory is ignored.        
         if ignore_current_directory(path, progargs):
             logging.debug("Ignoring directory for organization: " + path)
@@ -332,5 +339,5 @@ def organize_files(progargs):
                     logging.debug("Ignoring file: " + fn)
                     
         # Check the directory to remove bias and flat
-        # with a binning differente of that of data images.
+        # with a different binning of data images.
         remove_images_according_to_binning(progargs, path)
