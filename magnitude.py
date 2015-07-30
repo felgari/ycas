@@ -33,7 +33,6 @@ import math
 import numpy as np
 from constants import *
 from textfiles import *
-from fitfiles import get_rdls_data
 import starsset
 from instmag import InstrumentalMagnitudes
 from extcorrmag import ExtCorrMagnitudes
