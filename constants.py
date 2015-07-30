@@ -38,11 +38,6 @@ DATA_FINAL_PATTERN = "_final.fit"
 DATA_ALIGN_PATTERN = "_align.fit"
 MAG_CSV_PATTERN = "_mag.csv"
 
-# Directory paths.
-PATH_FROM_FLAT_TO_BIAS = os.path.join("..", "..", BIAS_DIRECTORY)
-PATH_FROM_DATA_TO_BIAS = os.path.join("..", "..", BIAS_DIRECTORY)
-PATH_FROM_DATA_TO_FLAT = os.path.join("..", "..", FLAT_DIRECTORY)
-
 # Special characters in file names.
 BIAS_STRING = 'bias'
 FLAT_STRING = 'flat'
@@ -52,8 +47,6 @@ FILTERS = [ 'V', 'B', 'R', 'CN', 'Cont4430', 'Cont6840' ]
 
 MASTERBIAS_FILENAME = "bias_avg.fit"
 MASTERFLAT_FILENAME = "flat_avg.fit"
-WORK_FILE_SUFFIX = "_work"
-NORM_FILE_SUFFIX = "_norm"
 DATA_FINAL_SUFFIX = "_final"
 INST_MAG_SUFFIX = "_inst_mag"
 ALL_INST_MAG_SUFFIX = "_all_inst_mag"
@@ -77,11 +70,6 @@ ASTROMETRY_PARAMS = "--overwrite -d "
 SOLVE_FIELD_RADIUS = 1.0
 # Identifier for object of interest in the coordinates list of a field.
 OBJ_OF_INTEREST_ID = 0
-# Error margin when assigning astrometry coordinates.
-ASTROMETRY_COORD_RANGE = 0.08
-
-# First index for a FIT table.
-FIT_FIRST_TABLE_INDEX = 1
 
 # sextractor parameters.
 SEXTACTOR_COMMENT = "#"
@@ -143,10 +131,6 @@ MEASURE_FIRST_COL_NUMBER = 3
 RDLS_RA_IDX_NUMBER = 0
 RDLS_RA_COL_NUMBER = 1
 RDLS_DEC_COL_NUMBER = 2
-
-# Columns in celestial coordinates table.
-RD_DATA_RA_COL = 0
-RD_DATA_DEC_COL = 1
 
 # Columns in XY coordinates table.
 XY_DATA_X_COL = 0

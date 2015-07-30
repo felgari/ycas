@@ -23,13 +23,15 @@ import logging
 import pyfits
 from constants import *
 
+# First index for a FIT table.
+FIT_FIRST_TABLE_INDEX = 1
+
 DATE_FIELD_NAME = "DATE-OBS"
 FILTER_FIELD_NAME = "FILTER"
 IMAGE_TYPE_FIELD_NAME = "IMAGETYP"
 XBINNING_FIELD_NAME = "XBINNING"
 YBINNING_FIELD_NAME = "YBINNING"
-CRPIX1 = "CRPIX1"
-CRPIX2 = "CRPIX2"
+
 
 BIAS_TYPE = "BIAS"
 FLAT_TYPE = "FLAT"
@@ -37,7 +39,6 @@ FLAT_TYPE = "FLAT"
 ORG_FIT_HEADER_FIELDS = [DATE_FIELD_NAME, IMAGE_TYPE_FIELD_NAME, \
                          FILTER_FIELD_NAME]
 
-XY_CENTER_FIT_HEADER_FIELDS = [CRPIX1, CRPIX2]
 
 def search_filter_from_set_in_file_name(filename):
     """ Get from a file name, a filter name belonging to the set filters used. 
@@ -376,28 +377,24 @@ def get_file_binning(fit_file_name):
     
     return bin
 
-def get_rdls_data(rdls_file):
-    """Returns the AR, DEC values stores in a RDLS file.
-    
-    This file is a FIT file that contains a table and this function returns
-    the coordinates values in a list.
+def get_fit_table_data(fit_table_file_name):
+    """Get the data of a the first table contained in the fit file indicated.
     
     Args:
-    rdls_file: RDLS file where to look for the coordinates. 
+        fit_table_file_name: File name of the fit file that contains the table.
     
     Returns:
-    A list containing in each item an index, and the AR, DEC for all the 
-    coordinates read form the RDLA file.    
-    
+        The table contained in the fit file.
+        
     """
     
     # Open the FITS file received.
-    fits_file = pyfits.open(rdls_file) 
+    fit_table_file = pyfits.open(fit_table_file_name) 
 
     # Assume the first extension is a table.
-    tbdata = fits_file[1].data       
+    table_data = fit_table_file[FIT_FIRST_TABLE_INDEX].data    
     
-    fits_file.close
+    fit_table_file.close()
     
     # Convert data from fits table to a list.
     ldata = list()
@@ -405,9 +402,9 @@ def get_rdls_data(rdls_file):
     # To add an index to the rows.
     n = 1
     
-    # Iterate over the table read from the RDLS file.
-    for row in tbdata:
-        ldata.append([n, row[0], row[1]])
+    # Read the table data and save it in a list.
+    for row in table_data:
+        ldata.append([row[0], row[1]])
         n += 1
     
-    return ldata  
+    return ldata   

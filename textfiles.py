@@ -21,6 +21,8 @@
 
 import logging
 import csv
+from fitfiles import get_fit_table_data
+from astrocoor import *
 from constants import *
 
 # End of the name of the files that contains coordinates.
@@ -198,3 +200,106 @@ def read_catalog_file(file_name):
     logging.debug("Coordinates read: " + str(identifiers))
 
     return coordinates
+
+def write_catalog_file(catalog_file_name, indexes, xy_data, identifiers):
+    """Write text files with the x,y and ra,dec coordinates.
+    
+    The coordinates written are related to the x,y data and indexes set 
+    received.
+    
+    Args:
+        catalog_file_name: File name o
+        indexes: List of indexes corresponding to the coordinates to write.
+        xy_data: List of the X, Y coordinates that are referenced by X, Y
+        coordinates.    
+        identifiers: Identifiers of the stars found.    
+    
+    """
+    
+    logging.debug("Writing catalog file: %s" % (catalog_file_name))
+    
+    # Open the destiny file.
+    catalog_file = open(catalog_file_name, "w")
+        
+    # Iterate over the range of indexes to write them to the file.
+    for i in range(len(indexes)):
+        # The indexes corresponds to items in the XY data list.
+        ind = indexes[i]
+        
+        catalog_file.write("%d %d %d" % (xy_data[ind][XY_DATA_X_COL],
+                           xy_data[ind][XY_DATA_Y_COL], identifiers[i]))
+    
+    catalog_file.close()
+
+def write_coord_catalogues(image_file_name, catalog_full_file_name, star):
+    """Writes the x,y coordinates of a FITS file to a text file.    
+    
+    This function opens the FITS file that contains the table of x,y 
+    coordinates and write these coordinates to a text file that only
+    contains this x,y values. This text file will be used later to calculate
+    the photometry of the stars on these coordinates.
+    
+    Args:
+        image_file_name: Name of the file of the image.
+        catalog_full_file_name: Name of the catalog to write
+        star: The star.
+                           
+    Returns:    
+        True if the file is written successfully.
+    
+    """
+    
+    success = False
+    
+    # Get the names for xyls and rdls files from the image file name.
+    xyls_file_name = image_file_name.replace("." + FIT_FILE_EXT, \
+                                             INDEX_FILE_PATTERN)
+    
+    rdls_file_name = image_file_name.replace("." + FIT_FILE_EXT, \
+                                             "." + RDLS_FILE_EXT)
+
+    # Check if the file containing x,y coordinates exists.
+    if os.path.exists(xyls_file_name):
+
+        logging.debug("X,Y coordinates file exists")
+        logging.debug("xyls file name: %s" % (xyls_file_name))
+        logging.debug("rdls file name: %s" % (rdls_file_name))      
+        logging.debug("Catalog file name: %s" % (catalog_full_file_name))
+        
+        logging.debug("Star name: %s" % star.name)
+
+        # Read x,y and ra,dec data from fit table.
+        xy_data = get_fit_table_data(xyls_file_name)
+        rd_data = get_fit_table_data(rdls_file_name)
+        
+        # Only generate catalog file if the star is no standard.
+        if not star.is_std:        
+            # Get the indexes for x,y and ra,dec data related to the
+            # stars received.
+            indexes, identifiers = get_indexes_for_star_coor(rd_data, star)  
+                
+            # Check if any star has been found in the image.
+            if len(indexes) > 0:              
+                # Check if the coordinates complies with the 
+                # coordinates validation criteria.
+                if check_celestial_coordinates(image_file_name, star, indexes, \
+                                               identifiers, rd_data, xy_data):
+        
+                    # Write catalog file with the x,y coordinate to do the
+                    # photometry.
+                    write_catalog_file(catalog_full_file_name, indexes, \
+                                       xy_data, identifiers)        
+                    
+                    success = True
+                else:
+                    logging.warning("Catalog file not saved, coordinates do not pass validation criteria.")
+            else:
+                logging.warning("Catalog file not saved, no stars found by astrometry")
+        else:
+            logging.debug("Catalog no generated, star is standard: %s" % 
+                          (star.name))
+    else:
+        logging.warning("X,Y coordinates file '%s' does not exists, so catalog file could not be created." %
+                      (xyls_file_name))
+        
+    return success 
