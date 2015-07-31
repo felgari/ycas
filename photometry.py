@@ -82,8 +82,8 @@ def set_image_specific_phot_pars(fwhm, datamin):
     """Sets the pyraf parameters in photometry that changes for each image.
     
     Args: 
-    fwhm: FWHM value.
-    datamin - datamin value to set.
+        fwhm: FWHM value.
+        datamin: datamin value to set.
     
     """       
     
@@ -109,7 +109,7 @@ def calculate_datamin(image_file_name):
     """ Calculate a datamin value for the image received using imstat. 
     
     Args: 
-    image_file_name: Name of the file with the image. 
+        image_file_name: Name of the file with the image. 
     
     """
     
@@ -120,34 +120,39 @@ def calculate_datamin(image_file_name):
         imstat_output = iraf.imstat(image_file_name, fields='mean,stddev', \
                                     Stdout=1)
         imstat_values = imstat_output[IMSTAT_FIRST_VALUE]
-        values = imstat_values.split() # Set a calculated value for datamin.
+        values = imstat_values.split()
+        
+        # Set a calculated value for datamin.
         datamin = float(values[0]) - DATAMIN_MULT * float(values[1])
+        
     except iraf.IrafError as exc:
-        logging.error("Error executing imstat: Stats for data image: " + \
-                      image_file_name)
-        logging.error("Iraf error is: " + str(exc))
+        logging.error("Error executing imstat: Stats for data image: %s" %
+                      (image_file_name))
+        logging.error("Iraf error is: %s" % (exc))
+        
     except ValueError as ve:
-        logging.error("Value Error calculating datamin for image: " + \
-                      image_file_name)
-        logging.error("mean is: " + values[0] + " stddev is: " + values[1])
-        logging.error("Value Error is: " + str(ve))
+        logging.error("Value Error calculating datamin for image: %s" %
+                      (image_file_name))
+        logging.error("mean is: %s stddev is: %s" % (values[0], values[1]))
+        logging.error("Value Error is: %s" % (ve))
         
     if datamin < DATAMIN_VALUE:
         datamin = DATAMIN_VALUE
         
     return datamin
 
-def do_phot(image_file_name, catalog_file_name, output_mag_file_name, progargs):
+def do_phot(image_file_name, catalog_file_name, output_mag_file_name, 
+            sextractor_cfg_path):
     """Calculates the photometry of the images.
     
     Receives the image to use, a catalog with the position of the objects
     contained in the image and the name of the output file.
     
     Args:     
-    image_file_name: Name of the file with the image. 
-    catalog_file_name: File with the X, Y coordinates to do phot.
-    output_mag_file_name: Name of the output file with the magnitudes.
-    progargs: Program arguments.
+        image_file_name: Name of the file with the image. 
+        catalog_file_name: File with the X, Y coordinates to do phot.
+        output_mag_file_name: Name of the output file with the magnitudes.
+        sextractor_cfg_path: Path to the sextractor configuration files.
     
     """
     
@@ -155,14 +160,14 @@ def do_phot(image_file_name, catalog_file_name, output_mag_file_name, progargs):
     if os.path.exists(output_mag_file_name):
         os.remove(output_mag_file_name)
 
-    logging.debug("Calculating magnitudes for: " + image_file_name + \
-                  " in " + output_mag_file_name)
+    logging.debug("Calculating magnitudes for: %s in %s" %
+                  (image_file_name, output_mag_file_name))
     
     # Calculate datamin for this image.   
     datamin = calculate_datamin(image_file_name)                         
            
     # Calculate FWHM for this image.
-    fwhm = astromatics.get_fwhm(progargs, image_file_name)
+    fwhm = astromatics.get_fwhm(sextractor_cfg_path, image_file_name)
            
     # Set the parameters for the photometry that depends on the image.
     set_image_specific_phot_pars(fwhm, datamin)                
@@ -172,8 +177,8 @@ def do_phot(image_file_name, catalog_file_name, output_mag_file_name, progargs):
                     coords = catalog_file_name, 
                     output = output_mag_file_name)
     except iraf.IrafError as exc:
-        logging.error("Error executing phot on : " + image_file_name) 
-        logging.error( "Iraf error is: " + str(exc))
+        logging.error("Error executing phot on : %s" % (image_file_name)) 
+        logging.error( "Iraf error is: %s" % (exc))
 
 def do_photometry(progargs):   
     """walk the directories searching for image to calculate its photometry.
@@ -186,7 +191,7 @@ def do_photometry(progargs):
     of the objects in the catalog file.
     
     Args:     
-    progargs: Program arguments.    
+        progargs: Program arguments.    
     
     """
     
@@ -199,23 +204,22 @@ def do_photometry(progargs):
             
             # Check if current directory is for data images.
             if split_path[-2] == progargs.data_directory:
-                logging.debug("Found a directory for data: " + path)
+                logging.debug("Found a directory for data: %s" % (path))
 
                 # Get the list of catalog files.
-                catalog_files = glob.glob(os.path.join(path, "*." + \
-                                                       CATALOG_FILE_EXT))
+                catalog_files = glob.glob(os.path.join(path, "*.%s" %
+                                                       (CATALOG_FILE_EXT)))
                 
-                logging.debug("Found " + str(len(catalog_files)) + \
-                              " catalog files")
+                logging.debug("Found %d catalog files" % (len(catalog_files)))
                 
                 # Each catalog corresponds to an image.
                 for cat_file in catalog_files:
                     
-                    image_file_name = cat_file.replace("." + CATALOG_FILE_EXT, \
+                    image_file_name = cat_file.replace("." + CATALOG_FILE_EXT, 
                                                        DATA_FINAL_PATTERN)
                         
-                    logging.debug("Found image " + image_file_name + \
-                                  " for catalog " + cat_file)
+                    logging.debug("Found image %s for catalog %s" %
+                                  (image_file_name, cat_file))
                         
                     # Calculate the magnitudes for the image related to the 
                     # catalog.        
@@ -228,14 +232,14 @@ def do_photometry(progargs):
                  
                     # If magnitude file exists, skip.
                     if not os.path.exists(output_mag_file_name):
-                        do_phot(image_file_name, cat_file, \
-                                output_mag_file_name, progargs)  
+                        do_phot(image_file_name, cat_file,
+                                output_mag_file_name,
+                                progargs.sextractor_cfg_path)  
                     else:
-                        logging.debug("Skipping phot for: " + \
-                                      output_mag_file_name + \
-                                      " already done.")
+                        logging.debug("Skipping phot for: %s, already done." %
+                                      (output_mag_file_name))
                     
-def txdump_photometry_info(progargs):
+def txdump_photometry_info(data_dir_name):
     """Extract the results of photometry from files to save them to a text file.
     
     This function search files containing the results of photometry
@@ -243,7 +247,7 @@ def txdump_photometry_info(progargs):
     to save it to a text file. 
     
     Args:    
-       progargs: Program arguments.    
+       data_dir_name: Name for the directories with data.    
     
     """
     
@@ -255,24 +259,25 @@ def txdump_photometry_info(progargs):
             split_path = path.split(os.sep) 
             
             # Check if current directory is for data images.
-            if split_path[-2] == progargs.data_directory:
-                logging.debug("Found a directory for data: " + path)
+            if split_path[-2] == data_dir_name:
+                logging.debug("Found a directory for data: $s" % (path))
 
                 # Get the list of magnitude files.
                 mag_files = glob.glob(os.path.join(path, "*." + \
                                                    MAGNITUDE_FILE_EXT))
                 
-                logging.debug("Found " + str(len(mag_files)) + \
-                              " magnitude files")    
+                logging.debug("Found %d magnitude files" % (len(mag_files)))    
                 
                 # Reduce each data file one by one.
                 for mfile in mag_files:                  
     
-                    # Get the name of the file where the magnitude data will be saved.
+                    # Get the name of the file where the magnitude data will 
+                    # be saved.
                     mag_dest_file_name = \
-                        mfile.replace("." + MAGNITUDE_FILE_EXT, \
-                                      FILE_NAME_PARTS_DELIM + \
-                                      MAGNITUDE_FILE_EXT + "." + CSV_FILE_EXT)
+                        mfile.replace("." + MAGNITUDE_FILE_EXT, 
+                                      "%s%s.%s" %
+                                      (FILE_NAME_PARTS_DELIM,
+                                      MAGNITUDE_FILE_EXT, CSV_FILE_EXT))
                     
                     # Remove the destiny file if exists.
                     if os.path.exists(mag_dest_file_name):
@@ -283,10 +288,11 @@ def txdump_photometry_info(progargs):
                     try:
                         iraf.txdump(mfile, fields=TXDUMP_FIELDS, expr='yes', \
                                     Stdout=mag_dest_file)
+                        
                     except iraf.IrafError as exc:
-                        logging.error("Error executing txdump to get: " + \
-                                      mag_dest_file_name)
-                        logging.error("Iraf error is: " + str(exc))
+                        logging.error("Error executing txdump to get: %s" %
+                                      (mag_dest_file_name))
+                        logging.error("Iraf error is: %s" % (exc))
                         
                     mag_dest_file.close()
                            
@@ -308,7 +314,7 @@ def calculate_photometry(progargs):
     do_photometry(progargs)
     
     # Export photometry info to a text file with only the columns needed.
-    txdump_photometry_info(progargs)
+    txdump_photometry_info(progargs.data_directory)
     
 def get_object_final_name(object_name, objects_final_names):
     """Get the name to use for a the received object name.
@@ -318,11 +324,11 @@ def get_object_final_name(object_name, objects_final_names):
     name indicated in the objects file.
     
     Args:
-    object_name: Name of the object.
-    objects_final_names: Names to use for the objects.
+        object_name: Name of the object.
+        objects_final_names: Names to use for the objects.
     
     Returns:    
-    Final name for the object. 
+        Final name for the object. 
     
     """
     
@@ -334,16 +340,16 @@ def get_object_final_name(object_name, objects_final_names):
     
     return object_final_name    
     
-def write_manitudes_diff_file(diff_mags, file_name):
+def write_magnitudes_diff_file(diff_mags, file_name):
     """Write the magnitudes received in a text file with the name indicated.
     
     Args:
-    diff_mags: List of differential magnitudes.
-    file_name: Name of the file to write.
+        diff_mags: List of differential magnitudes.
+        file_name: Name of the file to write.
 
     """
     
-    logging.info("Saving differences of magnitudes to file: " + file_name)    
+    logging.info("Saving differences of magnitudes to file: %s" % (file_name))    
 
     with open(file_name, 'w') as fw:
         
@@ -353,7 +359,7 @@ def write_manitudes_diff_file(diff_mags, file_name):
             # Write each magnitude in a row.
             writer.writerow(row)     
       
-def save_manitudes_diff(all_magnitudes, objects, filters, max_index):
+def save_magnitudes(all_magnitudes, objects, filters, max_index):
     """Write the magnitudes in text files according to the data received.
     
     Write a file with all the magnitudes and also a file for each object
@@ -361,21 +367,21 @@ def save_manitudes_diff(all_magnitudes, objects, filters, max_index):
     received
     
     Args:
-    all_magnitudes: All the magnitudes.
-    objects: The objects related to the magnitudes.
-    filters: The filters related to the magnitudes.
-    max_index: The maximum index that the magnitude may have to be saved.
+        all_magnitudes: All the magnitudes.
+        objects: The objects related to the magnitudes.
+        filters: The filters related to the magnitudes.
+        max_index: The maximum index that the magnitude may have to be saved.
         
     """
     
     # First save a file with all the magnitudes.
-    write_manitudes_diff_file(all_magnitudes, \
-                              DEFAULT_DIFF_PHOT_FILE_NAME_PREFIX + \
-                              "_all." + CSV_FILE_EXT)
+    write_magnitudes_diff_file(all_magnitudes, "%s_all.%s" % 
+                               (DEFAULT_DIFF_PHOT_FILE_NAME_PREFIX,
+                                CSV_FILE_EXT))
     
-    logging.debug("Objects to save diff. mag.: " + str(objects))
-    logging.debug("Filters to save diff. mag.: " + str(filters))
-    logging.debug("Indexes to save diff. mag.: " + str(max_index))
+    logging.debug("Objects to save diff. mag.: %s" % (str(objects)))
+    logging.debug("Filters to save diff. mag.: %s" % (str(filters)))
+    logging.debug("Indexes to save diff. mag.: %d" % (max_index))
     
     # Select magnitudes for each object and filter.
     for o in objects:
@@ -394,19 +400,19 @@ def save_manitudes_diff(all_magnitudes, objects, filters, max_index):
                     # file name that indicates the selection made.
                     if len(lofi) > 0:
                         
-                        file_name = DEFAULT_DIFF_PHOT_FILE_NAME_PREFIX + \
-                            FILE_NAME_PARTS_DELIM + o + \
-                            FILE_NAME_PARTS_DELIM + f + \
-                            FILE_NAME_PARTS_DELIM + str(n) + \
-                            "." + CSV_FILE_EXT
+                        file_name = "%s%s%s%s%s%s%d.%s" % \
+                            (DEFAULT_DIFF_PHOT_FILE_NAME_PREFIX,
+                            FILE_NAME_PARTS_DELIM, str(o),
+                            FILE_NAME_PARTS_DELIM, f,
+                            FILE_NAME_PARTS_DELIM, n, CSV_FILE_EXT)
                             
-                        write_manitudes_diff_file(lofi, file_name)  
+                        write_magnitudes_diff_file(lofi, file_name)  
                         
                     else:
-                        logging.debug("Dif. mag. not found for " + o + ", " + \
-                                      f + " and " + str(n))
+                        logging.debug("Dif. mag. not found for %s %s and %d" %
+                                      (str(o), f, n))
             else:
-                logging.debug("Not found for " + o + " and " + f)
+                logging.debug("Not found for %s and %s" % (str(o), f))
 
 def differential_photometry(progargs):
     """Calculates the differential photometry with one or more objects.
@@ -415,7 +421,7 @@ def differential_photometry(progargs):
     the same image.    
 
     Args:
-    progargs: Program arguments.
+        progargs: Program arguments.
     
     """
     
@@ -444,7 +450,7 @@ def differential_photometry(progargs):
             # Check if current directory is for data.
             if split_path[-2] == progargs.data_directory:
                 # Get the full path of the directory.                
-                logging.debug("Found a directory for data: " + path)   
+                logging.debug("Found a directory for data: %s" % (path))   
                 
                 num_data_dirs_found += 1         
 
@@ -456,8 +462,8 @@ def differential_photometry(progargs):
                                             "." + CSV_FILE_EXT)) \
                      if not os.path.basename(fn).startswith('.')]
                     
-                logging.debug("Found " + str(len(files_full_path)) + \
-                              " magnitude files")
+                logging.debug("Found %d magnitude files" % 
+                              (len(files_full_path)))
                 
                 # Process the magnitude files to get all the data.
                 for fl in files_full_path:
@@ -569,8 +575,8 @@ def differential_photometry(progargs):
                                 # contains all the differences.                        
                                 all_magnitudes.append(diff_row)
              
-    logging.debug("Found " + str(num_data_dirs_found) + " data directories.")
-    logging.debug("Found " + str(num_magnitude_files) + " magnitude files.") 
-    logging.debug("Compiled " + str(len(all_magnitudes)) + " magnitudes.")
+    logging.debug("Found %d data directories." % (num_data_dirs_found))
+    logging.debug("Found %d magnitude files." % (num_magnitude_files)) 
+    logging.debug("Compiled %d magnitudes." % (len(all_magnitudes)))
     
-    save_manitudes_diff(all_magnitudes, objects, filters, max_index) 
+    save_magnitudes(all_magnitudes, objects, filters, max_index) 

@@ -84,11 +84,11 @@ def process_sextractor_output(command_out):
     # Return the mode of the FWHM values found.
     return mode(sum)[0][0]
 
-def get_fwhm(progargs, img_filename):
+def get_fwhm(sextractor_cfg_path, img_filename):
     """Execute sextractor on the image received to get its fwhm. 
     
     Args:
-    progargs: Program arguments.
+    sextractor_cfg_path: Path to the sextractor configuration files.
     img_filename: Name of the file with image whose FWHM is calculated.
     
     Returns:    
@@ -98,7 +98,7 @@ def get_fwhm(progargs, img_filename):
 
     # Build the command to execute.
     command = "sex -c " + \
-        os.path.join(progargs.sextractor_cfg_path, SEXTRACTOR_CFG_FILENAME) \
+        os.path.join(sextractor_cfg_path, SEXTRACTOR_CFG_FILENAME) \
         + " " + os.path.join(os.getcwd(), img_filename)
         
     logging.debug("Executing: " + command)
