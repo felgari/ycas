@@ -34,10 +34,11 @@ DEFAULT_LOG_LEVEL_NAME = "WARNING"
 DEFAULT_LOG_FILE_NAME = "ycas_log.txt"
 
 def convert_logging_level(level):
-    """ Convert the log level received to one of the logging module. "
+    """ Convert the log level received to one of the logging module checking
+    if the level indicated as program argument is valid.
     
     Args:
-    level: Level to convert.
+        level: Level to convert.
     
     """
     
@@ -47,8 +48,8 @@ def convert_logging_level(level):
         # If no valid log level is indicated use the default level.
         logging_level = LOG_LEVELS[DEFAULT_LOG_LEVEL_NAME]
         
-        print "No valid log level has been indicated using default level: " + \
-                DEFAULT_LOG_LEVEL_NAME
+        logging.warning("Log level provided is no valid '%s', using default value '%s'" %
+                            (level, DEFAULT_LOG_LEVEL_NAME))
     
     return logging_level
 
@@ -56,16 +57,13 @@ def init_log(progargs):
     """ Initializes the file log and messages format. 
     
     Args:
-    progargs: ProgramArguments object, it contains the information of all 
-        program arguments received.
+        progargs: ProgramArguments object, it contains the information of all 
+            program arguments received.
     
     """    
     
-    # If no log level is indicated use the default level.
-    if progargs.log_level_provided:
-        logging_level = LOG_LEVELS[progargs.log_level]
-    else:
-        logging_level = LOG_LEVELS[DEFAULT_LOG_LEVEL_NAME]
+    # Set the logging level.
+    logging_level = convert_logging_level(progargs.log_level)
     
     # If a file name has been provided as program argument use it.
     if progargs.log_file_provided:
