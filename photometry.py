@@ -260,7 +260,7 @@ def txdump_photometry_info(data_dir_name):
             
             # Check if current directory is for data images.
             if split_path[-2] == data_dir_name:
-                logging.debug("Found a directory for data: $s" % (path))
+                logging.debug("Found a directory for data: %s" % (path))
 
                 # Get the list of magnitude files.
                 mag_files = glob.glob(os.path.join(path, "*." + \
