@@ -88,70 +88,62 @@ class ProgramArguments(object):
         # Initiate arguments of the parser.
         self.__parser = argparse.ArgumentParser()
         
-        self.__parser.add_argument("-all", dest="all", action="store_true", \
-                                   help="Perform sequentially all the " + \
-                                   "steps of the pipeline.")           
+        self.__parser.add_argument("-all", dest="all", action="store_true",
+                                   help="Perform sequentially all the steps.")           
         
-        self.__parser.add_argument("-o", dest="o", action="store_true", \
+        self.__parser.add_argument("-o", dest="o", action="store_true",
                                    help="Organize the images.")                
         
-        self.__parser.add_argument("-r", dest="r", action="store_true", \
+        self.__parser.add_argument("-r", dest="r", action="store_true",
                                    help="Reduce the images.")       
         
         self.__parser.add_argument("-a", dest="a", action="store_true",  
                                    help="Calculate the astrometry.")         
         
         self.__parser.add_argument("-p", dest="p", action="store_true", 
-                                   help="Calculate the photometry of the " + \
-                                   "images.")   
+                                   help="Calculate the photometry.")   
         
         self.__parser.add_argument("-dp", dest="dp", action="store_true", 
-                                   help="Calculate diferential photometry " + \
-                                   "of the images.")
+                                   help="Calculate diferential photometry.")
         
         self.__parser.add_argument("-m", dest="m", action="store_true", 
-                                   help="Calculate the magnitudes of " + \
-                                   "the stars o interest.")  
+                                   help="Calculate the magnitudes of stars.")
+        
+        self.__parser.add_argument("-sum", dest="sum", action="store_true", 
+                                   help="Generates a summary of the results.")           
         
         self.__parser.add_argument("-s", metavar="stars_file_name",
-                                   dest="s", \
-                                   help="File that contains the names and " + \
-                                   "coordinates of the stars od interest.")                 
+                                   dest="s",
+                                   help="File of the stars to analyze.")                 
         
-        self.__parser.add_argument("-b", dest="b", metavar="bias_dir_name", \
-                                   help="Name for the directory where " + \
-                                   "the bias images are stored.")
+        self.__parser.add_argument("-b", dest="b", metavar="bias_dir_name",
+                                   help="Name of the directory for bias.")
         
-        self.__parser.add_argument("-f", dest="f", metavar="flat_dir_name", \
-                                   help="Name for the directory where " + \
-                                   "the flat images are stored.")
+        self.__parser.add_argument("-f", dest="f", metavar="flat_dir_name",
+                                   help="Name of the directory for flat.")
         
-        self.__parser.add_argument("-d", dest="d", metavar="data_dir_name", \
-                                   help="Name for the directory where " + \
-                                   "the data images are stored.")
+        self.__parser.add_argument("-d", dest="d", metavar="data_dir_name",
+                                   help="Name of the directory for data.")
         
-        self.__parser.add_argument("-l", metavar="log_file_name", dest="l", \
+        self.__parser.add_argument("-l", metavar="log_file_name", dest="l",
                                    help="File to save the log messages.") 
         
-        self.__parser.add_argument("-v", metavar="log_level", dest="v", \
+        self.__parser.add_argument("-v", metavar="log_level", dest="v",
                                    help="Level of the log to generate.")                  
         
-        self.__parser.add_argument("-x", dest="x", metavar="sex_cfg_path", \
-                                   help="Name for directory where the " + \
-                                   "configuration files for sextractor are.")        
+        self.__parser.add_argument("-x", dest="x", metavar="sex_cfg_path",
+                                   help="configuration directory of sextractor.")        
         
-        self.__parser.add_argument("-no", dest="no", \
-                                   metavar="number_of_objects", type=int, \
-                                   help="Number of objects to take into " + \
+        self.__parser.add_argument("-no", dest="no",
+                                   metavar="number_of_objects", type=int,
+                                   help="Number of objects to take into " +
                                    "account in images when doing astrometry.")   
         
         self.__parser.add_argument("-us", dest="us", action="store_true",  
-                                   help="Use sextractor to calculate the " + \
-                                   "astrometry.")                   
+                                   help="Use sextractor for astrometry.")                   
         
         self.__parser.add_argument("-t", dest="t", action="store_true", 
-                                   help="Use header information to get " + \
-                                   "the type of the image.")                     
+                                   help="Use header information of FIT files.")                     
         
         self.__args = None   
         
@@ -240,6 +232,10 @@ class ProgramArguments(object):
         return self.__args.t    
     
     @property
+    def summary_requested(self):
+        return self.__args.sum 
+    
+    @property
     def all_steps_requested(self):
         return self.__args.all   
     
@@ -282,11 +278,11 @@ class ProgramArguments(object):
             not self.astrometry_requested and \
             not self.photometry_requested and \
             not self.magnitudes_requested and \
-            not self.all_steps_requested:
+            not self.all_steps_requested and \
+            not self.summary_requested:
             raise ProgramArgumentsException(self.NO_PIPELINE_STEPS_REQUESTED)
         
-        # Check all the conditions required for the program arguments.
-        
+        # Check all the conditions required for the program arguments.        
         if self.use_sextractor_for_astrometry and \
             not self.sextractor_cfg_file_provided:
             raise ProgramArgumentsException(self.USE_SEX_REQUIRES_SEX_PATH)
