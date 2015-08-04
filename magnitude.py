@@ -119,6 +119,9 @@ def process_magnitudes(stars, data_directoy_name):
     Args:
         stars: The list of stars.     
         data_directoy_name: Name of the directories that contains data images. 
+        
+    Returns:
+        magnitudes: The magnitudes calculated.
     
     """
     
@@ -145,3 +148,5 @@ def process_magnitudes(stars, data_directoy_name):
     
     # Save magnitudes.
     magnitudes.save_magnitudes()
+    
+    return magnitudes

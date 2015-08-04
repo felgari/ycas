@@ -45,9 +45,11 @@ class ProgramArguments(object):
     PHOT_REQUIRES_STARS_FILE = "Photometry requires the specification " + \
         "of a file containing the data of the stars." 
 
-    PHOT_REQUIRES_SEX_PATH_AND_STARS_FILE = "Photometry requires the " + \
-        "specification of a path for sextractor configuration files and " + \
-        "also the file containing the data of the stars." 
+    PHOT_REQUIRES_PHOT_PARAMETERS = "Photometry requires the specification " + \
+        "of a file containing the parameters for phot." 
+        
+    PHOT_REQUIRES_INST_CHARACTERISTICS = "Photometry requires the " + \
+        " specification of a file containing characteristics of the instrument."         
     
     USE_SEX_REQUIRES_SEX_PATH = "The use of sextractor requires the " + \
         "specification of a path for sextractor configuration files."
@@ -55,8 +57,11 @@ class ProgramArguments(object):
     ASTRO_REQUIRES_STARS_FILE = "Astrometry requires the specification " + \
         "of a file containing the data of the stars."    
         
-    MAG_REQUIRES_STARS_FILE = "Calculation of magnitudes  requires the " + \
+    MAG_REQUIRES_STARS_FILE = "Calculation of magnitudes requires the " + \
         "specification of a file containing the data of the stars."  
+        
+    LIGHT_CURVES_REQUIRES_STARS_FILE = "Generation of light curves " + \
+        "requires the specification of a file containing the data of the stars." 
         
     NO_PIPELINE_STEPS_INDICATED = "At least one pipeline step should be " + \
         "indicated."
@@ -109,12 +114,23 @@ class ProgramArguments(object):
         self.__parser.add_argument("-m", dest="m", action="store_true", 
                                    help="Calculate the magnitudes of stars.")
         
+        self.__parser.add_argument("-lc", dest="lc", action="store_true", 
+                                   help="Generates light curves.")        
+        
         self.__parser.add_argument("-sum", dest="sum", action="store_true", 
-                                   help="Generates a summary of the results.")           
+                                   help="Generates a summary of the results.")
         
         self.__parser.add_argument("-s", metavar="stars_file_name",
                                    dest="s",
-                                   help="File of the stars to analyze.")                 
+                                   help="File of the stars to analyze.")    
+        
+        self.__parser.add_argument("-i", metavar="instrument_file_name",
+                                   dest="i",
+                                   help="File with features of the instrument.")
+        
+        self.__parser.add_argument("-pp", metavar="phot_param_file_name",
+                                   dest="pp",
+                                   help="File with parameters for phot.")                           
         
         self.__parser.add_argument("-b", dest="b", metavar="bias_dir_name",
                                    help="Name of the directory for bias.")
@@ -132,12 +148,11 @@ class ProgramArguments(object):
                                    help="Level of the log to generate.")                  
         
         self.__parser.add_argument("-x", dest="x", metavar="sex_cfg_path",
-                                   help="configuration directory of sextractor.")        
+                                   help="Configuration directory of sextractor.")        
         
         self.__parser.add_argument("-no", dest="no",
                                    metavar="number_of_objects", type=int,
-                                   help="Number of objects to take into " +
-                                   "account in images when doing astrometry.")   
+                                   help="Number of objects to take into account in images when doing astrometry.")   
         
         self.__parser.add_argument("-us", dest="us", action="store_true",  
                                    help="Use sextractor for astrometry.")                   
@@ -187,6 +202,22 @@ class ProgramArguments(object):
     def stars_file_name(self):
         return self.__stars_file_name  
     
+    @property    
+    def file_of_instrument_provided(self): 
+        return self.__args.i is not None      
+    
+    @property
+    def intrument_file_name(self):
+        return self.__intrument_file_name   
+    
+    @property    
+    def file_of_phot_params_provided(self): 
+        return self.__args.pp is not None      
+    
+    @property
+    def phot_params_file_name(self):
+        return self.__phot_params_file_name        
+    
     @property
     def sextractor_cfg_file_provided(self):
         return self.__args.x is not None
@@ -225,7 +256,11 @@ class ProgramArguments(object):
     
     @property
     def magnitudes_requested(self):
-        return self.__args.m    
+        return self.__args.m
+    
+    @property
+    def light_curves_requested(self):
+        return self.__args.lc           
     
     @property    
     def use_headers_to_get_image_type(self):
@@ -262,7 +297,13 @@ class ProgramArguments(object):
             self.__sextractor_cfg_path = self.__args.x
             
         if self.file_of_stars_provided:
-            self.__stars_file_name = self.__args.s   
+            self.__stars_file_name = self.__args.s  
+            
+        if self.file_of_instrument_provided:
+            self.__intrument_file_name = self.__args.i
+            
+        if self.file_of_phot_params_provided:
+            self.__phot_params_file_name = self.__args.pp
             
         if self.__args.no is not None:
             self.__astrometry_num_of_objects = self.__args.no            
@@ -287,22 +328,29 @@ class ProgramArguments(object):
             not self.sextractor_cfg_file_provided:
             raise ProgramArgumentsException(self.USE_SEX_REQUIRES_SEX_PATH)
             
-        # Check the specification of the file with the stars of interest.
+        # Check the specification of the all the parameters needed for the
+        # photometry.
         if self.photometry_requested:
-            if not self.sextractor_cfg_file_provided:
-                if not self.file_of_stars_provided:
-                    raise ProgramArgumentsException(
-                                    PHOT_REQUIRES_SEX_PATH_AND_STARS_FILE)
-                else:
-                    raise ProgramArgumentsException(self.PHOT_REQUIRES_SEX_PATH)
-            elif not self.file_of_stars_provided:
-                raise ProgramArgumentsException(self.PHOT_REQUIRES_STARS_FILE)
+            if not self.file_of_stars_provided:
+                raise ProgramArgumentsException(ProgramArguments.PHOT_REQUIRES_STARS_FILE)
             
+            if not self.file_of_phot_params_provided:
+                raise ProgramArgumentsException(ProgramArguments.PHOT_REQUIRES_PHOT_PARAMETERS)
+            
+            if not self.file_of_instrument_provided:
+                raise ProgramArgumentsException(ProgramArguments.PHOT_REQUIRES_INST_CHARACTERISTICS)
+            
+            if not self.sextractor_cfg_file_provided:
+                raise ProgramArgumentsException(ProgramArguments.PHOT_REQUIRES_SEX_PATH)            
+
         if self.astrometry_requested and not self.file_of_stars_provided:
             raise ProgramArgumentsException(self.ASTRO_REQUIRES_STARS_FILE)
         
         if self.magnitudes_requested and not self.file_of_stars_provided:
             raise ProgramArgumentsException(self.MAG_REQUIRES_STARS_FILE)
+        
+        if self.light_curves_requested and not self.stars_file_name:
+            raise ProgramArgumentsException(self.LIGHT_CURVES_REQUIRES_STARS_FILE)
             
     def process_program_arguments(self):
         """ Parse and check coherence of program arguments.
