@@ -128,32 +128,23 @@ def pipeline(progargs):
     else:
         logging.info("* Step 4 * Skipping photometry. Not requested.")
         
-    # This step calculates the differental photometry of the objects detected
-    # doing the astrometry.
-    if progargs.diff_photometry_requested or progargs.all_steps_requested:
-        logging.info("* Step 5 * Performing differential photometry.")
-        photometry.differential_photometry(progargs)
-        anything_done = True
-    else:
-        logging.info("* Step 5 * Skipping differential photometry of stars. Not requested.")
-        
     # This step process the magnitudes calculated for each object and
     # generates a file that associate to each object all its measures.
     if progargs.magnitudes_requested or progargs.all_steps_requested:
-        logging.info("* Step 6 * Calculating magnitudes of stars.")
+        logging.info("* Step 5 * Calculating magnitudes of stars.")
         mag = magnitude.process_magnitudes(stars, progargs.data_directory)
         anything_done = True
     else:
-        logging.info("* Step 6 * Skipping the calculation of magnitudes of stars. Not requested.")
+        logging.info("* Step 5 * Skipping the calculation of magnitudes of stars. Not requested.")
         
     # This step process the magnitudes calculated for each object and
     # generates a light curves.
     if progargs.light_curves_requested or progargs.all_steps_requested:
-        logging.info("* Step 7 * Generating light curves.")
+        logging.info("* Step 6 * Generating light curves.")
         curves.generate_curves(stars, mag)
         anything_done = True
     else:
-        logging.info("* Step 7 * Skipping the generation of light curves. Not requested.")        
+        logging.info("* Step 6 * Skipping the generation of light curves. Not requested.")        
         
     # Generates a summary if requested and some task has been indicated.
     if anything_done and progargs.summary_requested:

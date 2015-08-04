@@ -108,9 +108,6 @@ class ProgramArguments(object):
         self.__parser.add_argument("-p", dest="p", action="store_true", 
                                    help="Calculate the photometry.")   
         
-        self.__parser.add_argument("-dp", dest="dp", action="store_true", 
-                                   help="Calculate diferential photometry.")
-        
         self.__parser.add_argument("-m", dest="m", action="store_true", 
                                    help="Calculate the magnitudes of stars.")
         
@@ -248,11 +245,7 @@ class ProgramArguments(object):
     
     @property
     def photometry_requested(self):
-        return self.__args.p  
-    
-    @property
-    def diff_photometry_requested(self):
-        return self.__args.dp      
+        return self.__args.p     
     
     @property
     def magnitudes_requested(self):
