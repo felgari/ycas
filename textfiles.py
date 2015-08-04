@@ -34,7 +34,6 @@ DEC_POS_COO = 1
 ID_POS_COO = 2
 
 # Functions for text files with objects coordinates: .coo.
-
 def read_objects_of_interest(objects_file):
     """Read the list of objects of interest from the file indicated.
     
@@ -42,13 +41,13 @@ def read_objects_of_interest(objects_file):
     coordinates of each object.
     
     Args:
-    objects_file: Name of the file that contains the information of objects.
+        objects_file: Name of the file that contains the information of objects.
     
     """
     
     objects = list()
     
-    logging.debug("Reading object from file: " + objects_file)
+    logging.debug("Reading object from file: %s" % (objects_file))
     
     # Read the file that contains the objects of interest.
     with open(objects_file, 'rb') as fr:
@@ -59,7 +58,7 @@ def read_objects_of_interest(objects_file):
                 # Only the column with name of the object.
                 objects.append(row)   
             
-    logging.debug("Read the following objects: " +  str(objects))            
+    logging.debug("Read the following objects: %s" %  (objects))            
             
     return objects  
 
@@ -140,7 +139,7 @@ def read_coordinates_file(star_name):
     # Build the file name.
     file_name = star_name + COORD_FILE_END
     
-    logging.debug("Reading coordinates from: " + file_name)
+    logging.debug("Reading coordinates from: %s " % (file_name))
     
     try:
         # Read the coordinates from the file.
@@ -156,27 +155,27 @@ def read_coordinates_file(star_name):
                     
                     references.append([ra, dec, id])    
     
-        logging.debug("Coordinates read for filename " + \
-                      file_name + ": "+ str(references))
+        logging.debug("Coordinates read for filename %s: %s" %
+                      (file_name, str(references)))
         
     except IOError as ioe:
-        logging.error("Error reading coordinates file: '" + file_name + \
-                      "' error is: " + str(ioe))
+        logging.error("Error reading coordinates file: '%s' error is: %s" %
+                      (file_name, str(ioe)))
 
     return references
 
 def read_catalog_file(file_name):
-    """ Read a catalog file containing coordinates and an identifier 
-        for each one.
+    """ Read a catalog file containing coordinates and an identifier for each 
+    one.
     
     Read a file containing in each file a x,y coordinate pair and a numeric 
     identifier for each coordinate.
         
     Args:
-    file_name: The name of the file to read.
+        file_name: The name of the file to read.
     
     Returns:    
-    The list of coordinates read from the file indicated.
+        The list of coordinates read from the file indicated.
     
     """
     
@@ -186,7 +185,7 @@ def read_catalog_file(file_name):
     # List of identifiers for the coordinates read.
     identifiers = []
     
-    logging.debug("Reading coordinates from: " + file_name)
+    logging.debug("Reading coordinates from: %s" % (file_name))
     
     # Read the coordinates from the file.
     with open(file_name, 'rb') as fr:
@@ -197,7 +196,7 @@ def read_catalog_file(file_name):
             
             identifiers.extend([row[CAT_ID_COL]])
 
-    logging.debug("Coordinates read: " + str(identifiers))
+    logging.debug("Coordinates read: %s" % (identifiers))
 
     return coordinates
 
@@ -302,4 +301,4 @@ def write_coord_catalogues(image_file_name, catalog_full_file_name, star):
         logging.warning("X,Y coordinates file '%s' does not exists, so catalog file could not be created." %
                       (xyls_file_name))
         
-    return success 
+    return success     
