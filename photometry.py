@@ -35,9 +35,10 @@ from constants import *
 from textfiles import *
 from fitfiles import *
 from images import *
+from photpars import *
 
 phot_progargs = None
-
+    
 def init_iraf():
     """Initializes the pyraf environment. """
     
@@ -58,42 +59,47 @@ def init_iraf():
     iraf.phot.interactive = "no"
     iraf.phot.verify = "no"
     
-def set_common_phot_pars():
+def set_common_phot_pars(phot_params):
     """Sets the pyraf parameters used to in photometry common to all the images.
     
+    Args:
+        phot_params: Parameters for phot.
+            
     """        
     
     # Set photometry parameters.
-    iraf.fitskypars.dannulus = DANNULUS_VALUE
-    iraf.fitskypars.skyvalue = SKY_VALUE
-    iraf.fitskypars.salgorithm = "mode"
-    iraf.centerpars.cbox = CBOX_VALUE
-    iraf.centerpars.calgori = "centroid"
+    iraf.fitskypars.dannulus = phot_params.dannulus
+    iraf.fitskypars.skyvalue = phot_params.sky
+    iraf.fitskypars.salgorithm = phot_params.salgorithm
+    iraf.centerpars.cbox = phot_params.cbox
+    iraf.centerpars.calgori = phot_params.calgori
     
     # Name of the fields FITS that contains these values.
     iraf.datapars.exposure = "EXPOSURE"
     iraf.datapars.airmass = "AIRMASS"
     iraf.datapars.obstime = "MJD"
-    iraf.datapars.readnoise = OSN_CCD_T150_READNOISE
-    iraf.datapars.epadu = OSN_CCD_T150_GAIN
-    iraf.datapars.datamax = OSN_CCD_T150_DATAMAX 
 
-def set_image_specific_phot_pars(fwhm, datamin):
+    
+    iraf.datapars.readnoise = phot_params.readnoise
+    iraf.datapars.epadu = phot_params.epadu
+    iraf.datapars.datamax = phot_params.datamax 
+
+def set_image_specific_phot_pars(fwhm, phot_params):
     """Sets the pyraf parameters in photometry that changes for each image.
     
     Args: 
         fwhm: FWHM value.
-        datamin: datamin value to set.
+        phot_params: Parameters for phot.
     
     """       
     
     # Set photometry parameters.
     iraf.datapars.fwhmpsf = fwhm
-    iraf.photpars.apertures = APERTURE_MULT * fwhm
-    iraf.fitskypars.annulus = ANNULUS_MULT * fwhm
+    iraf.photpars.apertures = fwhm * phot_params.aperture_mult
+    iraf.fitskypars.annulus = fwhm * phot_params.annulus_mult
     
     # Name of the fields FITS that contains these values.
-    iraf.datapars.datamin = datamin
+    iraf.datapars.datamin = phot_params.datamin
 
 def save_parameters():
     """Saves the parameters used to do the photometry. """    
@@ -142,7 +148,7 @@ def calculate_datamin(image_file_name):
     return datamin
 
 def do_phot(image_file_name, catalog_file_name, output_mag_file_name, 
-            sextractor_cfg_path):
+            sextractor_cfg_path, phot_params):
     """Calculates the photometry of the images.
     
     Receives the image to use, a catalog with the position of the objects
@@ -153,6 +159,7 @@ def do_phot(image_file_name, catalog_file_name, output_mag_file_name,
         catalog_file_name: File with the X, Y coordinates to do phot.
         output_mag_file_name: Name of the output file with the magnitudes.
         sextractor_cfg_path: Path to the sextractor configuration files.
+        phot_params: Parameters for phot.
     
     """
     
@@ -170,7 +177,7 @@ def do_phot(image_file_name, catalog_file_name, output_mag_file_name,
     fwhm = astromatics.get_fwhm(sextractor_cfg_path, image_file_name)
            
     # Set the parameters for the photometry that depends on the image.
-    set_image_specific_phot_pars(fwhm, datamin)                
+    set_image_specific_phot_pars(fwhm, phot_params)                
                 
     try:           
         iraf.phot(image = image_file_name, 
@@ -180,7 +187,7 @@ def do_phot(image_file_name, catalog_file_name, output_mag_file_name,
         logging.error("Error executing phot on : %s" % (image_file_name)) 
         logging.error( "Iraf error is: %s" % (exc))
 
-def do_photometry(progargs):   
+def do_photometry(progargs, phot_params):   
     """walk the directories searching for image to calculate its photometry.
     
     This function walk the directories searching for catalog files
@@ -191,7 +198,8 @@ def do_photometry(progargs):
     of the objects in the catalog file.
     
     Args:     
-        progargs: Program arguments.    
+        progargs: Program arguments. 
+        phot_params: Photometry parameters.  
     
     """
     
@@ -234,7 +242,8 @@ def do_photometry(progargs):
                     if not os.path.exists(output_mag_file_name):
                         do_phot(image_file_name, cat_file,
                                 output_mag_file_name,
-                                progargs.sextractor_cfg_path)  
+                                progargs.sextractor_cfg_path,
+                                phot_params)  
                     else:
                         logging.debug("Skipping phot for: %s, already done." %
                                       (output_mag_file_name))
@@ -307,14 +316,24 @@ def calculate_photometry(progargs):
     # Init iraf package.
     init_iraf()
     
-    # Set photometry parameters that do not depend on each image.
-    set_common_phot_pars()
-
-    # Calculate the photometry.
-    do_photometry(progargs)
+    # Get the paramters for the protometry.
+    try:
+        phot_params = PhotParameters(progargs.phot_params_file_name,
+                                     progargs.intrument_file_name)
+        
+        # Set photometry parameters that do not depend on each image.
+        set_common_phot_pars(phot_params)
     
-    # Export photometry info to a text file with only the columns needed.
-    txdump_photometry_info(progargs.data_directory)
+        # Calculate the photometry.
+        do_photometry(progargs, phot_params)
+        
+        # Export photometry info to a text file with only the columns needed.
+        txdump_photometry_info(progargs.data_directory)        
+    except PhotParamNotFound as ppnf:
+        logging.error(ppnf)
+        
+    except PhotParamFileError as ppfe:
+        logging.error(ppfe)
     
 def get_object_final_name(object_name, objects_final_names):
     """Get the name to use for a the received object name.
