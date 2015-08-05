@@ -44,6 +44,19 @@ else:
 RA_POS = 0
 DEC_POS = 1
 ID_POS = 2
+
+# Radius of the field to solve.
+SOLVE_FIELD_RADIUS = 1.0
+
+# External commands
+ASTROMETRY_COMMAND = "solve-field"
+
+# Astrometry option to use sextractor.
+ASTROMETRY_OPT_USE_SEXTRACTOR = " --use-sextractor "
+ASTROMETRY_OPT_SEXTRACTOR_CONFIG = "--sextractor-config "
+
+# Overwrite previous files and limit the number of objects to look at"
+ASTROMETRY_PARAMS = "--overwrite -d "
     
 class StarNotFound(Exception):
     """Raised if star is not found from file name. """

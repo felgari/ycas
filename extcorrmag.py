@@ -39,6 +39,10 @@ class ExtinctionCoefficient(object):
     
     """
     
+    # Minimum number of measures of standard objects to calculate extinction 
+    # coefficients.
+    MIN_NUM_STD_MEASURES = 4    
+    
     def __init__(self, day, filter, slope, intercept):
         
         self._day = day
@@ -271,7 +275,7 @@ class ExtCorrMagnitudes(object):
                            if m.day == d and  m.filter == f]
                     
                     # Check there is enough data for calculation.
-                    if len(mag) > MIN_NUM_STD_MEASURES:
+                    if len(mag) > ExtinctionCoefficient.MIN_NUM_STD_MEASURES:
                         try:
                             slope, intercept = self.calc_one_ext_coeff(mag)
                             

@@ -27,6 +27,9 @@ import argparse
 import logging
 from constants import *
 
+# Default number of objects to look at when doing astrometry.
+ASTROMETRY_NUM_OBJS = 20
+
 class ProgramArgumentsException(Exception):
     
     def __init__(self, msg):

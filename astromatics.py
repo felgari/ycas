@@ -34,6 +34,12 @@ import glob
 from scipy.stats import mode
 from constants import *
 
+# sextractor parameters.
+SEXTRACTOR_COMMENT = "#"
+SEXTRACTOR_FWHM_COL = 2
+SEXTRACTOR_FWHM_MIN_VALUE = 1.2
+SEXTRACTOR_CFG_FILENAME = "sextractor.sex"
+
 # Depending on Python version this module has a different name.
 if sys.version_info < (3, 3):
     from subprocess32 import check_output
@@ -66,7 +72,7 @@ def process_sextractor_output(command_out):
     # Process the output lines.
     for l in lines:
         # If it is not a commented line.
-        if len(l) > 0 and l[0] != SEXTACTOR_COMMENT:
+        if len(l) > 0 and l[0] != SEXTRACTOR_COMMENT:
             
             # Get the columns of the line.
             cols = l.split(" ")
@@ -75,10 +81,10 @@ def process_sextractor_output(command_out):
             cols = filter(len, cols)      
             
             # Get the fwhm from the columns of the line.
-            fwhm = float(cols[SEXTACTOR_FWHM_COL])
+            fwhm = float(cols[SEXTRACTOR_FWHM_COL])
             
             # If it is a value considered valid, store it.
-            if fwhm > SEXTACTOR_FWHM_MIN_VALUE:
+            if fwhm > SEXTRACTOR_FWHM_MIN_VALUE:
                 sum.extend([fwhm])
     
     # Return the mode of the FWHM values found.
