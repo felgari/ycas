@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2014 Felipe Gallego. All rights reserved.
+# Copyright (c) 2015 Felipe Gallego. All rights reserved.
 #
 # This file is part of ycas: https://github.com/felgari/ycas
 #
@@ -28,557 +28,50 @@ to generate a final summary of the steps performed by the pipeline.
 import sys
 import os
 import logging
-import glob
 import argparse
-import numpy as np
-from scipy.stats import mode
 from constants import *
+from sumreport import *
+import starsset
 
-PATH_COL = 0
-FILE_NAME_COL = 1
+def generate_summary(progargs, stars, stars_mag):
+    """ Generates a summary for the tasks performed by the pipeline.
+    
+    Args:
+        progargs: The program arguments.
+        stars: List of stars.
+        stars_mag: The magnitudes calculated.
+        
+    """    
+    
+    # Object that generates the summary.     
+    sum_report = SummaryReport(stars, stars_mag)     
+    
+    if progargs.all_steps_requested: 
+        sum_report.enable_all_summary_task()
 
-FITS_FILE_PATTERN = "*." + FIT_FILE_EXT
+    else:    
+        if progargs.organization_requested:
+            sum_report.enable_organization_summary
+    
+        if progargs.reduction_requested:
+            sum_report.enable_reduction_summary
+            
+        if progargs.astrometry_requested:
+            sum_report.enable_astrometry_summary   
+            
+        if progargs.photometry_requested:
+            sum_report.enable_photometry_summary
+            
+        if progargs.magnitudes_requested:
+            sum_report.enable_magnitude_summary
 
-class SummaryTasks(object):
-    """ Encapsulates the summary tasks to perform.
-    """
-    
-    ORG_SUM_NAME = "Organization"
-    RED_SUM_NAME = "Reduction"
-    ASTRO_SUM_NAME = "Astrometry"
-    PHOT_SUM_NAME = "Photometry"
-    MAG_SUM_NAME = "Magnitude"
+    try:
+        sum_report.generate_summary()
+    except SummaryException as se:
+        logging.error(se)   
 
-    SUMMARY_TASKS = [ORG_SUM_NAME, RED_SUM_NAME, ASTRO_SUM_NAME, 
-                     PHOT_SUM_NAME, MAG_SUM_NAME]
         
-    __SUM_PRO_NAME_COL = 0
-    __SUM_PRO_REQ_PROP_COL = 1
-    __SUM_PRO_BUILD_FUN_COL = 2    
-    
-    def __init__(self):
         
-        self._tasks_to_do = {
-                SummaryTasks.ORG_SUM_NAME : False,
-                SummaryTasks.RED_SUM_NAME : False,
-                SummaryTasks.ASTRO_SUM_NAME : False,
-                SummaryTasks.PHOT_SUM_NAME : False,
-                SummaryTasks.MAG_SUM_NAME : False }
-        
-    # List of methods to use to get the summary of each task.       
-        self.__SUMMARY_METHODS = {
-               SummaryTasks.ORG_SUM_NAME : self.summary_organization,
-               SummaryTasks.RED_SUM_NAME : self.summary_reduction,
-               SummaryTasks.ASTRO_SUM_NAME : self.summary_astrometry,
-               SummaryTasks.PHOT_SUM_NAME : self.summary_photometry,
-               SummaryTasks.MAG_SUM_NAME : self.summary_magnitude }  
-       
-    @property 
-    def enable_organization_summary(self):
-        self._tasks_to_do[SummaryTasks.ORG_SUM_NAME] = True
-        
-    @property 
-    def enable_reduction_summary(self):
-        self._tasks_to_do[SummaryTasks.RED_SUM_NAME] = True    
-        
-    @property 
-    def enable_astrometry_summary(self):
-        self._tasks_to_do[SummaryTasks.ASTRO_SUM_NAME] = True
-        
-    @property 
-    def enable_photometry_summary(self):
-        self._tasks_to_do[SummaryTasks.PHOT_SUM_NAME] = True               
-        
-    @property 
-    def enable_magnitude_summary(self):
-        self._tasks_to_do[SummaryTasks.MAG_SUM_NAME] = True                 
-        
-    def enable_all_summary_task(self):
-        """Enable the calculation of all sumaries.
-        
-        """
-        
-        # Walk the possible summaries to perform to enable them all.
-        for std in SummaryTasks.SUMMARY_TASKS:        
-            self._tasks_to_do[std] = True
-        
-    def enable_summary_task(self, summary_task):
-        """Enables the summary for a given task.
-        
-        Args:
-            summary_task. The task to enable.
-        """
-        
-        try:
-            self._tasks_to_do[summary_task] = True
-        except KeyError as ke:
-            logging.error("Value '%s' is invalid to reference a summary." %
-                          summary_task)
-            
-    def generate_summary(self):
-        """
-        
-        """         
-
-        # Walk the possible summaries to perform.
-        for std in SummaryTasks.SUMMARY_TASKS:
-             
-             # Check if this summary has been requested.
-             if self._tasks_to_do[std]:
-                 self.__SUMMARY_METHODS[std]()
-             
-            
-    def is_summary_task_enabled(self, summary_option):
-        """Indicates if the summary for a given task is enabled.
-        
-        Args:
-            summary_task. The task to enable.
-            
-        Return:
-            True if enabled, False otherwise.
-        """        
-                
-        enabled = False
-        
-        try:
-            enabled = self._tasks_to_do[summary_task]
-        except KeyError as ke:
-            logging.error("Option '%s' invalid for summary." %
-                          summary_task)  
-            
-        return enabled   
-    
-    @property
-    def is_any_summary_task_enabled(self):  
-        
-        any_enabled = False
-        
-        for std in SummaryTasks.SUMMARY_TASKS:
-            if self._tasks_to_do[std]:
-                any_enabled = True
-                break 
-        
-        return any_enabled  
-    
-    def print_and_log_info(self, log_msg):
-        """ Print the string received to sdtout and to logging with info level. 
-        """     
-        
-        print log_msg
-        logging.info(log_msg)        
-            
-    def print_summary(self, sum_name, msg_list):
-        """ Print the strings of the list received as a summary. """
-        
-        self.print_and_log_info("* Summary for: %s" % (sum_name))
-        
-        for l in msg_list:
-            self.print_and_log_info("- " + l[0])            
-            
-    def walk_directories(self, root_dir, file_pattern, dir_name = None,
-                         dir_for_images = False):
-        """Walk the directories from the root directory indicated searching
-        for directories and files that match the patterns received and
-        return the files matching these criteria.
-        
-        Args: 
-            root_dir: Root directory to search files.
-            file_pattern: Pattern of the file to search. 
-            dir_name: Name of the directory to look for, if any.
-            dir_for_images: Indicates it it is a directory with images.
-        
-        Returns:        
-        
-        """
-        
-        directories_found = []
-        files_found = []
-        
-        # Subdirectories into root directory, all are supposed to be
-        # directories with fits images.
-        directories_from_root = os.walk(root_dir).next()[1]
-        
-        # Walk all the directories searching for directories and files that
-        # matches the patterns received.
-        for path, dirs, files in os.walk(root_dir):
-    
-            # Split the string with the path to get the names of the
-            # parent directories.
-            split_path = path.split(os.sep)
-    
-            # Check if current directory matches any of the directory criteria.
-            # Matches the directory name received or it is a directory whose
-            # images are by filters so has one additional directory level.
-            if ( dir_name <> None and split_path[-1] == dir_name ) or \
-                ( dir_for_images and len(split_path) > 2 and \
-                  split_path[-2] == dir_name ):
-    
-                # Get the list of files of current directory matching 
-                # the pattern received and ignoring the hidden files.
-                dir_contents = \
-                    [f for f in glob.glob(os.path.join(path, file_pattern)) \
-                    if not os.path.basename(f).startswith('.')]
-                    
-                # For all the contents of current directory check if it is
-                # a directory or a file and include it in the appropriate list.
-                for dc in dir_contents:
-                    if os.path.isdir(dc):
-                        directories_found.extend([dc])
-                    else:
-                        files_found.extend([dc])
-            
-        # Get the files found with the path and file name splitted.
-        directories_found
-        files_found_path_splited = [ os.path.split(ff) for ff in files_found ]
-        
-        return directories_found, files_found_path_splited, \
-            directories_from_root
-    
-    
-    def sum_org_images_of_type(self, messages, has_filters, type_name, 
-                                     dir_name, master_file_name = None):
-        """Generates a summary for the images.
-        
-        Args:    
-            messages: List where the messages are added.
-            has_filters: Indicates if the directories are organized by filters.
-            type_name: Name of the type of image analyzed.
-            dir_name: Directory to walk to search for images.
-            master_file_name: Name of the master file, if any.
-                    
-        """
-        
-        messages.append(["> Summary for %s files." % (type_name)])
-        
-        subdirectories, files, directories_from_root = \
-            self.walk_directories(".", "*", dir_name, True)
-            
-        # Number of directories with data (from root).        
-        number_of_directories = len(directories_from_root)          
-        
-        if has_filters:
-            # Store a list of unique filters. Take all the paths and split them
-            # to get the filter component, and add all to a set, that is converted
-            # to a list.
-            filters = list(set([s.split(os.sep)[-1] for s in subdirectories]))
-            
-            messages.append(["Number of filters with %s files is: %d" %
-                             (type_name, len(filters))])
-            
-            messages.append(["Filters used by %s: %s" %
-                             (type_name, str(filters))])
-    
-        # Get the list of directories found containing files.
-        unique_paths = set([ff[PATH_COL] for ff in files])
-    
-        # Summary: Number of unique directories.
-        messages.append(["Number of %s directories: %d" %
-                         (type_name, len(unique_paths))])
-    
-        # The number of files in each directory is stored here.
-        num_files_by_dir = []
-        
-        # Number of mater files found in each directory, it is calculated only
-        # 
-        num_master = 0
-    
-        # Apply the following statistics if these files are used to create a mater
-        # file (i.e. bias or flats).
-        if master_file_name is not None:
-            # Summary: Number of master files created.
-            master = [fb for fb in files if fb[FILE_NAME_COL] == \
-                      master_file_name]
-            num_master = len(master)
-            messages.append(["Number of master %s: %d" % 
-                             (type_name, num_master)])
-        
-            # Number of directories with files and without master Important!).
-            dir_without_master = []
-            
-            for ubp in unique_paths:
-                # Get the files of each directory.
-                files_of_dir = [bf for bf in files if bf[PATH_COL] == ubp]
-                
-                # Get the master file of this directory if any.
-                master_file = [bf for bf in files_of_dir \
-                                 if bf[FILE_NAME_COL] == master_file_name]
-                
-                # If this directory has not master.
-                if len(master_file) == 0:
-                    dir_without_master.extend([ubp])
-                    
-                # The number of files in this directory is the total number
-                # of files minus the master fits found.
-                num_of_files = len(files_of_dir) - len(master_file)
-                num_files_by_dir.extend([num_of_files])
-                
-                messages.append(["Directory: '%s' Number of files: %d" %
-                                 (ubp, num_of_files)])             
-        
-            # Summary: Number of directories with files and no master.
-            messages.append(["Number of directories with %s and no master %s: %d" %
-                             (type_name, type_name, len(dir_without_master))])
-            
-            # If any directory has no master, show its path.
-            if len(dir_without_master) > 0:
-                messages.append(["Directories without master %s : %s" %
-                                 (type_name, str(dir_without_master))])
-           
-        else:               
-            # Count the number of files in each directory. Now taking into
-            # account names of files and its number instead of master files. 
-            for ubp in unique_paths:
-                
-                # Objects in the directory whose path matched those of unique set.            
-                all_objects_of_dir = [ f[FILE_NAME_COL] for f in files \
-                                      if f[PATH_COL] == ubp ]          
-                
-                # Take as objects names those of FIT images, not final, and only
-                # the part name that identifies the object.
-                objects_of_dir = [ o[:o.find(DATANAME_CHAR_SEP)] 
-                                  for o in all_objects_of_dir \
-                                  if o.find("." + FIT_FILE_EXT) > 0 and
-                                  o.find(DATA_FINAL_SUFFIX) < 0 ]
-                
-                # The number of files in this directory is the total number
-                # of files minus the master fits found.
-                num_files_by_dir.extend([len(objects_of_dir)])
-                
-                messages.append(["Directory: '%s' Number of files: %d" % 
-                                 (ubp, len(objects_of_dir))]) 
-                
-                unique_objects_of_dir = set(objects_of_dir)
-                
-                for uo in unique_objects_of_dir:
-                    num_objs = len([ o for o in objects_of_dir if o == uo ])  
-                    
-                    messages.append(["Object: '%s' Number of files: %d" %
-                                     (uo, num_objs)])          
-                
-        # Create a set containing the root directories that contains files.
-        # The source set contains a directory for each filter, so it may
-        # contain several directories for each root directory.
-        unique_root_dir_with_files = set([x.split(os.sep)[1] for x in unique_paths])
-    
-        # Summary: Number of directories without files.
-        # The total number of minus the number of directories without files.
-        num_dir_without_files = \
-            number_of_directories - len(unique_root_dir_with_files)
-        messages.append(["Number of directories without %s files: %d" %
-                          (type_name, num_dir_without_files)])
-            
-        # Summary: Number of files.
-        num_files = sum(num_files_by_dir)
-        messages.append(["Number of %s files is: %d" % (type_name, num_files)])
-            
-        if len(num_files_by_dir) > 0: 
-            max_files_by_dir = max(num_files_by_dir)
-            min_files_by_dir = min(num_files_by_dir)
-            avg_files_by_dir = sum(num_files_by_dir) / len(num_files_by_dir)
-            std_files_by_dir = np.std(num_files_by_dir)
-            med_files_by_dir = np.median(num_files_by_dir)
-            mode_files_by_dir = mode(num_files_by_dir)[0][0]
-        else:
-            max_files_by_dir = 0
-            min_files_by_dir = 0
-            avg_files_by_dir = 0
-            std_files_by_dir = 0
-            med_files_by_dir = 0
-            mode_files_by_dir = 0
-            
-        # Summary: Maximum number of files in directories.
-        messages.append(["Maximum number of %s files in directories: %d" %
-                         (type_name, max_files_by_dir)])
-        
-        # Summary: Minimum number of files in directories.
-        messages.append(["Minimum number of %s files in directories: %d" % 
-                         (type_name, min_files_by_dir)])    
-    
-        # Summary: Average of number of files in directories.
-        messages.append(["Average of number of %s files in directories: %.10g" %
-                         (type_name, avg_files_by_dir)])
-        
-        # Summary: Standard deviation of number of files in directories.
-        messages.append(["Standard deviation of number of %s files in directories: %.10g" %
-                         (type_name, std_files_by_dir)])
-    
-        # Summary: Median of number of files in directories.
-        messages.append(["Median of number of %s files in directories: %.10g" %
-                         (type_name, med_files_by_dir)])
-        
-        # Summary: Mode of number of files in directories.
-        messages.append(["Mode of number of %s files in directories: %.10g" %
-                         (type_name, mode_files_by_dir)])
-    
-    def summary_organization(self):
-        """ Get the summary for: Organization. """
-        
-        messages = []   
-            
-        # Summary for bias.        
-        self.sum_org_images_of_type(messages, False, "bias", BIAS_DIRECTORY,
-                               MASTERBIAS_FILENAME)         
-            
-        # Summary for flats.        
-        self.sum_org_images_of_type(messages, True, "flat", FLAT_DIRECTORY,
-                               MASTERFLAT_FILENAME)  
-        
-        # Summary for data files.
-        self.sum_org_images_of_type(messages, True, "image", DATA_DIRECTORY)    
-        
-        # Statistics for all the set, for each object of interest and for each
-        # standard star and taking into account the filters.
-        
-        self.print_summary(SummaryTasks.ORG_SUM_NAME, messages)
-    
-    def summary_reduction(self):
-        """Get the summary for: Reduction. """
-        
-        messages = []      
-        
-        # Get all the files related to data images.
-        subdirectories, files, directories_from_root = \
-            self.walk_directories(".", "*." + FIT_FILE_EXT, DATA_DIRECTORY, 
-                                  True)
-            
-        # All the final images with its full path.
-        final_images = [os.path.join(f[PATH_COL], f[FILE_NAME_COL]) \
-                        for f in files \
-                        if f[FILE_NAME_COL].find(DATA_FINAL_SUFFIX) > 0]    
-        
-        # Original images, those not final.
-        image_files_no_final = [os.path.join(f[PATH_COL], f[FILE_NAME_COL]) \
-                                for f in files \
-                                if f[FILE_NAME_COL].find(DATA_FINAL_SUFFIX) < 0]
-        
-        images_reduced = 0
-        images_not_reduced = []    
-    
-        # Check if each image has a final one.
-        for i in range(len(image_files_no_final)):
-            inf = image_files_no_final[i]
-            
-            final_image = inf.replace("." + FIT_FILE_EXT, \
-                                      DATA_FINAL_SUFFIX + "." + FIT_FILE_EXT)
-             
-            # Check if the final image related to current one exists.       
-            if final_image in final_images:
-                images_reduced += 1
-            else:
-                images_not_reduced.extend([final_image])
-          
-        # Print the summary.      
-        messages.append(["Total number of images: %d" % 
-                         len(image_files_no_final)])
-        
-        messages.append(["Number of images not reduced: %d" %
-                         len(images_not_reduced)])
-          
-        if len(images_not_reduced) > 0:
-            messages.append(["Images not reduced: %s" % 
-                             (str(images_not_reduced))])
-        
-        self.print_summary(SummaryTasks.RED_SUM_NAME, messages)        
-    
-    def summary_astrometry(self):
-        """Get the summary for: Astrometry. """
-        
-        messages = []      
-        
-        # Get all the files related to catalog images.
-        subdirectories, files, directories_from_root = \
-            self.walk_directories(".", "*." + FIT_FILE_EXT, DATA_DIRECTORY, 
-                                  True)   
-        
-        # Original images, those not final.
-        image_files_no_final = [os.path.join(f[PATH_COL], f[FILE_NAME_COL]) \
-                                for f in files \
-                                if f[FILE_NAME_COL].find(DATA_FINAL_SUFFIX) < 0]
-        
-        images_catalogued = 0
-        images_not_catalogued = []    
-    
-        # Check if each image has a final one.
-        for i in range(len(image_files_no_final)):
-            image = image_files_no_final[i]
-            
-            catalog_file = image.replace("." + FIT_FILE_EXT, \
-                                         "." + CATALOG_FILE_EXT)
-             
-            # Check if the final image related to current one exists.       
-            if os.path.exists(catalog_file):
-                images_catalogued += 1
-            else:
-                images_not_catalogued.extend([image])
-          
-        # Print the summary.      
-        messages.append(["Total number of images: %d" %
-                         (len(image_files_no_final))])
-        
-        messages.append(["Number of images not catalogued: %d" %
-                         (len(images_not_catalogued))])
-          
-        if len(images_not_catalogued) > 0:
-            messages.append(["Images not catalogued:\n %s" %
-                             str(images_not_catalogued)])
-        
-        self.print_summary(SummaryTasks.ASTRO_SUM_NAME, messages)
-    
-    def summary_photometry(self):
-        """ Get the summary for: Photometry. """
-        
-        messages = []      
-        
-        # Get all the original files related to images.
-        subdirectories, files, directories_from_root = \
-            self.walk_directories(".", "*." + FIT_FILE_EXT, DATA_DIRECTORY, 
-                                  True)   
-        
-        # Original images, those not final.
-        image_files_no_final = [os.path.join(f[PATH_COL], f[FILE_NAME_COL]) \
-                                for f in files \
-                                if f[FILE_NAME_COL].find(DATA_FINAL_SUFFIX) < 0]
-        
-        images_with_photometry = 0
-        images_without_photometry = []    
-    
-        # Check if each image has a final one.
-        for i in range(len(image_files_no_final)):
-            image = image_files_no_final[i]
-            
-            photometry_file = image.replace("." + FIT_FILE_EXT, \
-                                            DATA_FINAL_SUFFIX + \
-                                            FILE_NAME_PARTS_DELIM + \
-                                            MAGNITUDE_FILE_EXT + "." + CSV_FILE_EXT)
-             
-            # Check if the final image related to current one exists.       
-            if os.path.exists(photometry_file):
-                images_with_photometry += 1
-            else:
-                images_without_photometry.extend([image])
-          
-        # Print the summary.      
-        messages.append(["Total number of images: %d" %
-                         len(image_files_no_final)])
-        
-        messages.append(["Number of images without photometry: %d" %
-                         len(images_without_photometry)])
-          
-        if len(images_without_photometry) > 0:
-            messages.append(["Images without photometry:\n %s" %
-                             str(images_without_photometry)])
-        
-        self.print_summary(SummaryTasks.PHOT_SUM_NAME, messages)
-    
-    def summary_magnitude(self):
-        """Get the summary for: Magnitude. """
-        
-        messages = []
-        
-        messages.append(["Not implemented yet!"])
-        
-        self.print_summary(SummaryTasks.MAG_SUM_NAME, messages)
-
 class SummaryArguments(object):
     """ Encapsulates the definition and processing of program arguments for
         summaries as an independent program.
@@ -612,7 +105,7 @@ class SummaryArguments(object):
         self.__parser.add_argument("-r", dest="r", action="store_true", \
                                    help="Get summaries for reduction.") 
         
-        self.__parser.add_argument("-s", dest="s", action="store_true", \
+        self.__parser.add_argument("-a", dest="a", action="store_true", \
                                    help="Get summaries for astrometry.")   
         
         self.__parser.add_argument("-p", dest="p", action="store_true", \
@@ -622,7 +115,11 @@ class SummaryArguments(object):
                                    help="Get summaries for magnitudes.") 
         
         self.__parser.add_argument("-l", metavar="log file name", dest="l", \
-                                   help="File to save the log messages")         
+                                   help="File to save the log messages")
+          
+        self.__parser.add_argument("-s", metavar="stars_file_name",
+                                   dest="s",
+                                   help="File of the stars to analyze.")               
          
     @property
     def destiny_file_name(self):
@@ -630,7 +127,15 @@ class SummaryArguments(object):
     
     @property
     def log_file_name(self):
-        return self.__args.l      
+        return self.__args.l  
+    
+    @property    
+    def file_of_stars_provided(self): 
+        return self.__args.s is not None      
+    
+    @property
+    def stars_file_name(self):
+        return self.__stars_file_name         
     
     @property
     def summary_all(self):
@@ -646,7 +151,7 @@ class SummaryArguments(object):
     
     @property
     def summary_astrometry(self):
-        return self.__args.s 
+        return self.__args.a 
     
     @property
     def summary_photometry(self):
@@ -672,6 +177,9 @@ class SummaryArguments(object):
             
         if self.__args.l is None:
             self.__args.l = SummaryArguments.DEFAULT_LOG_FILE_NAME  
+            
+        if self.file_of_stars_provided:
+            self.__stars_file_name = self.__args.s              
             
     def args_summary(self):
         """ Print a brief summary of the arguments received. """
@@ -706,7 +214,7 @@ def init_log(progargs):
     
     logging.debug("Logging initialized.")       
             
-def main(progargss):
+def main(progargs):
     """ Determines the summaries to generate and call to generate them.
     
     Args: 
@@ -714,41 +222,55 @@ def main(progargss):
         
     """
     
+    ret_val = 0
+    
     # Process program arguments.
     progargs.parse()           
         
     # Initializes logging.
     init_log(progargs)  
     
-    # Object that generates the summary.     
-    sum_task = SummaryTasks()
-    
-    # Set the summaries to generate.
-    if progargs.summary_all:
-        sum_task.enable_all_summary_task()
-
-    else:
-        if progargs.summary_organization:
-            sum_task.enable_organization_summary
-            
-        if progargs.summary_reduction:
-            sum_task.enable_reduction_summary
-            
-        if progargs.summary_astrometry:
-            sum_task.enable_astrometry_summary   
-            
-        if progargs.summary_photometry:
-            sum_task.enable_photometry_summary
-            
-        if progargs.summary_magnitude:
-            sum_task.enable_magnitude_summary
-
-    sum_task.generate_summary()
+    # If summary for magnitudes has been requested, check if the file with
+    # information about the stars has been provided.
+    if ( progargs.summary_magnitude or progargs.summary_all ) and \
+        not progargs.file_of_stars_provided:
+        logging.error("A file for stars must be specified to generate a" +
+                      "summary for magnitudes.")
+        ret_val = 1
         
-    if not sum_task.is_any_summary_task_enabled:
-        progargs.print_help()                
+    else:    
+        # Read the stars.
+        stars = starsset.StarsSet(progargs.stars_file_name)
+        
+        # Object that generates the summary.     
+        sum_report = SummaryReport(stars, None)
+        
+        # Set the summaries to generate.
+        if progargs.summary_all:
+            sum_report.enable_all_summary_task()
     
-    return 0
+        else:
+            if progargs.summary_organization:
+                sum_report.enable_organization_summary
+                
+            if progargs.summary_reduction:
+                sum_report.enable_reduction_summary
+                
+            if progargs.summary_astrometry:
+                sum_report.enable_astrometry_summary   
+                
+            if progargs.summary_photometry:
+                sum_report.enable_photometry_summary
+                
+            if progargs.summary_magnitude:
+                sum_report.enable_magnitude_summary
+    
+        sum_report.generate_summary()
+            
+        if not sum_report.is_any_summary_task_enabled:
+            progargs.print_help()                
+    
+    return ret_val
         
 # Where all begins ...
 if __name__ == "__main__":

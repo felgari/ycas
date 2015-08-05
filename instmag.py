@@ -22,6 +22,7 @@ to the objects of interest and compile all then in files with csv format.
 
 """
 
+import os
 from textfiles import *
 from constants import *
 from utility import get_day_from_mjd

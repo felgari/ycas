@@ -39,42 +39,7 @@ import photometry
 import magnitude
 import curves
 import summary
-from constants import *
-
-def do_summary(progargs):
-    """ Generates a summary for the tasks performed by the pipeline.
-    
-    Args:
-        progargs: The program arguments.
-        
-    """    
-    
-    # Object that generates the summary.     
-    sum_task = summary.SummaryTasks()     
-    
-    if progargs.all_steps_requested: 
-        sum_task.enable_all_summary_task()
-
-    else:    
-        if progargs.organization_requested:
-            sum_task.enable_organization_summary
-    
-        if progargs.reduction_requested:
-            sum_task.enable_reduction_summary
-            
-        if progargs.astrometry_requested:
-            sum_task.enable_astrometry_summary   
-            
-        if progargs.photometry_requested:
-            sum_task.enable_photometry_summary
-            
-        if progargs.diff_photometry_requested:
-            sum_task.enable_diff_photometry_summary
-            
-        if progargs.magnitudes_requested:
-            sum_task.enable_magnitude_summary
-
-    sum_task.generate_summary()    
+from constants import * 
 
 def pipeline(progargs):
     """ Performs sequentially the steps of the pipeline that have been 
@@ -148,7 +113,7 @@ def pipeline(progargs):
         
     # Generates a summary if requested and some task has been indicated.
     if anything_done and progargs.summary_requested:
-        do_summary(progargs)
+        summary.generate_summary(progargs, stars, mag)
 
 def main(progargs):
     """ Main function.
