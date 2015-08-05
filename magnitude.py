@@ -34,7 +34,7 @@ import numpy as np
 from constants import *
 from textfiles import *
 import starsset
-from instmag import StarMagnitudes
+from starmag import StarMagnitudes
 from extcorrmag import ExtCorrMagnitudes
 from calibmag import get_calibrated_magnitudes
 
