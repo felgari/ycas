@@ -19,6 +19,7 @@
 
 """ This module groups some functions performed on text files. """
 
+import os
 import logging
 import csv
 from fitfiles import get_fit_table_data
