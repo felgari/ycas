@@ -47,11 +47,10 @@ class SummaryTasks(object):
     RED_SUM_NAME = "Reduction"
     ASTRO_SUM_NAME = "Astrometry"
     PHOT_SUM_NAME = "Photometry"
-    DIFF_PHOT_SUM_NAME = "Differential Photometry"
     MAG_SUM_NAME = "Magnitude"
 
     SUMMARY_TASKS = [ORG_SUM_NAME, RED_SUM_NAME, ASTRO_SUM_NAME, 
-                     PHOT_SUM_NAME, DIFF_PHOT_SUM_NAME, MAG_SUM_NAME]
+                     PHOT_SUM_NAME, MAG_SUM_NAME]
         
     __SUM_PRO_NAME_COL = 0
     __SUM_PRO_REQ_PROP_COL = 1
@@ -64,7 +63,6 @@ class SummaryTasks(object):
                 SummaryTasks.RED_SUM_NAME : False,
                 SummaryTasks.ASTRO_SUM_NAME : False,
                 SummaryTasks.PHOT_SUM_NAME : False,
-                SummaryTasks.DIFF_PHOT_SUM_NAME : False,
                 SummaryTasks.MAG_SUM_NAME : False }
         
     # List of methods to use to get the summary of each task.       
@@ -73,7 +71,6 @@ class SummaryTasks(object):
                SummaryTasks.RED_SUM_NAME : self.summary_reduction,
                SummaryTasks.ASTRO_SUM_NAME : self.summary_astrometry,
                SummaryTasks.PHOT_SUM_NAME : self.summary_photometry,
-               SummaryTasks.DIFF_PHOT_SUM_NAME : self.summary_diff_photometry,
                SummaryTasks.MAG_SUM_NAME : self.summary_magnitude }  
        
     @property 
@@ -90,11 +87,7 @@ class SummaryTasks(object):
         
     @property 
     def enable_photometry_summary(self):
-        self._tasks_to_do[SummaryTasks.PHOT_SUM_NAME] = True   
-        
-    @property 
-    def enable_diff_photometry_summary(self):
-        self._tasks_to_do[SummaryTasks.DIFF_PHOT_SUM_NAME] = True             
+        self._tasks_to_do[SummaryTasks.PHOT_SUM_NAME] = True               
         
     @property 
     def enable_magnitude_summary(self):
@@ -577,15 +570,6 @@ class SummaryTasks(object):
         
         self.print_summary(SummaryTasks.PHOT_SUM_NAME, messages)
     
-    def summary_diff_photometry(self):
-        """Get the summary for: Differential Photometry. """
-        
-        messages = []
-        
-        messages.append(["Not implemented yet!"])
-        
-        self.print_summary(SummaryTasks.DIFF_PHOT_SUM_NAME, messages) 
-    
     def summary_magnitude(self):
         """Get the summary for: Magnitude. """
         
@@ -633,10 +617,6 @@ class SummaryArguments(object):
         
         self.__parser.add_argument("-p", dest="p", action="store_true", \
                                    help="Get summaries for photometry.") 
-
-        self.__parser.add_argument("-dp", dest="dp", action="store_true", \
-                                   help="Get summaries for differential " + \
-                                   "photometry.") 
         
         self.__parser.add_argument("-m", dest="m", action="store_true", \
                                    help="Get summaries for magnitudes.") 
@@ -670,11 +650,7 @@ class SummaryArguments(object):
     
     @property
     def summary_photometry(self):
-        return self.__args.p
-    
-    @property
-    def summary_diff_photometry(self):
-        return self.__args.dp         
+        return self.__args.p     
     
     @property
     def summary_magnitude(self):
@@ -763,9 +739,6 @@ def main(progargss):
             
         if progargs.summary_photometry:
             sum_task.enable_photometry_summary
-            
-        if progargs.summary_diff_photometry:
-            sum_task.enable_diff_photometry_summary
             
         if progargs.summary_magnitude:
             sum_task.enable_magnitude_summary
