@@ -107,10 +107,13 @@ class Magnitude(object):
     def calib_mag(self, calib_mag):
         self._calib_mag = calib_mag                
 
-class InstrumentalMagnitudes(object):
-    """ Read and stores the values of the instrumental magnitudes of stars.
+class StarMagnitudes(object):
+    """ Read and stores the values of the magnitudes of stars.
     
     """
+    
+    # Identifier for object of interest in the coordinates list of a field.
+    OBJ_OF_INTEREST_ID = 0
     
     # Number of the column that contains the magnitude value.
     CSV_ID_COOR_COL = 0
@@ -132,10 +135,10 @@ class InstrumentalMagnitudes(object):
         self._stars = stars
         
         # To store the instrumental magnitudes of the star of interest.
-        self._instrumental_magnitudes = []
-        # To store the instrumental magnitudes of the star of interest and the
-        # stars of reference.
-        self._all_instrumental_magnitudes = [] 
+        self._magnitudes = []
+        # To store the magnitudes of the star of interest and the stars of 
+        # reference.
+        self._all_magnitudes = [] 
         
         self._star_names = []   
        
@@ -143,8 +146,8 @@ class InstrumentalMagnitudes(object):
         for s in stars:
             self._star_names.append(s.name)
             
-            self._instrumental_magnitudes.append([])
-            self._all_instrumental_magnitudes.append([])
+            self._magnitudes.append([])
+            self._all_magnitudes.append([])
             
         # Sets of filters and days of the magnitudes.
         self._filter = set()
@@ -217,26 +220,26 @@ class InstrumentalMagnitudes(object):
         return filter_name
     
     def get_mags_of_star(self, star_name):
-        """Returns the instrumental magnitudes of the star name received
+        """Returns the magnitudes of the star name received
         
         Args:
-            star_name: Name of the star whose inst. magnitudes are requested.
+            star_name: Name of the star whose magnitudes are requested.
             
         Returns:
-            The instrumental magnitudes of the star if available.
+            The magnitudes of the star if available.
         """
         
-        inst_mag = None
+        mag = None
         
         i = 0
         
         for sn in self._star_names:
             if sn == star_name:
-                inst_mag = self._instrumental_magnitudes[i]
+                mag = self._magnitudes[i]
                 break
             i = i + 1
                         
-        return inst_mag    
+        return mag    
 
     def add_all_mags(self, star_name, star_index, magnitudes, time, filter):
         """Add all the magnitudes sorted by id.
@@ -283,7 +286,7 @@ class InstrumentalMagnitudes(object):
                     # There is no magnitude for this reference, add INDEF values.
                     mag_row.extend([INDEF_VALUE, INDEF_VALUE])                     
             
-        self._all_instrumental_magnitudes[star_index].append(mag_row)
+        self._all_magnitudes[star_index].append(mag_row)
 
     def read_mag_file(self, mag_file, filter_name, star_name, coordinates):
         """Read the magnitudes from the file.
@@ -328,7 +331,7 @@ class InstrumentalMagnitudes(object):
                     
                     # If it is the object of interest, add the magnitude to the
                     # magnitudes list.
-                    if current_coor_id == OBJ_OF_INTEREST_ID:
+                    if current_coor_id == StarMagnitudes.OBJ_OF_INTEREST_ID:
                         im = Magnitude(star_name,
                                        mjd,
                                        filter_name,
@@ -354,7 +357,7 @@ class InstrumentalMagnitudes(object):
             
             if star_index >= 0: 
                 
-                self._instrumental_magnitudes[star_index].extend(mag)
+                self._magnitudes[star_index].extend(mag)
 
                 if len(all_mag) > 0:
                     # Add all the magnitudes in the image sorted by identifier.
@@ -389,7 +392,7 @@ class InstrumentalMagnitudes(object):
             
             self.read_mag_file(mag_file, filter_name, star_name, coordinates)
     
-    def save_all_inst_mag(self):
+    def save_all_mag(self):
         """ Save the magnitudes received.   
         
         """
@@ -401,7 +404,7 @@ class InstrumentalMagnitudes(object):
             # Save only no standard stars.
             if not s.is_std:
                 # Check not empty.
-                if self._all_instrumental_magnitudes[i]:                    
+                if self._all_magnitudes[i]:                    
                     # Get the name of the output file.
                     output_file_name = "%s%s%s%s" % \
                         (s.name, ALL_INST_MAG_SUFFIX, ".", TSV_FILE_EXT)
@@ -412,7 +415,7 @@ class InstrumentalMagnitudes(object):
                 
                         # It is a list that contains sublists, each sublist is
                         # a different magnitude, so each one is written as a row.
-                        for imag in self._all_instrumental_magnitudes[i]:
+                        for imag in self._all_magnitudes[i]:
                         
                             # Write each magnitude in a row.
                             writer.writerow(imag)                     
@@ -434,7 +437,7 @@ class InstrumentalMagnitudes(object):
         for s in self._stars:          
             
             # Retrieve the magnitudes of current star.
-            mags = self._instrumental_magnitudes[i]
+            mags = self._magnitudes[i]
             
             # Check not empty.
             if mags:                

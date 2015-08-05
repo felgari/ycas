@@ -34,7 +34,7 @@ import numpy as np
 from constants import *
 from textfiles import *
 import starsset
-from instmag import InstrumentalMagnitudes
+from instmag import StarMagnitudes
 from extcorrmag import ExtCorrMagnitudes
 from calibmag import get_calibrated_magnitudes
 
@@ -50,7 +50,7 @@ def get_instrumental_magnitudes(stars, data_directoy_name):
     
     """
     
-    ins_mag = InstrumentalMagnitudes(stars)
+    ins_mag = StarMagnitudes(stars)
         
     # Walk directories searching for files containing magnitudes.
     for path,dirs,files in os.walk('.'):
@@ -62,17 +62,17 @@ def get_instrumental_magnitudes(stars, data_directoy_name):
             # Check if current directory is for data.
             if split_path[-2] == data_directoy_name:
                
-                logging.debug("Found a directory for data images: " + path)
+                logging.debug("Found a directory for data images: %s" % (path))
 
                 # Get the list of RDLS files ignoring hidden files 
                 # (starting with dot).
                 mag_files_full_path = \
-                    [f for f in glob.glob(os.path.join(path, "*" + \
-                                                       MAG_CSV_PATTERN)) \
+                    [f for f in glob.glob(os.path.join(path, "*%s" %
+                                                       (MAG_CSV_PATTERN))) \
                     if not os.path.basename(f).startswith('.')]
                     
-                logging.debug("Found " + str(len(mag_files_full_path)) + \
-                             " files with magnitudes.")    
+                logging.debug("Found %d files with magnitudes." % 
+                              (len(mag_files_full_path)))    
                 
                 # Sort the list of files to ensure a right processing of MJD.
                 mag_files_full_path.sort()               
@@ -83,7 +83,7 @@ def get_instrumental_magnitudes(stars, data_directoy_name):
                     # Get the magnitudes for this object in current path.
                     ins_mag.read_inst_magnitudes(mag_file, path)
                             
-    ins_mag.save_all_inst_mag()                            
+    ins_mag.save_all_mag()                            
                         
     return ins_mag
 

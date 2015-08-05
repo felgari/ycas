@@ -38,6 +38,8 @@ from images import *
 from photpars import *
 
 phot_progargs = None
+
+TXDUMP_FIELDS = "id,xc,yc,otime,mag,xairmass,merr"
     
 def init_iraf():
     """Initializes the pyraf environment. """
