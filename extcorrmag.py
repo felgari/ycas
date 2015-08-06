@@ -71,8 +71,8 @@ class ExtinctionCoefficientNotCalculated(Exception):
         self._filter = filter
         
     def __str__(self):
-        return "No extinction coefficient calculated for star %s " + \
-            "and filter %s" % (self._star_name, self._filter)      
+        return "No extinction coefficient calculated for star %s and filter %s"\
+                % (self._star_name, self._filter)      
     
 class ExtinctionCoefficientNotFound(Exception):
     """To raise when a extinction coefficient does not exist for a day 
@@ -197,10 +197,7 @@ class ExtCorrMagnitudes(object):
                
             raise ExtinctionCoefficientNotCalculated(star_name, filter)
         else:                    
-            logging.info("Linear regression for day: %.10g star: %s with " +
-                         "filter: %s slope: %.10g intercept %.10g r-value: " +
-                         "%.10g p-value: %.10g std_err: %.10g air mass min: " +
-                         "%.10g air mass max: %.10g using %d values" %
+            logging.info("Linear regression for day: %.10g star: %s with filter: %s slope: %.10g intercept %.10g r-value: %.10g p-value: %.10g std_err: %.10g air mass min: %.10g air mass max: %.10g using %d values" %
                          (a[0][0], star_name, filter, 
                           slope, intercept, r_value, p_value, std_err, 
                           np.min(na[:,2]), np.max(na[:,2]), na.size))       
@@ -244,9 +241,8 @@ class ExtCorrMagnitudes(object):
         if len(mag_to_calc_ext_coef) > 0:
             
             for d in self._inst_mag.days:
-                logging.debug("Calculating extinction coefficient " +
-                              "for day %d with %d magnitudes." %
-                              (d, len(mag_to_calc_ext_coef)))
+                logging.debug("Calculating extinction coefficient for day %d with %d magnitudes."
+                              % (d, len(mag_to_calc_ext_coef)))
                 
                 for f in self._inst_mag.filters:
                     mag = [m for m in mag_to_calc_ext_coef \
@@ -265,17 +261,15 @@ class ExtCorrMagnitudes(object):
                                                                intercept)             
                                 self._ec.append(new_ec)
                             else:
-                                logging.warning("Data to calculate " +
-                                                "extinction coefficient " +
-                                                "discarded for day %d." % (d))
+                                logging.warning("Data to calculate extinction coefficient discarded for day %d."
+                                                % (d))
 
                         except ExtinctionCoefficientNotCalculated as ecnc:
                             logging.error(ecnc)         
                             print ecnc         
                     else:
-                        logging.warning("There is not enough  data to " + \
-                                        "calculate extinction coefficient " + \
-                                        "on day %s for filter " % (f))
+                        logging.warning("There is not enough  data to calculate extinction coefficient on day %s for filter "
+                                        % (f))
         else:
             logging.warning("There is not enough data to " +
                             "calculate extinction coefficients")      
@@ -321,5 +315,5 @@ class ExtCorrMagnitudes(object):
                         logging.debug(e)
                         
                 else:
-                    logging.debug("Found an instrumental magnitude " +
-                                  "undefined for star %s" % (star.name))       
+                    logging.debug("Found an instrumental magnitude undefined for star %s"
+                                  % (star.name))       

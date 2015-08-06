@@ -230,11 +230,11 @@ class ProgramArguments(object):
     
     @property
     def file_of_filters_provided(self):
-        return self._args.filters is not None   
+        return self.__args.filters is not None   
     
     @property
     def filters_file_name(self):
-        return self._args.filters      
+        return self.__args.filters      
     
     @property
     def sextractor_cfg_file_provided(self):
@@ -355,7 +355,7 @@ class ProgramArguments(object):
 
         # Check coherence for other steps.
         
-        if self.organization_requested() and not self.file_of_filters_provided():
+        if self.organization_requested and not self.file_of_filters_provided:
             raise ProgramArgumentsException(self.ORG_REQUIRES_FILTERS)        
         
         if self.astrometry_requested and not self.file_of_stars_provided:

@@ -439,8 +439,8 @@ class StarsSet(object):
         
         # Check the line has a minimum number of fields.
         if len(line) < self.MIN_NUM_OF_FIELDS_IN_LINE:
-            logging.error("In the file of stars, the line %d does not " +
-                          "contain enough values." % (line_number))
+            logging.error("In the file of stars, the line %d does not contain enough values."
+                          % (line_number))
         else:
             # Create the object for the star filling the basic data for it.
             star = self.create_star(line)
@@ -467,7 +467,7 @@ class StarsSet(object):
         
         objects = list()
         
-        logging.debug("Reading stars from file: " + file_name)
+        logging.debug("Reading stars from file: %s" % (file_name))
         
         line_number = 0
         
@@ -487,6 +487,7 @@ class StarsSet(object):
                     
                 line_number = line_number + 1 
                 
-        logging.debug("Finished the reading of stars from file: " + file_name)            
+        logging.debug("Finished the reading of stars from file: %s" %
+                      (file_name))            
                 
         return objects   

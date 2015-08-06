@@ -187,8 +187,7 @@ def generate_all_masterbias(bias_dir_name):
                 
                 # Check if masterbias already exists.
                 if os.path.exists(masterbias_name) == True:
-                    logging.debug("Masterbias file exists '%s', so resume " + \
-                                  "to next directory." % 
+                    logging.debug("Masterbias file exists '%s', so resume to next directory." % 
                                   (masterbias_name))
                 else:
                     # Put the files list in a string.

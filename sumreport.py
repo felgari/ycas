@@ -214,7 +214,7 @@ class SummaryReport(object):
     def save_complete_report(self):
         """Save all the summary messages to a file. """
         
-        with open(self.report_file_name(), 'a') as fw:
+        with open(self.report_file_name, 'a') as fw:
             
             for m in self._all_messages:
                 fw.write("%s\n" % (m))         

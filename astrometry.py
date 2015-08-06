@@ -66,7 +66,7 @@ class StarNotFound(Exception):
         
 class Astrometry(object):
     
-    NUM_OF_OBJECTS_FOR_SECOND_TRY = 40
+    NUM_OBJECTS_SECOND_TRY = 40
     
     def __init__(self, progargs, stars):
         """Constructor.
@@ -150,12 +150,14 @@ class Astrometry(object):
     
         self.print_summary()
         
-    def execute_astrometry_command(self, num_of_objects):
+    def execute_astrometry_command(self, num_of_objects, image_file, star):
         """Executes a external command to perform the astrometry.
         
         Args:
             num_of_objects: Number of objects to use when identifying the
                 field of stars.
+            image_file: The name of the file with the image.
+            star: The star related to the image.
         """
         
         # Compose the command use the base command and adding the arguments
@@ -176,7 +178,7 @@ class Astrometry(object):
         
         return return_code
         
-    def do_astrometry_of_image(self, image_file):
+    def do_astrometry_of_image(self, image_file, star):
         """Get the astrometry of an image. The command is execute a second
         time if the first execution does not generate the astrometry.
         
@@ -186,28 +188,29 @@ class Astrometry(object):
             
         """
                     
-        execute_astrometry_command(self._num_of_objects)
+        self.execute_astrometry_command(self._num_of_objects, image_file, star)
         
         # Check if the astrometry has been successful.
-        if astrometry_success(image_file):
+        if self.astrometry_success(image_file):
             logging.debug("Astrometry first execution successful with %d objects" %
                           (self._num_of_objects))
             
-        elif self._num_of_objects < Astrometry.NUM_OF_OBJECTS_FOR_SECOND_TRY:
+        elif self._num_of_objects < Astrometry.NUM_OBJECTS_SECOND_TRY:
             
             # If the first execution of astrometry has not been successful do a
             # second try incrementing the number of objects to identify.            
-            execute_astrometry_command(Astrometry.NUM_OF_OBJECTS_FOR_SECOND_TRY)
+            self.execute_astrometry_command(Astrometry.NUM_OBJECTS_SECOND_TRY,
+                                            image_file, star)
         
-            success = astrometry_success(image_file)
+            success = self.astrometry_success(image_file)
             
             if success:
                 logging.debug("Astrometry second execution successful with %d objects" %
-                              (Astrometry.NUM_OF_OBJECTS_FOR_SECOND_TRY))
+                              (Astrometry.NUM_OBJECTS_SECOND_TRY))
             else:
                 logging.debug("Astrometry second and final execution not " + 
                               "successful with %d objects" %
-                              (Astrometry.NUM_OF_OBJECTS_FOR_SECOND_TRY))        
+                              (Astrometry.NUM_OBJECTS_SECOND_TRY))        
         return success
     
     def do_astrometry_of_images(self, files_to_catalog):

@@ -47,8 +47,8 @@ def convert_logging_level(level):
         # If no valid log level is indicated use the default level.
         logging_level = LOG_LEVELS[DEFAULT_LOG_LEVEL_NAME]
         
-        logging.warning("Log level provided is no valid '%s', using " + 
-                        "default value '%s'" % (level, DEFAULT_LOG_LEVEL_NAME))
+        logging.warning("Log level provided is no valid '%s', using default value '%s'" 
+                        % (level, DEFAULT_LOG_LEVEL_NAME))
     
     return logging_level
 
