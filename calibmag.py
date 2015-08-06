@@ -32,6 +32,9 @@ from textfiles import *
 MIN_VALUE_TO_CALC_COEF = 0.01
 
 class TransformingCoefficient(object):   
+    """Stores a set of transforming coefficient used to calibrate magnitudes in
+    a concrete day.
+    """
     
     def __init__(self, day, B_V_observed_mag, V_observed_mag, \
                  B_V_std_mag, V_std_mag):
@@ -97,8 +100,9 @@ class TransformingCoefficient(object):
         y = np.array(V_std_mag).astype(np.float) - \
             np.array(V_observed_mag).astype(np.float)
             
-        # Only if the difference between the standard magnitude and the observed 
-        # one is greater than a given value calculate the transforming coefficients.
+        # Only if the difference between the standard magnitude and the 
+        # observed one is greater than a given value calculate the 
+        # transforming coefficients.
         if np.mean(y) > MIN_VALUE_TO_CALC_COEF: 
             
             print np.array(B_V_std_mag)

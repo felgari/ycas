@@ -216,8 +216,6 @@ class Astrometry(object):
         Args:
             files_to_catalog: List of catalog files to generate.
         
-        Returns:
-        
         """
         
         # Get the astrometry for each image_file found.

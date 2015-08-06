@@ -36,6 +36,7 @@ PATH_COL = 0
 FILE_NAME_COL = 1
 
 class SummaryException(Exception):
+    """Raised for different errors that could arise generating the report."""
     
     def __init__(self, msg):
         self._msg
@@ -44,8 +45,7 @@ class SummaryException(Exception):
         return self._msg
 
 class SummaryReport(object):
-    """ Encapsulates the summary report to generate.
-    """
+    """Encapsulates the summary report to generate."""
     
     ORG_SUM_NAME = "Organization"
     RED_SUM_NAME = "Reduction"
@@ -64,6 +64,7 @@ class SummaryReport(object):
         """Constructor.
         
         Args:
+            report_file_name: Name of the file where the report is saved.
             stars: List of stars.
             stars_mag: The magnitudes calculated, if any.
             
@@ -140,8 +141,8 @@ class SummaryReport(object):
                           summary_task)
             
     def generate_summary(self):
-        """Generate the summary. All the possible tasks are evaluated and its
-        summary generated if requested. Finally a report is saved to a file.
+        """Generate the summary. Check all the steps to determine those whose
+        report has been requested. Finally a report is saved to a file.
         
         """         
 
@@ -175,7 +176,9 @@ class SummaryReport(object):
         return enabled   
     
     @property
-    def is_any_summary_task_enabled(self):  
+    def is_any_summary_task_enabled(self):
+        """Returns True if the report has been requested at least for a task.
+        """   
         
         any_enabled = False
         
@@ -229,7 +232,7 @@ class SummaryReport(object):
             dir_for_images: Indicates it it is a directory with images.
         
         Returns:        
-        
+            The directories and files found that matches the patterns received.
         """
         
         directories_found = []
@@ -269,12 +272,10 @@ class SummaryReport(object):
                         files_found.extend([dc])
             
         # Get the files found with the path and file name splitted.
-        directories_found
         files_found_path_splited = [ os.path.split(ff) for ff in files_found ]
         
         return directories_found, files_found_path_splited, \
             directories_from_root
-    
     
     def sum_org_images_of_type(self, messages, has_filters, type_name, 
                                      dir_name, master_file_name = None):
@@ -652,6 +653,7 @@ class SummaryReport(object):
                 messages.append(["%d calibrated magnitudes." % \
                                  calib_mag])                 
         
+        # Print the summary.
         self.print_summary(SummaryReport.MAG_SUM_NAME, messages)
         
     def read_magnitude_files(self):

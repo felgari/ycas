@@ -21,10 +21,13 @@
 
 The organization takes into account the session (day) where was taken and 
 the type of the image: bias, flat or data.
+
 The module assume that images are initially stored in directories that 
 corresponds to the day which were taken.
+
 Into each day the images are organized in a directory for bias, another
 for flats and another for data.
+
 Also flats and data images are organized in different subdirectories,
 one for each filter. 
 """
@@ -49,7 +52,7 @@ def create_directory(path, dirname):
         dirname: Name of the directory to create.
         
     Raises:
-        OSError if the directory could not be created.
+        OSError if the directory can not be created.
     
     """
 

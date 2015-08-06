@@ -20,11 +20,15 @@
 """This module performs the reduction of astronomical images. 
 
 It walks the directories looking for bias, flat and data images.
+
 For bias images calculates the average bias.
+
 For flats images, subtract the bias, normalize the result and calculates the 
 average flat for each filter.
+
 Finally for each data image subtract bias and divide it by the flat 
 corresponding to its filter.
+
 """
 
 import sys
@@ -70,8 +74,8 @@ def is_data_directory(current_dir, data_dir_name):
     return split_path[-2] == data_dir_name
 
 def get_masterbias_file_name(data_path):
-    """Get the masterbias file name related to the data_path containing the data 
-    images.
+    """Get the masterbias file name related to the data_path containing the 
+    data images.
     
     Args:
         data_path: Path of the directory with the data images.
@@ -92,8 +96,8 @@ def get_masterbias_file_name(data_path):
     return masterbias_name
 
 def get_masterflat_file_name(data_path):
-    """Get the masterflat file name related to the data_path containing the data 
-    images.
+    """Get the masterflat file name related to the data_path containing the 
+    data images.
     
     Args:
         data_path: Path of the directory with the data images.
@@ -183,7 +187,8 @@ def generate_all_masterbias(bias_dir_name):
                 
                 # Check if masterbias already exists.
                 if os.path.exists(masterbias_name) == True:
-                    logging.debug("Masterbias file exists '%s', so resume to next directory." % 
+                    logging.debug("Masterbias file exists '%s', so resume " + \
+                                  "to next directory." % 
                                   (masterbias_name))
                 else:
                     # Put the files list in a string.
@@ -198,7 +203,8 @@ def generate_all_masterbias(bias_dir_name):
                         iraf.imcombine(list_of_files, masterbias_name, Stdout=1)
                         
                     except iraf.IrafError as exc:
-                        logging.error("Error executing imcombine combining bias with: %s" %
+                        logging.error("Error executing imcombine combining " + \
+                                      "bias with: %s" %
                                       (list_of_files))  
                         logging.error("Iraf error is: %s" % (exc))    
                         
@@ -334,7 +340,7 @@ def generate_masterflat(path, files, masterflat_name):
         logging.error("Iraf error is: %s" % (exc))
 
 def generate_all_masterflats(flat_dir_name):
-    """ Calculation of all the masterflat files.
+    """Calculation of all the masterflat files.
     
     This function search for flat files from current directory.
     Usually data images are taken using different filters, so flat images
@@ -530,13 +536,13 @@ def reduce_images(progargs):
     # Load the images package and does not show any output.
     iraf.images(_doprint=0)
 
-    # Obtain all the average bias.
+    # Generate all the average bias.
     generate_all_masterbias(progargs.bias_directory)
 
-    # Obtain all the average flat.
+    # Generate all the average flat.
     generate_all_masterflats(progargs.flat_directory)
 
-    # Reduce data images applying bias and flats.
+    # Reduce all the data images applying the average bias and flats.
     reduce_data_images(progargs.data_directory)
     
     logging.info("Finished the reduction of images.")    

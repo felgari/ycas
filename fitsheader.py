@@ -86,13 +86,13 @@ def summarize_fit_headers():
                     hdulist.close()
                     
 def main(argv=None):
-    """ main function.
+    """main function.
 
     A main function allows the easy calling from other modules and also from 
     the command line.
 
-    Arguments:
-    argv - List of arguments passed to the script.
+    Args:
+        argv: List of arguments passed to the script.
 
     """
     

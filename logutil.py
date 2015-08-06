@@ -17,8 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Provides some utility functions for logging.
-"""
+"""Provides some utility functions for logging."""
 
 import logging
 
@@ -48,8 +47,8 @@ def convert_logging_level(level):
         # If no valid log level is indicated use the default level.
         logging_level = LOG_LEVELS[DEFAULT_LOG_LEVEL_NAME]
         
-        logging.warning("Log level provided is no valid '%s', using default value '%s'" %
-                            (level, DEFAULT_LOG_LEVEL_NAME))
+        logging.warning("Log level provided is no valid '%s', using " + 
+                        "default value '%s'" % (level, DEFAULT_LOG_LEVEL_NAME))
     
     return logging_level
 
@@ -57,8 +56,7 @@ def init_log(progargs):
     """ Initializes the file log and messages format. 
     
     Args:
-        progargs: ProgramArguments object, it contains the information of all 
-            program arguments received.
+        progargs: Program arguments.
     
     """    
     

@@ -17,19 +17,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-""" This module performs some utility functions. """
+"""This module performs some utility functions. """
 
 def get_day_from_mjd(mjd_time):
-    """Returns the julian day related to the Julian time received.
+    """Returns the Modified Julian day related to the Modified Julian time
+    received without decimals.
     
     The day is assigned to that which the night begins.
-    So a JD between .0 (0:00:00) and .4 (+8:00:00) belongs to the day before.
+    So a MJD between .0 (0:00:00) and .5 (+12:00:00) belongs to the day before,
+    this is, when the night begins.
     
     Args:
         mjd_time: A Julian time value.
     
     Returns:        
-        The Julian day related to the Julian day, without decimals. 
+        The Modified Julian day calculated. 
     
     """
     
@@ -40,8 +42,9 @@ def get_day_from_mjd(mjd_time):
     first_decimal = mjd_time[dot_pos + 1]
     
     int_first_decimal = int(first_decimal) 
-    
-    if int_first_decimal >= 0 and int_first_decimal <= 4:
+        
+    if int_first_decimal >= 0 and int_first_decimal <= 5:
+        # The day before, as the time corresponds to early morning.
         day = str(int(mjd_time[:dot_pos]) - 1)
     else:
         day = mjd_time[:dot_pos]

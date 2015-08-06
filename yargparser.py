@@ -19,17 +19,14 @@
 
 """Process the program arguments received by main function.
 
-Define the arguments available, check for its correctness, and provides 
-these arguments to other modules. 
+Define the arguments available, check for its correctness and coherence, 
+and provides these arguments to other modules. 
 """
 
 import os
 import argparse
 import logging
 from constants import *
-
-# Default number of objects to look at when doing astrometry.
-ASTROMETRY_NUM_OBJS = 20
 
 class ProgramArgumentsException(Exception):
     
@@ -42,6 +39,9 @@ class ProgramArgumentsException(Exception):
 
 class ProgramArguments(object):
     """ Encapsulates the definition and processing of program arguments. """
+    
+    # Default number of objects to look at when doing astrometry.
+    ASTROMETRY_NUM_OBJS = 20
     
     PHOT_REQUIRES_SEX_PATH = "Photometry requires the specification of " + \
         "a path for sextractor configuration files."
@@ -90,11 +90,11 @@ class ProgramArguments(object):
         
         self.__sextractor_cfg_path = os.getcwd()
         
-        self.__astrometry_num_of_objects = ASTROMETRY_NUM_OBJS
+        self.__astrometry_num_of_objects = ProgramArguments.ASTROMETRY_NUM_OBJS
         
         self.__stars_file_name = self.STARS_FILE_NAME  
             
-        # Initiate arguments of the parser.
+        # Initialize arguments of the parser.
         self.__parser = argparse.ArgumentParser()
         
         self.__parser.add_argument("-all", dest="all", action="store_true",
@@ -153,7 +153,8 @@ class ProgramArguments(object):
         
         self.__parser.add_argument("-no", dest="no",
                                    metavar="number_of_objects", type=int,
-                                   help="Number of objects to take into account in images when doing astrometry.")   
+                                   help="Number of objects to take into " + 
+                                   "account in images when doing astrometry.")   
         
         self.__parser.add_argument("-us", dest="us", action="store_true",  
                                    help="Use sextractor for astrometry.")                   
@@ -272,9 +273,7 @@ class ProgramArguments(object):
         return self.__args.all   
     
     def parse_and_update(self):
-        """ Parse the program arguments and update attributes.
-        
-        """
+        """Parse the program arguments and update attributes."""
         
         # Parse program arguments.
         self.__args = self.__parser.parse_args()          
@@ -306,11 +305,9 @@ class ProgramArguments(object):
             self.__astrometry_num_of_objects = self.__args.no            
             
     def check_arguments_coherence(self):
-        """ Check the coherence of program arguments received.
+        """Check the coherence of program arguments received."""
         
-        """
-        
-        # Check at least a pipeline step has been requested.
+        # Check that at least a pipeline step has been requested.
         if not self.organization_requested and \
             not self.reduction_requested and \
             not self.astrometry_requested and \
@@ -340,6 +337,8 @@ class ProgramArguments(object):
             if not self.sextractor_cfg_file_provided:
                 raise ProgramArgumentsException(ProgramArguments.PHOT_REQUIRES_SEX_PATH)            
 
+        # Check coherence for other steps.
+
         if self.astrometry_requested and not self.file_of_stars_provided:
             raise ProgramArgumentsException(self.ASTRO_REQUIRES_STARS_FILE)
         
@@ -350,23 +349,18 @@ class ProgramArguments(object):
             raise ProgramArgumentsException(self.LIGHT_CURVES_REQUIRES_STARS_FILE)
             
     def process_program_arguments(self):
-        """ Parse and check coherence of program arguments.
-        
-        Parse the program arguments using the 'ArgumentParser' object created.
-        
-        """      
+        """Parse and check coherence of program arguments."""      
         
         self.parse_and_update()
       
         self.check_arguments_coherence()
             
     def print_usage(self):
-        """ Print arguments options """
+        """Print arguments options """
                 
         self.__parser.print_usage()     
         
     def print_help(self):
-        """ Print help for arguments options """
+        """Print help for arguments options """
                 
-        self.__parser.print_help()           
-     
+        self.__parser.print_help()     

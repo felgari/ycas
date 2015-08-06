@@ -308,7 +308,7 @@ def txdump_photometry_info(data_dir_name):
                     mag_dest_file.close()
                            
 def calculate_photometry(progargs):
-    """ Calculates the photometry for all the data images found.
+    """Calculates the photometry for all the data images found.
     
     Args:    
        progargs: Program arguments.

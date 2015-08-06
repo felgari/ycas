@@ -48,6 +48,7 @@ def generate_summary(progargs, stars, stars_mag):
     # Object that generates the summary.     
     sum_report = SummaryReport(DEFAULT_DESTINY_FILE, stars, stars_mag)     
     
+    # Indicates the steps whose summary has been requested.
     if progargs.all_steps_requested: 
         sum_report.enable_all_summary_task()
 
@@ -70,9 +71,7 @@ def generate_summary(progargs, stars, stars_mag):
     try:
         sum_report.generate_summary()
     except SummaryException as se:
-        logging.error(se)   
-
-        
+        logging.error(se)          
         
 class SummaryArguments(object):
     """ Encapsulates the definition and processing of program arguments for
@@ -249,7 +248,7 @@ def main(progargs):
                                    progargs.stars_file_name, 
                                    None)
         
-        # Set the summaries to generate.
+        # Indicate the summaries to generate.
         if progargs.summary_all:
             sum_report.enable_all_summary_task()
     

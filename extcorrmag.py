@@ -20,7 +20,6 @@
 
 """ This module calculates the magnitudes applying the atmospheric extinction
 correction when possible, this is, when there are enough standard stars.
-
 """
 
 import logging
@@ -35,9 +34,7 @@ from textfiles import *
 from utility import get_day_from_mjd
 
 class ExtinctionCoefficient(object):
-    """The extinction coefficient values calculated for a day and a filter.
-    
-    """
+    """The extinction coefficient values calculated for a day and a filter."""
     
     # Minimum number of measures of standard objects to calculate extinction 
     # coefficients.
@@ -67,9 +64,7 @@ class ExtinctionCoefficient(object):
         return self._intercept
     
 class ExtinctionCoefficientNotCalculated(Exception):
-    """To raise when a extinction coefficient could not be calculated.
-    
-    """
+    """To raise when a extinction coefficient could not be calculated."""
     
     def __init__(self, star_name, filter):
         self._star_name = star_name
@@ -81,8 +76,7 @@ class ExtinctionCoefficientNotCalculated(Exception):
     
 class ExtinctionCoefficientNotFound(Exception):
     """To raise when a extinction coefficient does not exist for a day 
-    and filter.
-    
+    and filter.    
     """
     
     def __init__(self, day, filter):
@@ -95,8 +89,7 @@ class ExtinctionCoefficientNotFound(Exception):
         
 class ExtCorrMagnitudes(object):
     """Calculates the extinction coefficients from a set of measures and
-    applies them to a set of magnitudes.
-    
+    applies them to a set of magnitudes.    
     """ 
     
     def __init__(self, inst_mag):
@@ -204,28 +197,13 @@ class ExtCorrMagnitudes(object):
                
             raise ExtinctionCoefficientNotCalculated(star_name, filter)
         else:                    
-            logging.info("Linear regression for day: %.10g star: %s with filter: %s slope: %.10g intercept %.10g r-value: %.10g p-value: %.10g std_err: %.10g air mass min: %.10g air mass max: %.10g using %d values" %
+            logging.info("Linear regression for day: %.10g star: %s with " +
+                         "filter: %s slope: %.10g intercept %.10g r-value: " +
+                         "%.10g p-value: %.10g std_err: %.10g air mass min: " +
+                         "%.10g air mass max: %.10g using %d values" %
                          (a[0][0], star_name, filter, 
                           slope, intercept, r_value, p_value, std_err, 
-                          np.min(na[:,2]), np.max(na[:,2]), na.size))
-            """
-            logging.info("Linear regression for day: {day} star: {star} " + 
-                         "with filter: {filter} slope: {slope} " +
-                         "intercept {intercept} r-value: {r_value} " +
-                         "p-value: {p_value} std_err: {std_err} " +
-                         "air mass min: {airmass_min} " +
-                         "air mass max: {airmass_max} " +
-                         "using {size} values".format(
-                                day={str(a[0][0])}, star={star_name}, 
-                                filter={filter}, slope={str(slope)}, 
-                                intercept={str(intercept)}, 
-                                r_value={str(intercept)}, 
-                                p_value={str(p_value)}, 
-                                std_err={str(std_err)}, 
-                                airmass_min={str(np.min(na[:,2]))}, 
-                                airmass_max={str(np.max(na[:,2]))}, 
-                                size={str(na.size)}))   
-            """         
+                          np.min(na[:,2]), np.max(na[:,2]), na.size))       
             
         return slope, intercept
     
@@ -279,8 +257,9 @@ class ExtCorrMagnitudes(object):
                         try:
                             slope, intercept = self.calc_one_ext_coeff(mag)
                             
-                            # Check that relation between magnitude and air mass is
-                            # direct, otherwise the calculation has not any sense.
+                            # Check that relation between magnitude and air 
+                            # mass is direct, otherwise the calculation has 
+                            # not any sense.
                             if slope > 0.0:   
                                 new_ec = ExtinctionCoefficient(d, f, slope, \
                                                                intercept)             

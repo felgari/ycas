@@ -55,7 +55,6 @@ def read_objects_of_interest(objects_file):
         
         for row in reader:    
             if len(row) > 0:
-                # Only the column with name of the object.
                 objects.append(row)   
             
     logging.debug("Read the following objects: %s" %  (objects))            
@@ -66,12 +65,13 @@ def convert_deg_to_dec_deg(str_degress, is_ra = False):
     """Convert the coordinate in degrees received to decimal degrees.
     
     Args:
-    str_degress: A string containing a value in degrees, minutes and seconds.
-    is_ra: Indicates if the value received is right ascension and so it
-        should be multiplied to scale it from 24 to 360.
+        str_degress: A string containing a value in degrees, minutes and 
+            seconds.
+        is_ra: Indicates if the value received is right ascension and so it
+            should be multiplied to scale it from 24 to 360.
     
     Returns:    
-    The value received converted to decimal degrees.
+        The value received converted to decimal degrees.
     """    
     
     multiplier = 1.0
@@ -92,15 +92,12 @@ def convert_deg_to_dec_deg(str_degress, is_ra = False):
 def get_coordinates(content):
     """Convert the RA, DEC pair of coordinates received to decimal degrees.
     
-    in degrees stored in the list received
-    converted to a pair RA, DEC in decimal degrees.
-    
     Args:
-    content: String of coordinates of RA and DEC in degrees, minutes and 
-        seconds.
+        content: String of coordinates of RA and DEC in degrees, minutes and 
+            seconds.
     
     Returns:    
-    RA and DEC values converted to decimal degrees.    
+        RA and DEC values converted to decimal degrees.    
     """
     
     # Get RA and DEC strings in degrees.
@@ -118,10 +115,9 @@ def get_coordinates(content):
     return ra_dec_deg, dec_dec_deg, id
 
 def read_coordinates_file(star_name):
-    """ Read a file with the coordinates of some stars in its field.
-    
-    Read a file with the name of the star that contains coordinates
+    """Read a file with the name of the star that contains coordinates
     of reference stars in its same field to perform differential photometry.
+    
     The first star of the file are the coordinate of the proper star.
     Return a list of lists, each list contains the coordinates for the field 
     of an star.
@@ -165,10 +161,7 @@ def read_coordinates_file(star_name):
     return references
 
 def read_catalog_file(file_name):
-    """ Read a catalog file containing coordinates and an identifier for each 
-    one.
-    
-    Read a file containing in each file a x,y coordinate pair and a numeric 
+    """Read a file containing in each file a x,y coordinate pair and a numeric 
     identifier for each coordinate.
         
     Args:

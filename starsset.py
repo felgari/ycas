@@ -17,18 +17,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-""" Stores the information related to the stars to process.
-
-"""
+""" Stores the information related to the stars to process."""
 
 import locale
 import logging
 import csv
 
 class NoStdStarException(Exception):
-    """Raised when a star no standard is used as standard.
-    
-    """
+    """Raised when a star no standard is used as standard."""
     
     def __init__(self, name):
         self._name = name
@@ -37,9 +33,7 @@ class NoStdStarException(Exception):
         return "Star with name %s is not standard" % (self._name)
                 
 class NoFilterFoundForStdStarException(Exception):    
-    """Raised when a standard star has not a filter.
-    
-    """
+    """Raised when a standard star has not a filter."""
     
     def __init__(self, star_name, filter):
         self._star_name = star_name
@@ -88,9 +82,7 @@ class FieldStar(object):
         self._dec = dec
     
 class StandardStarMagitude(object):
-    """A class to store the magnitude in a given filter for a standard star.
-    
-    """
+    """A class to store the magnitude in a given filter for a standard star. """
     
     def __init__(self, filter, mag):
         self._filter = filter
@@ -116,7 +108,7 @@ class StandardStarMagitude(object):
         self._mag = mag
         
 class Star(object):
-    """A class to store the values of a star
+    """A class to store the data of a star.
     
     The star could be a standard one or not, and depending on this different 
     values are stored.
@@ -205,9 +197,9 @@ class Star(object):
         return mag    
             
 class StarsSet(object):
-    """Stores the data of the stars whose measures are processed.
+    """Stores the data of a set of stars whose measures are processed.
     
-    The data of the stars is read from a file passed as argument when 
+    The data of the stars are read from a file passed as argument when 
     constructing the instance. 
     
     """
@@ -252,9 +244,7 @@ class StarsSet(object):
         self.read_stars(file_name)    
         
     def __str__(self):
-        """Log the information of the stars.
-        
-        """
+        """Log the information of the stars."""
         
         star_names = [ s.name for s in self._stars ]
         
@@ -283,9 +273,8 @@ class StarsSet(object):
         
     @property
     def has_any_std_star(self):
-        """ Returns True id the set contains at least one no standard star.
+        """ Returns True id the set contains at least one no standard star."""
         
-        """
         has_std = False
         
         for s in self._stars:
@@ -299,11 +288,10 @@ class StarsSet(object):
         """Create an object for a star with the data contained in the line
         
         Args:
-        line: A line read from the file.
+            line: A line read from the file.
         
         Returns:
-        An object with the basic data for a star regardless standard or
-        not.        
+            An object with the basic data for a star regardless standard or not.        
         """
         
         name = line[self.OBJ_NAME_COL]
@@ -319,7 +307,7 @@ class StarsSet(object):
         """Add the star received to the stars.
         
         Args:
-        star: The star to store.
+            star: The star to store.
         """
         
         self._stars.append(star)
@@ -359,8 +347,7 @@ class StarsSet(object):
         
     def load_standard_star(self, star, line, line_number):
         """Process the line to initialize the data corresponding to a standard
-        star. The
-        If successful the star is stored.
+        star. If successful the star is stored.
 
         Args:
             star: A star object with the basic data.

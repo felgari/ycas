@@ -18,14 +18,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Joins the measurements taken for an object in a time series.
-
-The measurements are taken from several files indicated as program 
-arguments. All the files have a column, typically MJD, used to sort
-the data in time.
-
-If there are measurements in the same day it is possible to use a median value
-for all these measurements.
+"""Generate plots with different types of light curves that could be done from
+the magnitudes calculated.
 
 """
 
@@ -45,7 +39,7 @@ ERR_COL = 5
 NO_VALUE = "NA"
 
 class CurvesArguments(object):
-    """Encapsulates the definition and processing of program arguments. """
+    """Encapsulates the definition and processing of program arguments."""
     
     MIN_NUM_ARGVS = 1  
     

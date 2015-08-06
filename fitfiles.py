@@ -44,10 +44,10 @@ def search_filter_from_set_in_file_name(filename):
     """ Get from a file name, a filter name belonging to the set filters used. 
     
     Args:
-    filename: File name where the filter name is extracted.
+        filename: File name where the filter name is extracted.
     
     Returns:    
-    The filter name extracted from the file name, if any.
+        The filter name extracted from the file name, if any.
     
     """
     
@@ -75,11 +75,11 @@ def get_image_filter(header_fields, filename):
     If it is not found there, the filter is extracted from the file name.
     
     Args:
-    header_fields: Header fields of the file. 
-    filename: Name of the file.
+        header_fields: Header fields of the file. 
+        filename: Name of the file.
     
     Returns:    
-    The filter name, if it is identified.
+        The filter name, if it is identified.
     
     """    
 
@@ -126,10 +126,10 @@ def get_image_filter_from_file(filename):
     another function that actually gets the filter name.
     
     Args:
-    filename: Name of the file whose filter is requested.
+        filename: Name of the file whose filter is requested.
     
     Returns:    
-    The filter name, if it is identified.
+        The filter name, if it is identified.
             
     """    
     
@@ -145,11 +145,11 @@ def get_fit_fields(fit_file_name, fields = ORG_FIT_HEADER_FIELDS):
     """Retrieves the fields of the fit header from the file indicated.
     
     Args:
-    fit_file_name: Name of the fit file
-    fields: The fields to return.
+        fit_file_name: Name of the fit file
+        fields: The fields to return.
     
     Returns:    
-    The requested fields found in the file name indicated. 
+        The requested fields found in the file name indicated. 
         
     """
     
@@ -192,10 +192,10 @@ def remove_prefixes(file_name):
     The numeric prefixes should be separated by dots.
     
     Args:
-    file_name: Name of the file to process.
+        file_name: Name of the file to process.
     
     Returns:    
-    The name of the file without prefixes.
+        The name of the file without prefixes.
         
     """
     
@@ -240,13 +240,13 @@ def file_is_type(header_fields, filename_path, field_type, type_string):
     only bias has no filter.     
     
     Args:
-    header_fields: The headers of the file.
-    filename_path: The path of the file.
-    field_type: The value to compare with that of the fields.
-    type_string: The value expected in the file name to check the type.
+        header_fields: The headers of the file.
+        filename_path: The path of the file.
+        field_type: The value to compare with that of the fields.
+        type_string: The value expected in the file name to check the type.
     
     Returns:    
-        
+        True if it is the type indicated, False otherwise.
     """  
     
     is_type = False
@@ -300,11 +300,11 @@ def file_is_bias(header_fields, filename):
     """Determines if the data received are related to a bias file. 
     
     Args:
-    header_fields: Fields from the file header to check if it is a bias.
-    filename: Name of the file.
+        header_fields: Fields from the file header to check if it is a bias.
+        filename: Name of the file.
     
     Returns:    
-    True if the file is for a bias, False otherwise.
+        True if the file is for a bias, False otherwise.
         
     """
     
@@ -319,11 +319,11 @@ def file_is_flat(header_fields, filename):
     """Determine if the data received are related to a flat file. 
     
     Args:
-    header_fields: Fields from the file header to check if it is a flat.
-    filename: Name of the file.
+        header_fields: Fields from the file header to check if it is a flat.
+        filename: Name of the file.
     
     Returns:    
-    True if the file is for a flat, False otherwise.  
+        True if the file is for a flat, False otherwise.  
         
     """
     
@@ -340,10 +340,10 @@ def get_file_binning(fit_file_name):
     The return format is: 1x1, 2x2, and so on.
     
     Args:
-    fit_file_name: Name of the fit file.
+        fit_file_name: Name of the fit file.
     
     Returns:    
-    The binning value, if found.
+        The binning value, if found.
         
     """
     
