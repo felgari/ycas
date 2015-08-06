@@ -4,9 +4,9 @@ ycas
 A pipeline to reduce and calculate the aperture photometry of astronomical images.
 
 The name comes from the star gamma cassiopeiae, the first star of type Be discovered. 
-This pipeline was developed initially to study images of x-ray binaries, and some of those contained a Be star.
+This pipeline was developed initially to process images of x-ray binaries, and some of those contain a Be star.
 
-This software is a set of python scripts and alre requires external software. The reduction and photometry of images uses pyraf. 
+This software is a set of python scripts and requires external software to perform some tasks. The astrometry uses astrometry.net and the reduction and photometry of images uses pyraf. 
 
 Functionality
 -------------
@@ -15,8 +15,8 @@ This software performs the following tasks:
 * Reduction using bias and flat images.
 * Calculation of astrometry to identify the objects in the images.
 * Aperture photometry.
-* Retrieving of magnitudes corrected for the atmospheric extinction (when standard stars are available).
-* Retrieving of calibrated magnitudes (when standard stars are available).
+* Calculation of magnitudes corrected for the atmospheric extinction (when standard stars are available).
+* Calculation of calibrated magnitudes (when standard stars are available).
 * Generation of a summary with the results of the tasks performed.
 * Generation of a file log to debug the tasks performed.
 
