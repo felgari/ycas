@@ -56,7 +56,7 @@ ASTROMETRY_OPT_USE_SEXTRACTOR = " --use-sextractor "
 ASTROMETRY_OPT_SEXTRACTOR_CONFIG = "--sextractor-config "
 
 # Overwrite previous files and limit the number of objects to look at"
-ASTROMETRY_PARAMS = "--overwrite -d "
+ASTROMETRY_PARAMS = "--overwrite "
     
 class StarNotFound(Exception):
     """Raised if star is not found from file name. """
@@ -77,6 +77,7 @@ class Astrometry(object):
         self._stars = stars
         
         self._data_dir_name = progargs.data_directory
+        self._num_of_objects = progargs.number_of_objects_for_astrometry
         
         # Initializes attributes to store summary information of the astrometry.
         self._number_of_images = 0
@@ -89,9 +90,8 @@ class Astrometry(object):
             use_sextractor = "%s %s" % \
                 (ASTROMETRY_OPT_USE_SEXTRACTOR, progargs.sextractor_cfg_path)     
         
-        self._base_command = "%s %s %d %s --radius %s" % \
+        self._base_command = "%s %s %s --radius %s -d " % \
             (ASTROMETRY_COMMAND, ASTROMETRY_PARAMS, 
-            progargs.number_of_objects_for_astrometry, 
             use_sextractor, SOLVE_FIELD_RADIUS)        
 
     def do_astrometry(self):
@@ -144,8 +144,9 @@ class Astrometry(object):
             
         # Compose the command use the base command and adding the arguments
         # for current image.
-        command = "%s --ra %.10g --dec %.10g %s" % \
-            (self._base_command, star.ra, star.dec, image_file)
+        command = "%s %d --ra %.10g --dec %.10g %s" % \
+            (self._base_command, self._num_of_objects, 
+             star.ra, star.dec, image_file)
             
         logging.debug("Executing: %s" % (command))
         
@@ -182,21 +183,23 @@ class Astrometry(object):
     
                     return_code, star = self.do_astrometry_of_image(image_file)
                     
+                    if return_code == 0:
+                        
+                        # Generates catalog files with x,y and ra,dec values
+                        # and if it is successful count it.
+                        if write_coord_catalogues(image_file, cat_file_name, 
+                                                  star):
+                            
+                            self._number_of_successful_images += 1
+                            
+                        else:
+                            self._images_without_astrometry.extend([image_file])                     
+                    
                 else:
                     logging.debug("Catalog image_file already exists: %s" % 
                                   (cat_file_name))
                     
                     return_code = 0
-                    
-                if return_code == 0:
-                    
-                    # Generates catalog files with x,y and ra,dec values
-                    # and if it successfully count it.
-                    if write_coord_catalogues(image_file, cat_file_name, star):
-                        self._number_of_successful_images += 1
-                        
-                    else:
-                        self._images_without_astrometry.extend([image_file]) 
                         
             except StarNotFound as onf:
                 logging.debug("Object not found related to image_file: %s" % 
