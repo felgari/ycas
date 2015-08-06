@@ -70,6 +70,9 @@ class ProgramArguments(object):
     NO_PIPELINE_STEPS_INDICATED = "At least one pipeline step should be " + \
         "indicated."
         
+    ORG_REQUIRES_FILTERS = "Organization of files requires the " +  \
+        "specification of filters."
+        
     # Name of the file that contains information about the stars of interest.
     STARS_FILE_NAME = "stars.csv"        
     
@@ -138,6 +141,11 @@ class ProgramArguments(object):
         
         self.__parser.add_argument("-f", dest="f", metavar="flat_dir_name",
                                    help="Name of the directory for flat.")
+        
+        self.__parser.add_argument("-filters", metavar="filters_file_name",
+                                   dest="filters",
+                                   help="Name of the file with the filters " + 
+                                   "to take into account.")      
         
         self.__parser.add_argument("-d", dest="d", metavar="data_dir_name",
                                    help="Name of the directory for data.")
@@ -218,13 +226,21 @@ class ProgramArguments(object):
     
     @property
     def phot_params_file_name(self):
-        return self.__phot_params_file_name        
+        return self.__phot_params_file_name  
+    
+    @property
+    def file_of_filters_provided(self):
+        return self._args.filters is not None   
+    
+    @property
+    def filters_file_name(self):
+        return self._args.filters      
     
     @property
     def sextractor_cfg_file_provided(self):
         return self.__args.x is not None
 
-    @property    
+    @property
     def log_level_provided(self): 
         return self.__args.v is not None     
     
@@ -338,7 +354,10 @@ class ProgramArguments(object):
                 raise ProgramArgumentsException(ProgramArguments.PHOT_REQUIRES_SEX_PATH)            
 
         # Check coherence for other steps.
-
+        
+        if self.organization_requested() and not self.file_of_filters_provided():
+            raise ProgramArgumentsException(self.ORG_REQUIRES_FILTERS)        
+        
         if self.astrometry_requested and not self.file_of_stars_provided:
             raise ProgramArgumentsException(self.ASTRO_REQUIRES_STARS_FILE)
         

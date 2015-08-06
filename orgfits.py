@@ -41,6 +41,76 @@ import pyfits
 from fitfiles import *
 from constants import *
 
+class Filters(object):
+    """Stores the filters that should be taking into account when processing
+    images.
+    """
+    
+    def __init__(self, file_name):
+        """Constructor.
+        
+        Args:
+            file_name: The name of the file that contains the filters.            
+        """
+        
+        self.__iter_idx = 0
+        
+        self._filters = set()
+        
+        self.read_filters(file_name)
+        
+    def __str__(self):
+        return str(self._filters)
+    
+    def __iter__(self):
+        self.__iter_idx = 0
+        
+        return self       
+        
+    # Python 3 compatibility
+    def __next__(self):
+        return self.next()
+    
+    def next(self):
+        if self.__iter_idx < len(self._filters):
+            cur, self.__iter_idx = \
+                self._filters[self.__iter_idx], self.__iter_idx + 1
+            return cur
+        else:
+            raise StopIteration()
+        
+    def read_filters(file_name):
+        """Read the filters to use from a file.
+        
+        Each filter must be indicated in a line.
+        
+        Args:
+            file_name: The name of the file that contains the filters.        
+        """
+        
+        logging.debug("Reading filters from file: %s" % (file_name))
+        
+        # Read the file that contains the filters.
+        with open(file_name, "r") as f:
+            for line in f:
+                filter_name = line.strip()
+                if len(filter_name) > 0:
+                    self._filters.add(filter_name)  
+                
+        logging.debug("Read the following filters: %s" % (self._filters))
+        
+    def exists(self, filter_name):
+        """Search for a filter with the name received.
+        
+        Args:
+            filter_name: The name of the filter to search.
+            
+        Returns:
+            True if the filter is found, False otherwise.
+        """
+        
+        return filter_name in self._filters
+        
 def create_directory(path, dirname):
     """ Create a directory with the given name. 
     
@@ -69,7 +139,7 @@ def create_directory(path, dirname):
             if not os.path.isdir(complete_dirname):
                 raise  
 
-def analyze_and_organize_dir(filename, path, progargs):
+def analyze_and_organize_dir(filename, path, progargs, filters):
     """Establish the type of each file and copies it to the appropriate folder. 
     
     This function determines the file type and moves the
@@ -82,7 +152,7 @@ def analyze_and_organize_dir(filename, path, progargs):
         filename: Name of the file to analyze.
         path: Path where is the file.
         progargs: Program arguments.
-    	
+    	filters: The set of filters to take into account.
     """
 
     full_file_name = os.path.join(path, filename)
@@ -107,14 +177,15 @@ def analyze_and_organize_dir(filename, path, progargs):
     elif file_is_flat(header_fields, full_file_name):
         create_directory(path, progargs.flat_directory)
 
-        filtername = get_image_filter(header_fields, filename)
+        filter_name = get_image_filter(header_fields, filename)
 
-        if len(filtername) > 0:
+        # Check if the filter of the images matches one of the indicated.
+        if len(filter_name) > 0 and filters.exists(filter_name):
             create_directory(path, os.path.join(progargs.flat_directory, \
-                                                filtername))
+                                                filter_name))
 
         file_destination = os.path.join(path, progargs.flat_directory, \
-                                        filtername, filename)
+                                        filter_name, filename)
         
         logging.debug("%s identified as flat." % (full_file_name))
 
@@ -122,15 +193,16 @@ def analyze_and_organize_dir(filename, path, progargs):
     else:
         create_directory(path, progargs.data_directory)
 
-        filtername = get_image_filter(header_fields, filename)
+        filter_name = get_image_filter(header_fields, filename)
 
-        if len(filtername) > 0:
+        # Check if the filter of the images matches one of the indicated.
+        if len(filter_name) > 0 and filters.exists(filter_name):
             create_directory(path, os.path.join(progargs.data_directory, \
-                                                filtername))
+                                                filter_name))
 
         # Prefixes are removed from file name.
         file_destination = os.path.join(path, progargs.data_directory, \
-                                        filtername, remove_prefixes(filename))
+                                        filter_name, remove_prefixes(filename))
         
         logging.debug("%s identified as data image." % (full_file_name))
 
@@ -320,6 +392,8 @@ def organize_files(progargs):
         
     """
     
+    filters = Filters(progargs.filters_file_name)
+    
     # Walk from current directory.
     for path,dirs,files in os.walk('.'):
         
@@ -337,7 +411,7 @@ def organize_files(progargs):
                 if filext == FIT_FILE_EXT:
                     # Analyze name.
                     logging.debug("Analyzing: " + os.path.join(path, fn))
-                    analyze_and_organize_dir(fn, path, progargs)
+                    analyze_and_organize_dir(fn, path, progargs, filters)
                 else:
                     logging.debug("Ignoring file: " + fn)
                     
