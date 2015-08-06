@@ -33,6 +33,8 @@ from constants import *
 from sumreport import *
 import starsset
 
+DEFAULT_DESTINY_FILE = "ycas_sum.txt"
+
 def generate_summary(progargs, stars, stars_mag):
     """ Generates a summary for the tasks performed by the pipeline.
     
@@ -44,7 +46,7 @@ def generate_summary(progargs, stars, stars_mag):
     """    
     
     # Object that generates the summary.     
-    sum_report = SummaryReport(stars, stars_mag)     
+    sum_report = SummaryReport(DEFAULT_DESTINY_FILE, stars, stars_mag)     
     
     if progargs.all_steps_requested: 
         sum_report.enable_all_summary_task()
@@ -78,8 +80,7 @@ class SummaryArguments(object):
         
     """
     
-    MIN_NUM_ARGVS = 1
-    DEFAULT_DESTINY_FILE = "ycas_sum.txt"    
+    MIN_NUM_ARGVS = 1    
     DEFAULT_LOG_FILE_NAME = "sum_log.txt"
     
     def __init__(self):
@@ -135,11 +136,15 @@ class SummaryArguments(object):
     
     @property
     def stars_file_name(self):
-        return self.__stars_file_name         
+        return self.__stars_file_name
+    
+    @property
+    def summary_file_name(self):
+        return self.__args.d         
     
     @property
     def summary_all(self):
-        return self.__args.all 
+        return self.__args.all     
     
     @property
     def summary_organization(self):
@@ -173,7 +178,7 @@ class SummaryArguments(object):
         self.__args = self.__parser.parse_args()
             
         if self.__args.d is None:
-            self.__args.d = SummaryArguments.DEFAULT_DESTINY_FILE 
+            self.__args.d = DEFAULT_DESTINY_FILE 
             
         if self.__args.l is None:
             self.__args.l = SummaryArguments.DEFAULT_LOG_FILE_NAME  
@@ -238,12 +243,11 @@ def main(progargs):
                       "summary for magnitudes.")
         ret_val = 1
         
-    else:    
-        # Read the stars.
-        stars = starsset.StarsSet(progargs.stars_file_name)
-        
+    else:           
         # Object that generates the summary.     
-        sum_report = SummaryReport(stars, None)
+        sum_report = SummaryReport(progargs.summary_file_name,
+                                   progargs.stars_file_name, 
+                                   None)
         
         # Set the summaries to generate.
         if progargs.summary_all:

@@ -26,6 +26,7 @@ results of the steps performed by the pipeline.
 import sys
 import os
 import glob
+import time
 import logging
 import numpy as np
 from scipy.stats import mode
@@ -59,7 +60,7 @@ class SummaryReport(object):
     __SUM_PRO_REQ_PROP_COL = 1
     __SUM_PRO_BUILD_FUN_COL = 2    
     
-    def __init__(self, stars, stars_mag):
+    def __init__(self, report_file_name, stars, stars_mag):
         """Constructor.
         
         Args:
@@ -68,8 +69,10 @@ class SummaryReport(object):
             
         """
         
+        self._report_file_name = report_file_name
         self._stars = stars
         self._stars_mag = stars_mag
+        self._all_messages = []
         
         self._tasks_to_do = {
                 SummaryReport.ORG_SUM_NAME : False,
@@ -85,6 +88,14 @@ class SummaryReport(object):
                SummaryReport.ASTRO_SUM_NAME : self.summary_astrometry,
                SummaryReport.PHOT_SUM_NAME : self.summary_photometry,
                SummaryReport.MAG_SUM_NAME : self.summary_magnitude }  
+       
+    @property
+    def report_file_name(self):
+        # The name of the report includes the day and time so ii could be
+        # different in each invocation.
+        return "%s_%s" % \
+            (time.strftime("%Y%m%d_%H%M%S", time.gmtime()), 
+             self._report_file_name)
        
     @property 
     def enable_organization_summary(self):
@@ -129,7 +140,8 @@ class SummaryReport(object):
                           summary_task)
             
     def generate_summary(self):
-        """
+        """Generate the summary. All the possible tasks are evaluated and its
+        summary generated if requested. Finally a report is saved to a file.
         
         """         
 
@@ -139,7 +151,8 @@ class SummaryReport(object):
              # Check if this summary has been requested.
              if self._tasks_to_do[std]:
                  self.__SUMMARY_METHODS[std]()
-             
+                 
+        self.save_complete_report()             
             
     def is_summary_task_enabled(self, summary_option):
         """Indicates if the summary for a given task is enabled.
@@ -174,7 +187,7 @@ class SummaryReport(object):
         return any_enabled  
     
     def print_and_log_info(self, log_msg):
-        """ Print the string received to sdtout and to logging with info level. 
+        """ Print the string received to stdout and to logging with info level. 
         """     
         
         print log_msg
@@ -183,10 +196,25 @@ class SummaryReport(object):
     def print_summary(self, sum_name, msg_list):
         """ Print the strings of the list received as a summary. """
         
-        self.print_and_log_info("* Summary for: %s" % (sum_name))
+        report_title = "* Summary for: %s" % (sum_name)
+        
+        self.print_and_log_info(report_title)        
+        
+        # Store it to write the file to the end.
+        self._all_messages.append([report_title])        
         
         for l in msg_list:
-            self.print_and_log_info("- " + l[0])            
+            msg_text = "- " + l[0]
+            self.print_and_log_info(msg_text)
+            self._all_messages.append([msg_text])  
+            
+    def save_complete_report(self):
+        """Save all the summary messages to a file. """
+        
+        with open(self.report_file_name(), 'a') as fw:
+            
+            for m in self._all_messages:
+                fw.write("%s\n" % (m))         
             
     def walk_directories(self, root_dir, file_pattern, dir_name = None,
                          dir_for_images = False):
