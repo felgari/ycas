@@ -270,6 +270,10 @@ class StarsSet(object):
     @property
     def size(self):
         return len(self._stars)     
+    
+    @property
+    def star_names(self):
+        return [ s.name for s in self._stars ]
         
     @property
     def has_any_std_star(self):

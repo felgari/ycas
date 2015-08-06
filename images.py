@@ -49,17 +49,17 @@ class ImagesArguments(object):
 
         """   
         
-        self.__objects_of_interest_file = INT_OBJECTS_FILE_NAME          
+        self.__stars_file = INT_OBJECTS_FILE_NAME          
             
         # Initiate arguments of the parser.
         self.__parser = argparse.ArgumentParser()
         
         self.__parser.add_argument("-e", dest="e", action="store_true", \
-                                   help='Extract images of objects of \
+                                   help='Extract images of stars of \
                                    interest to destiny directory')
         
         self.__parser.add_argument("-l", dest="l", action="store_true", \
-                                   help="List objects found in images")
+                                   help="List stars found in images")
         
         self.__parser.add_argument("-d", metavar="destiny directory", \
                                    dest="d", \
@@ -69,8 +69,8 @@ class ImagesArguments(object):
                                    dest="s", \
                                    help="Source directory for images") 
         
-        self.__parser.add_argument("-o", metavar="objects", dest="o", \
-                                   help="File containing the objects of " + \
+        self.__parser.add_argument("-o", metavar="stars", dest="o", \
+                                   help="File containing the stars of " + \
                                    "interest")
         
         self.__parser.add_argument("-t", dest="t", action="store_true", 
@@ -82,7 +82,7 @@ class ImagesArguments(object):
         return self.__args.e
     
     @property     
-    def is_object_list(self):        
+    def is_star_list(self):        
         return self.__args.l      
     
     @property    
@@ -102,18 +102,19 @@ class ImagesArguments(object):
         return self.__args.s       
     
     @property
-    def interest_object_file_name(self):
-        return self.__objects_of_interest_file  
+    def stars_file_name(self):
+        return self.__stars_file  
+    
+    @property
+    def stars_file_provided(self):
+        return self.__stars_file is not None    
     
     @property    
     def use_headers_to_get_image_type(self):
         return self.__args.t            
     
     def parse(self):
-        """ 
-        
-        Initialize properties and performs the parsing 
-        of program arguments.
+        """Initialize properties and performs the parsing of program arguments.
         
         """
         
@@ -121,29 +122,29 @@ class ImagesArguments(object):
         self.__args = self.__parser.parse_args()
             
         if self.__args.o is not None:
-            self.__objects_of_interest_file = self.__args.o    
+            self.__stars_file = self.__args.stars    
             
     def print_usage(self):
-        """ Print arguments options """
+        """Print arguments options """
         
         self.__parser.print_usage()    
         
     def print_help(self):
-        """ Print help for arguments options """
+        """Print help for arguments options """
                 
         self.__parser.print_help()                     
             
 def get_filename_start(path_file):
     """Returns the first part of the name of a file.
     
-    This starting word indicates the file type or the name of the object
+    This starting word indicates the file type or the name of the star
     related to this image.
     
     Args:
-    path_file: File name with the complete path.
+        path_file: File name with the complete path.
     
     Returns:      
-    The first part of the file name.
+        The first part of the file name.
     """
     
     # Discard the path and get only the filename.
@@ -156,18 +157,18 @@ def get_filename_start(path_file):
     # that should be suppressed.    
     return filename_start.split(".")[-1]                
 
-def get_files_of_interest(obj_names, files):
-    """Returns a subset of the file list containing the images of the objects.
+def get_files_of_interest(stars_names, files):
+    """Returns a subset of the file list containing the images of the stars.
     
-    If the images for an object are found also returns the bias and flat
+    If the images for an star are found also returns the bias and flat
     images related. 
     
     Args:
-    obj_names: Names of the objects whose images are of interest.
-    files: List of files that could contain images related to the objects.
+        stars_names: Names of the stars whose images are of interest.
+        files: List of files that could contain images related to the stars.
     
     Returns:    
-    Set of files related to the objects indicated.
+        Set of files related to the stars indicated.
         
     """
     
@@ -177,8 +178,7 @@ def get_files_of_interest(obj_names, files):
     flat_list = []
     flat_filter_list = []    
     
-    # Add to the list the files whose name corresponds to a
-    # object of interest.
+    # Add to the list the files whose name corresponds to a star of interest.
     for f in files:
         
         header_fields = None
@@ -207,11 +207,11 @@ def get_files_of_interest(obj_names, files):
             flat_list.extend([f])
             flat_filter_list.extend([filter])
             
-        elif get_filename_start(f) in obj_names:
+        elif get_filename_start(f) in stars_names:
             file_list.extend([f])
             file_filter_list.extend([filter])
         
-    # If any image file related to any object has been found.
+    # If any image file related to any star has been found.
     if len(file_list) > 0:
         
         # Get the set of filter used by images.
@@ -231,7 +231,7 @@ def get_files_of_interest(obj_names, files):
                 file_list.extend([flat_list[i]])            
 
     else:
-        logging.debug("No image files found for objects of interest.")
+        logging.debug("No image files found for stars of interest.")
             
     return file_list
     
@@ -239,8 +239,8 @@ def copy_files_of_interest(destiny_path, files_of_interest):
     """Creates a directory in the path indicated and copy the files received.
     
     Args:
-    destiny_path: Destiny path to create and where to copy the files.
-    files_of_interest: Files to copy.  
+        destiny_path: Destiny path to create and where to copy the files.
+        files_of_interest: Files to copy.  
             
     """
     
@@ -256,24 +256,24 @@ def copy_files_of_interest(destiny_path, files_of_interest):
         
         shutil.copyfile(f, os.path.join(destiny_path, destiny_filename))
 
-def copy_images(destiny_path, source_path, objects_file):
-    """Searches files related to the object and copy them to the path indicated.
+def copy_images(destiny_path, source_path, starts_file_name):
+    """Searches files related to the star and copy them to the path indicated.
     
     Args:
-    destiny_path: Destiny path to create and where to copy the files.
-    source_path: Source where to look for files.
-    objects_file: Objects whose related files are searched.
+        destiny_path: Destiny path to create and where to copy the files.
+        source_path: Source where to look for files.
+        starts_file_name: Stars whose files are searched.
             
     """
     
-    # Read the objects from the file received.
-    objects = read_objects_of_interest(objects_file)
+    # Read the stars from the file received.
+    stars = starsset.StarsSet(starts_file_name)
     
-    # Get the names of the objects.
-    obj_names = [ o[OBJ_NAME_COL] for o in objects]    
+    # Get the names of the stars.
+    stars_names = stars.star_names  
     
     # Walk from current directory.
-    for path,dirs,files in os.walk(source_path):
+    for path, dirs, files in os.walk(source_path):
     
         # Inspect only directories without subdirectories.
         if len(dirs) == 0:           
@@ -285,7 +285,7 @@ def copy_images(destiny_path, source_path, objects_file):
             files = glob.glob(os.path.join(path, "*" + FIT_FILE_EXT))
             logging.debug("Found " + str(len(files)) + " image files")
             
-            files_of_interest = get_files_of_interest(obj_names, files)  
+            files_of_interest = get_files_of_interest(stars_names, files)  
             
             if len(files_of_interest) > 0:            
                 # For the destiny directory the name that contains the images 
@@ -294,31 +294,31 @@ def copy_images(destiny_path, source_path, objects_file):
                 
                 copy_files_of_interest(full_destiny_path, files_of_interest) 
 
-def list_objects_in_files(source_dir):
-    """Walks the directory and create a list of the objects with images.
+def list_stars_in_files(source_dir):
+    """Walks the directory and create a list of the stars with images.
     
     Args:
     source_dir: Source directory where to search for files.
             
     """
     
-    objects = []
+    stars_names = []
     
-    logging.debug("Creating a list of objects with images from: " + source_dir)
+    logging.debug("Creating a list of stars_names with images from: " + source_dir)
     
     # Walk from current directory.
     for path,dirs,files in os.walk(source_dir):
     
         # Inspect only directories without subdirectories.
         if len(dirs) == 0:           
-            logging.debug("Found a directory for images: " + path)
+            logging.debug("Found a directory for images: %s" % (path))
             
             split_path = os.path.split(path)
 
             # Get the list of files.
             files = glob.glob(os.path.join(path, "*" + FIT_FILE_EXT))
             
-            logging.debug("Found " + str(len(files)) + " image files")
+            logging.debug("Found %d image files" % (len(files)))
             
             # Process all the files found.
             for f in files:
@@ -331,18 +331,16 @@ def list_objects_in_files(source_dir):
                     # Get only the name of the file.
                     filename_start = get_filename_start(f)  
             
-                    objects.extend([filename_start])
+                    stars_names.extend([filename_start])
                     
-    # Get a set with the names of the objects only once.
-    objects_set = set(objects)
-                    
-    print "Objects: " +  str(objects_set)               
+    # Get a set with the names of the stars names only once.
+    print "Stars: %s" % set(stars_names)              
             
 def main(progargs):
-    """Configure logging, check arguments and read objects of interest. 
+    """Configure logging, check arguments and read stars of interest. 
 
     Args:
-    progargs: Program arguments.    
+        progargs: Program arguments.    
         
     """  
     
@@ -357,19 +355,19 @@ def main(progargs):
         if progargs.destiny_dir_provided and \
             progargs.source_dir_provided:
             
-            logging.debug("Copying images for the objects indicated to the " + \
+            logging.debug("Copying images for the stars indicated to the " + \
                           "destiny directory.")            
             
-            # Copy images for the list of objects into the path indicated.
+            # Copy images for the list of stars into the path indicated.
             copy_images(progargs.destiny_dir, \
                         progargs.source_dir, \
-                        progargs.interest_object_file_name)      
+                        progargs.stars_file_name)      
         else:
             print "The following arguments are needed: " + \
-                          "destiny_directory source_directory objects_file" 
+                          "destiny_directory source_directory stars_file" 
                           
-    elif progargs.is_object_list:
-        list_objects_in_files(progargs.source_dir)
+    elif progargs.is_star_list:
+        list_stars_in_files(progargs.source_dir)
        
             
 # Where all begins ...
