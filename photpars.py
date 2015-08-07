@@ -25,6 +25,7 @@ The parameters are read from text files with a format name/value.
 
 import csv
 import logging
+import textfiles
 
 class PhotParamNotFound(Exception):
     def __init__(self, param_list):
@@ -45,9 +46,6 @@ class PhotParamFileError(Exception):
             (self.__file_list) 
     
 class PhotParameters(object):
-    
-    # Character to separate parameter name from its value in a configuration file.
-    __CFG_FILE_SEP_CHAR = "="
     
     # Names for the parameters of an instrument.
     __READNOISE_PAR_NAME = "READNOISE"
@@ -95,7 +93,7 @@ class PhotParameters(object):
         
         # Read and assign the parameters for the phot.
         try:
-            phot_params = self.read_cfg_file(phot_params_file_name)
+            phot_params = textfiles.read_cfg_file(phot_params_file_name)
             
             self.aperture = phot_params[PhotParameters.__APERTURE_PAR_NAME]
             self.annulus_mult = phot_params[PhotParameters.__ANNULUS_MULT_PAR_NAME]
@@ -113,7 +111,7 @@ class PhotParameters(object):
         
         # Read and assign the parameters of the instrument.
         try:            
-            instrument_params = self.read_cfg_file(instrument_params_file_name)
+            instrument_params = textfiles.read_cfg_file(instrument_params_file_name)
              
             self.readnoise = instrument_params[PhotParameters.__READNOISE_PAR_NAME]
             self.gain = instrument_params[PhotParameters.__GAIN_PAR_NAME]
@@ -279,49 +277,4 @@ class PhotParameters(object):
         try:
             self.__sky = float(sky)
         except KeyError as ke:
-            self.__par_error.append(sky)                                                            
-    
-    def read_cfg_file(self, file_name):
-        """Read parameters from a text file containing a pair parameter/value
-        in each line separated by an equal character.
-        
-        Args:
-            file_name: Name of the file to read.
-        
-        Returns:
-            The list of parameters read as a dictionary.
-        """
-        
-        cfg_params = {}
-        
-        logging.debug("Reading configuration from file: %s" % (file_name))
-        
-        try:
-        
-            # Read the file that contains the cfg_params of interest.
-            with open(file_name, 'rb') as fr:
-                reader = csv.reader(fr, 
-                                    delimiter=PhotParameters.__CFG_FILE_SEP_CHAR)        
-                
-                for row in reader:    
-                    # Just two elements, the parameter name and value.
-                    if len(row) == 2:
-                        # Remove spaces before using the values.                
-                        param_name = row[0].strip()
-                        param_value = row[1].strip()
-                        
-                        cfg_params[param_name] = param_value
-                    elif len(row) > 1:
-                        # If it has more that two items.
-                        logging.warning("Discarded the following line %s from file %s" %
-                                        (row, file_name))  
-                    
-            logging.debug("Read the following configurations parameters: %s from %s" % 
-                          (cfg_params, file_name))
-                   
-        except TypeError as te:     
-            logging.error(te)
-            
-            raise PhotParamFileError([file_name])     
-                
-        return cfg_params      
+            self.__par_error.append(sky)                                                                 

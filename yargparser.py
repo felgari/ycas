@@ -43,35 +43,34 @@ class ProgramArguments(object):
     # Default number of objects to look at when doing astrometry.
     ASTROMETRY_NUM_OBJS = 20
     
-    PHOT_REQUIRES_SEX_PATH = "Photometry requires the specification of " + \
-        "a path for sextractor configuration files."
+    # Error messages related to parameters coherence.
+    NO_PIPELINE_STEPS_INDICATED = "At least one pipeline step should be " + \
+        "indicated."           
         
-    PHOT_REQUIRES_STARS_FILE = "Photometry requires the specification " + \
-        "of a file containing the data of the stars." 
-
+    SEXTRACTOR_PATH_REQUIRED = "The path for sextractor must be supplied."
+        
+    FILTERS_PARAM_REQUIRED = "A configuration file specifying the filters " + \
+        "must be supplied."
+        
+    HEADER_PARAM_REQUIRED = "A configuration file for FIT headers must be " + \
+        "supplied."
+        
+    STARS_FILE_REQUIRED = "A file with the information of the stars " + \
+        "must be supplied."
+        
     PHOT_REQUIRES_PHOT_PARAMETERS = "Photometry requires the specification " + \
         "of a file containing the parameters for phot." 
         
     PHOT_REQUIRES_INST_CHARACTERISTICS = "Photometry requires the " + \
-        " specification of a file containing characteristics of the instrument."         
+        "specification of a file containing characteristics of the instrument."  
+        
+    SOURCE_DIR_REQUIRED = "The source directory with the files must be supplied."   
     
-    USE_SEX_REQUIRES_SEX_PATH = "The use of sextractor requires the " + \
-        "specification of a path for sextractor configuration files."
-        
-    ASTRO_REQUIRES_STARS_FILE = "Astrometry requires the specification " + \
-        "of a file containing the data of the stars."    
-        
-    MAG_REQUIRES_STARS_FILE = "Calculation of magnitudes requires the " + \
-        "specification of a file containing the data of the stars."  
-        
-    LIGHT_CURVES_REQUIRES_STARS_FILE = "Generation of light curves " + \
-        "requires the specification of a file containing the data of the stars." 
-        
-    NO_PIPELINE_STEPS_INDICATED = "At least one pipeline step should be " + \
-        "indicated."
-        
-    ORG_REQUIRES_FILTERS = "Organization of files requires the " +  \
-        "specification of filters."
+    SOURCE_DIR_MUST_EXISTS = "The source directory supplied does not exist."     
+    
+    TARGET_DIR_REQUIRED = "The target directory of the files must be supplied."
+    
+    ERROR_CREATING_TARGET_DIR = "The target directory cannot be created."               
         
     # Name of the file that contains information about the stars of interest.
     STARS_FILE_NAME = "stars.csv"        
@@ -128,13 +127,17 @@ class ProgramArguments(object):
                                    dest="s",
                                    help="File of the stars to analyze.")    
         
-        self.__parser.add_argument("-i", metavar="instrument_file_name",
+        self.__parser.add_argument("-i", metavar="instrument_file",
                                    dest="i",
                                    help="File with features of the instrument.")
         
-        self.__parser.add_argument("-pp", metavar="phot_param_file_name",
+        self.__parser.add_argument("-pp", metavar="phot_param_file",
                                    dest="pp",
-                                   help="File with parameters for phot.")                           
+                                   help="File with parameters for phot.")   
+        
+        self.__parser.add_argument("-hp", metavar="headers_param_file",
+                                   dest="hp",
+                                   help="File with parameters for FIT headers.")                                
         
         self.__parser.add_argument("-b", dest="b", metavar="bias_dir_name",
                                    help="Name of the directory for bias.")
@@ -142,15 +145,23 @@ class ProgramArguments(object):
         self.__parser.add_argument("-f", dest="f", metavar="flat_dir_name",
                                    help="Name of the directory for flat.")
         
-        self.__parser.add_argument("-filters", metavar="filters_file_name",
+        self.__parser.add_argument("-filters", metavar="filters_file",
                                    dest="filters",
                                    help="Name of the file with the filters " + 
-                                   "to take into account.")      
+                                   "to take into account.")   
+        
+        self.__parser.add_argument("-sd", metavar="source_dir",
+                                   dest="sd",
+                                   help="Source directory of the files.")  
+        
+        self.__parser.add_argument("-td", metavar="target_dir",
+                                   dest="td",
+                                   help="Target directory of the files.")                  
         
         self.__parser.add_argument("-d", dest="d", metavar="data_dir_name",
                                    help="Name of the directory for data.")
         
-        self.__parser.add_argument("-l", metavar="log_file_name", dest="l",
+        self.__parser.add_argument("-l", metavar="log_file", dest="l",
                                    help="File to save the log messages.") 
         
         self.__parser.add_argument("-v", metavar="log_level", dest="v",
@@ -228,6 +239,14 @@ class ProgramArguments(object):
     def phot_params_file_name(self):
         return self.__phot_params_file_name  
     
+    @property    
+    def file_of_header_params_provided(self): 
+        return self.__args.hp is not None      
+    
+    @property
+    def header_params_file_name(self):
+        return self.__header_params_file_name      
+    
     @property
     def file_of_filters_provided(self):
         return self.__args.filters is not None   
@@ -247,6 +266,22 @@ class ProgramArguments(object):
     @property
     def log_level(self):
         return self.__args.v     
+        
+    @property
+    def source_dir_provided(self): 
+        return self.__args.sd is not None     
+    
+    @property
+    def source_dir(self):
+        return self.__args.sd   
+    
+    @property
+    def target_dir_provided(self): 
+        return self.__args.td is not None     
+    
+    @property
+    def target_dir(self):
+        return self.__args.td
     
     @property
     def organization_requested(self):
@@ -317,6 +352,9 @@ class ProgramArguments(object):
         if self.file_of_phot_params_provided:
             self.__phot_params_file_name = self.__args.pp
             
+        if self.file_of_header_params_provided:
+            self.__header_params_file_name = self.__args.hp
+            
         if self.__args.no is not None:
             self.__astrometry_num_of_objects = self.__args.no            
             
@@ -331,18 +369,18 @@ class ProgramArguments(object):
             not self.magnitudes_requested and \
             not self.all_steps_requested and \
             not self.summary_requested:
-            raise ProgramArgumentsException(self.NO_PIPELINE_STEPS_REQUESTED)
+            raise ProgramArgumentsException(ProgramArguments.NO_PIPELINE_STEPS_REQUESTED)        
         
         # Check all the conditions required for the program arguments.        
         if self.use_sextractor_for_astrometry and \
             not self.sextractor_cfg_file_provided:
-            raise ProgramArgumentsException(self.USE_SEX_REQUIRES_SEX_PATH)
+            raise ProgramArgumentsException(ProgramArguments.SEXTRACTOR_PATH_REQUIRED)
             
         # Check the specification of the all the parameters needed for the
         # photometry.
-        if self.photometry_requested:
+        if self.photometry_requested or self.all_steps_requested:
             if not self.file_of_stars_provided:
-                raise ProgramArgumentsException(ProgramArguments.PHOT_REQUIRES_STARS_FILE)
+                raise ProgramArgumentsException(ProgramArguments.STARS_FILE_REQUIRED)
             
             if not self.file_of_phot_params_provided:
                 raise ProgramArgumentsException(ProgramArguments.PHOT_REQUIRES_PHOT_PARAMETERS)
@@ -351,22 +389,51 @@ class ProgramArguments(object):
                 raise ProgramArgumentsException(ProgramArguments.PHOT_REQUIRES_INST_CHARACTERISTICS)
             
             if not self.sextractor_cfg_file_provided:
-                raise ProgramArgumentsException(ProgramArguments.PHOT_REQUIRES_SEX_PATH)            
+                raise ProgramArgumentsException(ProgramArguments.SEXTRACTOR_PATH_REQUIRED)        
 
         # Check coherence for other steps.
         
-        if self.organization_requested and not self.file_of_filters_provided:
-            raise ProgramArgumentsException(self.ORG_REQUIRES_FILTERS)        
+        if self.organization_requested or self.all_steps_requested:
+            if not self.file_of_stars_provided:
+                raise ProgramArgumentsException(ProgramArguments.STARS_FILE_REQUIRED)
+                                                            
+            if not self.file_of_filters_provided:
+                raise ProgramArgumentsException(ProgramArguments.FILTERS_PARAM_REQUIRED) 
         
-        if self.astrometry_requested and not self.file_of_stars_provided:
-            raise ProgramArgumentsException(self.ASTRO_REQUIRES_STARS_FILE)
+            if not self.file_of_header_params_provided:
+                raise ProgramArgumentsException(ProgramArguments.HEADER_PARAM_REQUIRED)       
         
-        if self.magnitudes_requested and not self.file_of_stars_provided:
-            raise ProgramArgumentsException(self.MAG_REQUIRES_STARS_FILE)
+        if self.astrometry_requested or self.all_steps_requested:
+            if not self.file_of_stars_provided:
+                raise ProgramArgumentsException(ProgramArguments.STARS_FILE_REQUIRED)            
         
-        if self.light_curves_requested and not self.stars_file_name:
-            raise ProgramArgumentsException(self.LIGHT_CURVES_REQUIRES_STARS_FILE)
+        if self.magnitudes_requested or self.all_steps_requested:
+            if not self.file_of_stars_provided:
+                raise ProgramArgumentsException(ProgramArguments.STARS_FILE_REQUIRED)
+        
+        if self.light_curves_requested or self.all_steps_requested:
+            if not self.stars_file_name:
+                raise ProgramArgumentsException(ProgramArguments.STARS_FILE_REQUIRED)
             
+        if not self.source_dir_provided:
+            raise ProgramArgumentsException(ProgramArguments.SOURCE_DIR_REQUIRED)
+        elif not os.path.exists(self.source_dir):
+            raise ProgramArgumentsException(ProgramArguments.SOURCE_DIR_MUST_EXISTS)
+        
+        if not self.target_dir_provided:
+            raise ProgramArgumentsException(ProgramArguments.TARGET_DIR_REQUIRED)
+        elif not os.path.exists(self.target_dir):     
+            try: 
+                logging.debug("Creating target directory: %s" % 
+                              (self.target_dir))
+                os.makedirs(complete_dirname)
+                
+            except OSError:            
+                logging.error("Target directory cannot be created: %s" %
+                              (self.target_dir))
+                
+                raise ProgramArgumentsException(ProgramArguments.ERROR_CREATING_TARGET_DIR)
+                
     def process_program_arguments(self):
         """Parse and check coherence of program arguments."""      
         

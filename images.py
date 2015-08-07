@@ -154,7 +154,7 @@ def get_filename_start(path_file):
     filename_start = filename.split(DATANAME_CHAR_SEP)[0]    
     
     # Some file names have suffixes delimited by dots
-    # that should be suppressed.    
+    # that must be ignored to get the real name.    
     return filename_start.split(".")[-1]                
 
 def get_files_of_interest(stars_names, files):
@@ -217,10 +217,8 @@ def get_files_of_interest(stars_names, files):
         # Get the set of filter used by images.
         images_filters =  set(file_filter_list)
         
-        logging.debug("Found " + str(len(file_list)) + \
-                      " image files, " + str(len(bias_list)) + \
-                      " bias files and " + str(len(flat_list)) + \
-                      " flat files.")
+        logging.debug("Found %d image files, %d bias files and %d flat files." % 
+                      (len(file_list), len(bias_list), len(flat_list)))
         
         # Add all the bias.
         file_list.extend(bias_list)
@@ -256,18 +254,18 @@ def copy_files_of_interest(destiny_path, files_of_interest):
         
         shutil.copyfile(f, os.path.join(destiny_path, destiny_filename))
 
-def copy_images(destiny_path, source_path, starts_file_name):
+def copy_images(destiny_path, source_path, stars_file_name):
     """Searches files related to the star and copy them to the path indicated.
     
     Args:
         destiny_path: Destiny path to create and where to copy the files.
         source_path: Source where to look for files.
-        starts_file_name: Stars whose files are searched.
+        stars_file_name: Stars whose files are searched.
             
     """
     
     # Read the stars from the file received.
-    stars = starsset.StarsSet(starts_file_name)
+    stars = starsset.StarsSet(stars_file_name)
     
     # Get the names of the stars.
     stars_names = stars.star_names  
@@ -277,13 +275,13 @@ def copy_images(destiny_path, source_path, starts_file_name):
     
         # Inspect only directories without subdirectories.
         if len(dirs) == 0:           
-            logging.debug("Found a directory for data: " + path)
+            logging.debug("Found a directory for data: %s" % (path))
             
             split_path = os.path.split(path)
 
             # Get the list of files.
-            files = glob.glob(os.path.join(path, "*" + FIT_FILE_EXT))
-            logging.debug("Found " + str(len(files)) + " image files")
+            files = glob.glob(os.path.join(path, "*.%s" % (FIT_FILE_EXT)))
+            logging.debug("Found %d image files." % (len(files)))
             
             files_of_interest = get_files_of_interest(stars_names, files)  
             
@@ -298,13 +296,14 @@ def list_stars_in_files(source_dir):
     """Walks the directory and create a list of the stars with images.
     
     Args:
-    source_dir: Source directory where to search for files.
+        source_dir: Source directory where to search for files.
             
     """
     
     stars_names = []
     
-    logging.debug("Creating a list of stars_names with images from: " + source_dir)
+    logging.debug("Creating a list of stars_names with images from: %s" %
+                  (source_dir))
     
     # Walk from current directory.
     for path,dirs,files in os.walk(source_dir):
@@ -316,7 +315,7 @@ def list_stars_in_files(source_dir):
             split_path = os.path.split(path)
 
             # Get the list of files.
-            files = glob.glob(os.path.join(path, "*" + FIT_FILE_EXT))
+            files = glob.glob(os.path.join(path, "*.%s" % (FIT_FILE_EXT)))
             
             logging.debug("Found %d image files" % (len(files)))
             

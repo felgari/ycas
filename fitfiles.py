@@ -21,24 +21,17 @@
 
 import logging
 import pyfits
+import fitsheader
 from constants import *
 
 # First index for a FIT table.
 FIT_FIRST_TABLE_INDEX = 1
 
-DATE_FIELD_NAME = "DATE-OBS"
-FILTER_FIELD_NAME = "FILTER"
-IMAGE_TYPE_FIELD_NAME = "IMAGETYP"
 XBINNING_FIELD_NAME = "XBINNING"
 YBINNING_FIELD_NAME = "YBINNING"
 
-
 BIAS_TYPE = "BIAS"
 FLAT_TYPE = "FLAT"
-
-ORG_FIT_HEADER_FIELDS = [DATE_FIELD_NAME, IMAGE_TYPE_FIELD_NAME, \
-                         FILTER_FIELD_NAME]
-
 
 def search_filter_from_set_in_file_name(filename):
     """ Get from a file name, a filter name belonging to the set filters used. 
@@ -133,15 +126,14 @@ def get_image_filter_from_file(filename):
             
     """    
     
-    # Get some fit header fields that can be used to organize
-    # the image.
+    # Get some fit header fields that can be used to organize the image.
     header_fields = get_fit_fields(filename)
     
     # Get the image filter from the header fields or the file name
     # if the filter can not be read from header fields.
     return get_image_filter(header_fields, filename)  
 
-def get_fit_fields(fit_file_name, fields = ORG_FIT_HEADER_FIELDS):
+def get_fit_fields(fit_file_name, fields):
     """Retrieves the fields of the fit header from the file indicated.
     
     Args:
@@ -153,7 +145,7 @@ def get_fit_fields(fit_file_name, fields = ORG_FIT_HEADER_FIELDS):
         
     """
     
-    logging.debug("Extracting header fields for: " + fit_file_name)
+    logging.debug("Extracting header fields for: %s" % (fit_file_name))
     
     # Create a dictionary to retrieve easily the appropriate list
     # using the name of the object.
@@ -167,22 +159,28 @@ def get_fit_fields(fit_file_name, fields = ORG_FIT_HEADER_FIELDS):
         header = hdulist[0].header
         
         # For all the header fields of interest.
-        for i in range(len(fields)):
-            
-            field = fields[i]
+        for f in fields:
             
             # Retrieve and store the value of this field.
-            header_fields[field] = header[field]
+            header_fields[f] = header[f]
         
-        hdulist.close() 
+        hdulist.close()
+        
     except IOError as ioe:
-        logging.error("Error reading fit file '" + fit_file_name + \
-                      "'. Error is: " + str(ioe))
+        logging.error("Error reading fit file '%s'. Error is: %s." % 
+                      (fit_file_name, ioe))
+        
     except KeyError as ke:
-        logging.warning("Header field '" + fields[i] + \
-                        "' not found in file " + fit_file_name)   
+        logging.warning("Header field '%s' not found in file %s." %
+                        (f,fit_file_name))   
     except:
-        logging.error("Unknown error reading fit file: " + fit_file_name)             
+        logging.error("Unknown error reading fit file: %s." % (fit_file_name))             
+        
+    # If the object has not the field for tha name, add it with the default 
+    # value.
+    if not fitsheader.DEFAULT_OBJECT_NAME in header_fields:
+        header_fields[fitsheader.DEFAULT_OBJECT_NAME] = \
+            fitsheader.DEFAULT_OBJECT_NAME
         
     return header_fields
   
@@ -290,49 +288,45 @@ def file_is_type(header_fields, filename_path, field_type, type_string):
     # If the type has been identified, show the method used.
     if is_type:      
         if field_processed:
-            logging.debug(filename + " type using file headers.")
+            logging.debug("%s type using file headers." % (filename))
         else:
-            logging.warning(filename + " type using file name.")        
+            logging.warning("%s type using file name." % (filename))        
     
     return is_type       
 
-def file_is_bias(header_fields, filename):    
-    """Determines if the data received are related to a bias file. 
+def file_is_bias(file_header, header_fields_names):    
+    """Determine if the file received corresponds to a bias image. 
     
     Args:
-        header_fields: Fields from the file header to check if it is a bias.
-        filename: Name of the file.
+        file_header: Fields from the file header to check if it is a bias.
+        header_fields_names: Information about the headers fields of FIT files.
     
     Returns:    
         True if the file is for a bias, False otherwise.
         
     """
     
-    type = file_is_type(header_fields, filename, \
-                        BIAS_TYPE, BIAS_STRING)
+    is_type = file_header[header_fields_names.image_type] == \
+                header_fields_names.bias_value
     
-    logging.debug(filename + " is bias is: " + str(type))
+    logging.debug("%s is bias is: %s" % (filename, str(is_type)))
     
-    return type
+    return is_type
     
-def file_is_flat(header_fields, filename):    
-    """Determine if the data received are related to a flat file. 
+def file_is_flat(file_header, header_fields_names):    
+    """Determine if the file received corresponds to a flat image. 
     
     Args:
-        header_fields: Fields from the file header to check if it is a flat.
-        filename: Name of the file.
+        file_header: Fields from the file header to check if it is a bias.
+        header_fields_names: Information about the headers fields of FIT files.
     
     Returns:    
         True if the file is for a flat, False otherwise.  
         
     """
     
-    type = file_is_type(header_fields, filename, \
-                        FLAT_TYPE, FLAT_STRING)
-    
-    logging.debug(filename + " is flat is: " + str(type))
-    
-    return type
+    return file_header[header_fields_names.image_type] == \
+                header_fields_names.flat_value
 
 def get_file_binning(fit_file_name):
     """ Returns the binning of a fit file reading its header.

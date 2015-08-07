@@ -62,7 +62,7 @@ def pipeline(progargs):
     # image: bias, flat or data.
     if progargs.organization_requested or progargs.all_steps_requested:
         logging.info("* Step 1 * Organizing image files in directories.")
-        orgfits.organize_files(progargs)
+        orgfits.organize_files(progargs, stars)
         anything_done = True
     else:
         logging.info("* Step 1 * Skipping the organization of image files in directories. Not requested.")
