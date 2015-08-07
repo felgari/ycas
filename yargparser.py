@@ -401,7 +401,12 @@ class ProgramArguments(object):
                 raise ProgramArgumentsException(ProgramArguments.FILTERS_PARAM_REQUIRED) 
         
             if not self.file_of_header_params_provided:
-                raise ProgramArgumentsException(ProgramArguments.HEADER_PARAM_REQUIRED)       
+                raise ProgramArgumentsException(ProgramArguments.HEADER_PARAM_REQUIRED) 
+            
+            if not self.source_dir_provided:
+                raise ProgramArgumentsException(ProgramArguments.SOURCE_DIR_REQUIRED)
+            elif not os.path.exists(self.source_dir):
+                raise ProgramArgumentsException(ProgramArguments.SOURCE_DIR_MUST_EXISTS)                  
         
         if self.astrometry_requested or self.all_steps_requested:
             if not self.file_of_stars_provided:
@@ -414,11 +419,6 @@ class ProgramArguments(object):
         if self.light_curves_requested or self.all_steps_requested:
             if not self.stars_file_name:
                 raise ProgramArgumentsException(ProgramArguments.STARS_FILE_REQUIRED)
-            
-        if not self.source_dir_provided:
-            raise ProgramArgumentsException(ProgramArguments.SOURCE_DIR_REQUIRED)
-        elif not os.path.exists(self.source_dir):
-            raise ProgramArgumentsException(ProgramArguments.SOURCE_DIR_MUST_EXISTS)
         
         if not self.target_dir_provided:
             raise ProgramArgumentsException(ProgramArguments.TARGET_DIR_REQUIRED)
@@ -426,7 +426,7 @@ class ProgramArguments(object):
             try: 
                 logging.debug("Creating target directory: %s" % 
                               (self.target_dir))
-                os.makedirs(complete_dirname)
+                os.makedirs(self.target_dir)
                 
             except OSError:            
                 logging.error("Target directory cannot be created: %s" %

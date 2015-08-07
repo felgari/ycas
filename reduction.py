@@ -150,7 +150,7 @@ def show_bias_files_statistics(list_of_files):
         logging.error("Error calculating mean values: %s" % (mean_strings))
         logging.error("Error is: %s" % (ve))          	
 
-def generate_all_masterbias(bias_dir_name):
+def generate_all_masterbias(target_dir, bias_dir_name):
     """ Calculation of all the masterbias files.
     
     This function search for bias files from current directory.
@@ -161,14 +161,15 @@ def generate_all_masterbias(bias_dir_name):
     with an average operation using all the bias files.
     
     Args:
+        target_dir: Directory of the files.
         bias_dir_name: Name of the directories that contain bias images.     
     
     """
 
-    logging.info("Generating all masterbias files ...")
+    logging.info("Generating all masterbias files from %s ..." % target_dir)
     
     # Walk from current directory.
-    for path, dirs, files in os.walk('.'):
+    for path, dirs, files in os.walk(target_dir):
     	
         # Check if current directory is for bias fits.
         for dr in dirs:
@@ -338,7 +339,7 @@ def generate_masterflat(path, files, masterflat_name):
         
         logging.error("Iraf error is: %s" % (exc))
 
-def generate_all_masterflats(flat_dir_name):
+def generate_all_masterflats(target_dir, flat_dir_name):
     """Calculation of all the masterflat files.
     
     This function search for flat files from current directory.
@@ -350,14 +351,15 @@ def generate_all_masterflats(flat_dir_name):
     directory with an average operation using all the bias files.    
     
     Args:
-        flat_dir_name: Name of the directories containing flat images.      
+        flat_dir_name: Name of the directories containing flat images.     
+        target_dir: Directory of the files. 
         
     """
     
-    logging.info("Generating all masterflats files ...")
+    logging.info("Generating all masterflats files from %s ..." % (target_dir))
 
     # Walk from current directory.
-    for path, dirs, files in os.walk('.'):
+    for path, dirs, files in os.walk(target_dir):
 
         # Process only directories without subdirectories.
         if len(dirs) == 0:
@@ -478,7 +480,7 @@ def reduce_list_of_images(data_files, masterbias_filename, masterflat_filename):
             logging.warning("No reduction to get '%s', already exists" %
                             (source_image)) 
 
-def reduce_data_images(data_dir_name):
+def reduce_data_images(target_dir, data_dir_name):
     """Reduction all data images.
     
     This function search images from the source directory to reduce then. 
@@ -488,12 +490,13 @@ def reduce_data_images(data_dir_name):
     name to keep the original file. 
     
     Args:
+        target_dir: Directory of the files.
         data_dir_name: Name of the directories containing data images.     
         
     """
 
     # Walk from current directory.
-    for path, dirs, files in os.walk('.'):
+    for path, dirs, files in os.walk(target_dir):
 
         # Inspect only directories without subdirectories. Only these
         # directories should contain files with images.
@@ -536,12 +539,15 @@ def reduce_images(progargs):
     iraf.images(_doprint=0)
 
     # Generate all the average bias.
-    generate_all_masterbias(progargs.bias_directory)
+    generate_all_masterbias(progargs.target_dir,
+                            progargs.bias_directory)
 
     # Generate all the average flat.
-    generate_all_masterflats(progargs.flat_directory)
+    generate_all_masterflats(progargs.target_dir,
+                             progargs.flat_directory)
 
     # Reduce all the data images applying the average bias and flats.
-    reduce_data_images(progargs.data_directory)
+    reduce_data_images(progargs.target_dir,
+                       progargs.data_directory)
     
     logging.info("Finished the reduction of images.")    
