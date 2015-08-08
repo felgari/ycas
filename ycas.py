@@ -39,30 +39,54 @@ import photometry
 import magnitude
 import curves
 import summary
-from constants import * 
+import fitsheader
+import textfiles
+from constants import *
+
+def get_pipeline_parameters(progargs):
+    """Read the configuration parameters required by the pipeline.
+    
+    Args:
+        progargs: Program arguments.
+    
+    """
+    
+    stars = None
+    
+    if progargs.file_of_stars_provided:        
+        # Read the data of the stars of interest.
+        stars = starsset.StarsSet(progargs.stars_file_name)  
+        
+        print stars.star_names  
+    
+    filters = orgfits.Filters(progargs.filters_file_name)
+    
+    # Read the names of the header fields used.
+    cfg_header_fields = textfiles.read_cfg_file(progargs.header_params_file_name)
+    
+    header_fields = fitsheader.HeaderFields(cfg_header_fields)    
+    
+    return stars, filters, header_fields
 
 def pipeline(progargs):
     """ Performs sequentially the steps of the pipeline that have been 
     requested.
     
     Args:
-        progargs: The program arguments.
+        progargs: Program arguments.    
         
     """
     
-    stars = None
     # Magnitudes calculated.
-    mag = None
+    mag = None     
     
-    if progargs.file_of_stars_provided:        
-        # Read the data of the stars of interest.
-        stars = starsset.StarsSet(progargs.stars_file_name)        
+    stars, filters, header_fields = get_pipeline_parameters(progargs)
     
     # This step organizes the images in directories depending on the type of
     # image: bias, flat or data.
     if progargs.organization_requested or progargs.all_steps_requested:
         logging.info("* Step 1 * Organizing image files in directories.")
-        orgfits.organize_files(progargs, stars)
+        orgfits.organize_files(progargs, stars, header_fields, filters)
         anything_done = True
     else:
         logging.info("* Step 1 * Skipping the organization of image files in directories. Not requested.")
@@ -79,7 +103,7 @@ def pipeline(progargs):
     # AR,DEC coordinates.
     if progargs.astrometry_requested or progargs.all_steps_requested:
         logging.info("* Step 3 * Performing astrometry of the images.")
-        astrometry.do_astrometry(progargs, stars)
+        astrometry.do_astrometry(progargs, stars, header_fields)
         anything_done = True
     else:
         logging.info("* Step 3 * Skipping astrometry. Not requested.")
@@ -140,6 +164,10 @@ def main(progargs):
     except yargparser.ProgramArgumentsException as pae:
         # To stdout, since logging has not been initialized.
         print pae
+        
+    except fitsheader.HeaderFieldsException as hfe:
+        logging.error("Invalid header fields in file: %s" % 
+                      progargs.header_params_file_name)        
   
 
 # Where all begins ...

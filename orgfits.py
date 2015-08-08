@@ -130,12 +130,12 @@ class OrganizeFIT(object):
     
     """
     
-    def __init__(self, progargs, filters, header_fields, stars):
+    def __init__(self, progargs, stars, header_fields, filters):
         
         self._progargs = progargs
-        self._filters = filters
-        self._header_fields = header_fields
         self._stars = stars
+        self._header_fields = header_fields
+        self._filters = filters
                 
     def create_directory(self, dir_name):
         """ Create a directory with the given name. 
@@ -571,28 +571,18 @@ class OrganizeFIT(object):
             # with a different binning of data images.
             self.remove_images_according_to_binning(path)      
 
-def organize_files(progargs, stars):
+def organize_files(progargs, stars, header_fields, filters):
     """Get the data necessary to process files and initiates the search of 
     FIT files in directories to organize them.
         
     Args:    
         progargs: Program arguments.  
-        stars: The list of stars. 
+        stars: The list of stars.
+        header_fields: Information about the headers.        
+        filters: Filters to use.
         
     """
+            
+    org = OrganizeFIT(progargs, stars, header_fields, filters)
     
-    filters = Filters(progargs.filters_file_name)
-    
-    # Read the names of the header fields used.
-    cfg_header_fields = textfiles.read_cfg_file(progargs.header_params_file_name)
-    
-    try:
-        header_fields = fitsheader.HeaderFields(cfg_header_fields)
-        
-        org = OrganizeFIT(progargs, filters, header_fields, stars)
-        
-        org.process_directories()
-        
-    except fitsheader.HeaderFieldsException as hfe:
-        logging.error("Invalid header fields in file: %s" % 
-                      progargs.header_params_file_name)        
+    org.process_directories()

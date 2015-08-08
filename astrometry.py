@@ -30,6 +30,7 @@ import yargparser
 import glob
 import pyfits
 import csv
+import fitsheader
 from constants import *
 from textfiles import *
 from fitfiles import *
@@ -68,16 +69,20 @@ class Astrometry(object):
     
     NUM_OBJECTS_SECOND_TRY = 40
     
-    def __init__(self, progargs, stars):
+    def __init__(self, progargs, stars, header_fields):
         """Constructor.
     
         Args:
             progargs: Program arguments. 
             stars: Stars of interest.    
+            header_fields: Information about the headers.
+            
         """
 
         self._stars = stars
+        self._header_fields = header_fields
         
+        self._target_dir = progargs.target_dir
         self._data_dir_name = progargs.data_directory
         self._num_of_objects = progargs.number_of_objects_for_astrometry
         
@@ -124,8 +129,8 @@ class Astrometry(object):
         
         """
         
-        # Walk from current directory.
-        for path, dirs, files in os.walk('.'):
+        # Walk from target directory.
+        for path, dirs, files in os.walk(self._target_dir):
     
             # Inspect only directories without subdirectories.
             if len(dirs) == 0:
@@ -142,9 +147,8 @@ class Astrometry(object):
                                                 "*" + DATA_FINAL_PATTERN)) \
                         if not os.path.basename(fn).startswith('.')]
                         
-                    logging.debug("Found %d files to catalog: %s " % \
-                                  (len(files_to_catalog), 
-                                   files_to_catalog))
+                    logging.debug("Found %d files to catalog." % \
+                                  (len(files_to_catalog)))
     
                     self.do_astrometry_of_images(files_to_catalog)
     
@@ -190,8 +194,10 @@ class Astrometry(object):
                     
         self.execute_astrometry_command(self._num_of_objects, image_file, star)
         
+        success = self.astrometry_success(image_file)
+        
         # Check if the astrometry has been successful.
-        if self.astrometry_success(image_file):
+        if success:
             logging.debug("Astrometry first execution successful with %d objects" %
                           (self._num_of_objects))
             
@@ -210,7 +216,8 @@ class Astrometry(object):
             else:
                 logging.debug("Astrometry second and final execution not " + 
                               "successful with %d objects" %
-                              (Astrometry.NUM_OBJECTS_SECOND_TRY))        
+                              (Astrometry.NUM_OBJECTS_SECOND_TRY))       
+                 
         return success
     
     def do_astrometry_of_images(self, files_to_catalog):
@@ -226,15 +233,16 @@ class Astrometry(object):
             
             self._number_of_images += 1
             
-            try:
-                cat_file_name = image_file.replace(DATA_FINAL_PATTERN, 
-                    "." + CATALOG_FILE_EXT)
+            cat_file_name = image_file.replace(DATA_FINAL_PATTERN, 
+                "." + CATALOG_FILE_EXT)
+            
+            # Check if the catalog image_file already exists.
+            # If it already exists the astrometry is not calculated.
+            if os.path.exists(cat_file_name) == False:
                 
-                # Check if the catalog image_file already exists.
-                # If it already exists the astrometry is not calculated.
-                if os.path.exists(cat_file_name) == False:
+                try:
                     
-                    star = self.get_star_of_filename(image_file)
+                    star = self.get_star_from_file(image_file)
 
                     # Generate astrometry of the image and check the result.                    
                     if self.do_astrometry_of_image(image_file, star):
@@ -249,13 +257,13 @@ class Astrometry(object):
                     else:
                         self._images_without_astrometry.extend([image_file])                     
                     
-                else:
-                    logging.debug("Catalog image_file already exists: %s" % 
-                                  (cat_file_name))
-                        
-            except StarNotFound as onf:
-                logging.debug("Object not found related to image_file: %s" % 
-                              (onf.filename))   
+                except StarNotFound as onf:
+                    logging.debug("Star not identified for image_file: %s" % 
+                                  (onf.filename))                      
+                    
+            else:
+                logging.debug("Catalog '%s' already exists." % 
+                              (cat_file_name)) 
                 
     def write_coord_catalogues(self, image_file_name, catalog_full_file_name, 
                                star):
@@ -294,34 +302,29 @@ class Astrometry(object):
         # Read x,y and ra,dec data from fit table.
         xy_data = get_fit_table_data(xyls_file_name)
         rd_data = get_fit_table_data(rdls_file_name)
-        
-        # Only generate catalog file if the star is no standard.
-        if not star.is_std:        
-            # Get the indexes for x,y and ra,dec data related to the
-            # stars received.
-            indexes, identifiers = get_indexes_for_star_coor(rd_data, star)  
+               
+        # Get the indexes for x,y and ra,dec data related to the
+        # stars received.
+        indexes, identifiers = get_indexes_for_star_coor(rd_data, star)  
+            
+        # Check if any star has been found in the image.
+        if len(indexes) > 0:              
+            # Check if the coordinates complies with the 
+            # coordinates validation criteria.
+            if check_celestial_coordinates(image_file_name, star, indexes, \
+                                           identifiers, rd_data, xy_data):
+    
+                # Write catalog file with the x,y coordinate to do the
+                # photometry.
+                self.write_catalog_file(catalog_full_file_name, indexes, \
+                                        xy_data, identifiers)        
                 
-            # Check if any star has been found in the image.
-            if len(indexes) > 0:              
-                # Check if the coordinates complies with the 
-                # coordinates validation criteria.
-                if check_celestial_coordinates(image_file_name, star, indexes, \
-                                               identifiers, rd_data, xy_data):
-        
-                    # Write catalog file with the x,y coordinate to do the
-                    # photometry.
-                    self.write_catalog_file(catalog_full_file_name, indexes, \
-                                            xy_data, identifiers)        
-                    
-                    success = True
-                else:
-                    logging.warning("Catalog file not saved, coordinates " + \
-                                    "do not pass validation criteria.")
+                success = True
             else:
-                logging.warning("Catalog file not saved, no stars found by astrometry")
+                logging.warning("Catalog file not saved, coordinates " + \
+                                "do not pass validation criteria.")
         else:
-            logging.debug("Catalog no generated, star is standard: %s" % 
-                          (star.name))
+            logging.warning("Catalog file not saved, no stars found by astrometry")
             
         return success  
     
@@ -375,7 +378,7 @@ class Astrometry(object):
         logging.info("- List of images without astrometry: %s" % \
                      (self._images_without_astrometry))        
 
-    def get_star_of_filename(self, filename):
+    def get_star_from_file(self, filename):
         """Returns the star indicated by the file name received.
         
         The filename should corresponds to an star and the name of this stars
@@ -395,25 +398,13 @@ class Astrometry(object):
         
         """
         
-        # Default values for the variables returned.
-        star = None
-        index = -1
-        
-        # Split file name from path.
-        path, file = os.path.split(filename)
-        
         # Get the star name from the filename, the name is at the beginning
         # and separated by a special character.
-        star_name = file.split(DATANAME_CHAR_SEP)[0]
-        
-        logging.debug("In astrometry, searching coordinates for star: %s" %
-                      (star_name))
+        star_name = fitsheader.get_header_value(filename, 
+                                                self._header_fields.object)
         
         # Look for an star of the list whose name matches that of the filename.
-        for s in self._stars:
-            if s.name == star_name:
-                star = s
-                break
+        star = self._stars.get_star(star_name)
         
         # If the star is not found raise an exception,
         if star is None:
@@ -421,18 +412,19 @@ class Astrometry(object):
         
         return star 
         
-def do_astrometry(progargs, stars):
+def do_astrometry(progargs, stars, header_fields):
     """Performs the astrometry.
     
     Args:
         progargs: Program arguments. 
         stars: Stars of interest.
+        header_fields: Information about the headers.
         
     """
     
     logging.info("Doing astrometry ...")
     
-    astrom = Astrometry(progargs, stars)
+    astrom = Astrometry(progargs, stars, header_fields)
 
     astrom.do_astrometry()
 

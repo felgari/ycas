@@ -181,6 +181,41 @@ class HeaderFields(object):
     def header_fields_names(self):
         return HeaderFields._HEADER_FIELDS
     
+def get_header_value(file_name, field):
+    """Returns the value of a field in the header of a FIT file.
+    
+    Args:
+        file_name: Name of the file.
+        field: Field to get.
+        
+    Returns:
+        The value of the field.
+    
+    """
+    
+    value = None
+    
+    # Get value of the field.
+    try:
+        # Open FIT file.
+        hdulist = pyfits.open(file_name)   
+             
+        value = hdulist[0].header[field]
+        
+        hdulist.close()  
+        
+        logging.debug("Star %s identified for file %s." %
+                      (value, file_name))
+        
+    except IOError as ioe:
+        logging.error("Opening file '%s'." % (file_name))    
+              
+    except KeyError as ke:
+        logging.error("Field '%s' not found in file '%s'." %
+                      (field, file_name))    
+    
+    return value   
+    
 def process_fit_file(file_name):
     """Process the header of the file whose name has been received.
     
