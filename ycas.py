@@ -56,8 +56,6 @@ def get_pipeline_parameters(progargs):
     if progargs.file_of_stars_provided:        
         # Read the data of the stars of interest.
         stars = starsset.StarsSet(progargs.stars_file_name)  
-        
-        print stars.star_names  
     
     filters = orgfits.Filters(progargs.filters_file_name)
     
