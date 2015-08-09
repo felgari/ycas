@@ -17,10 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Obtains the calibrated magnitude of objects using the atmospheric extinction
+"""Obtains the calibrated magnitude of stars using the atmospheric extinction
 corrected magnitudes calculated previously.
 
-The magnitude values are stored in different files for each object.
+The magnitude values are stored in different files for each star.
 """
 
 import numpy as np
@@ -125,7 +125,7 @@ class TransformingCoefficient(object):
 def get_transforming_coefficients(magnitudes):
     """Get the transforming coefficients to calculate the calibrated magnitudes.
     
-    From the extinction corrected magnitudes of standard object 
+    From the extinction corrected magnitudes of standard star 
     get the transforming coefficients used to calculate the
     calibrated magnitudes.
     
@@ -175,18 +175,18 @@ def get_transforming_coefficients(magnitudes):
                 B_mags = B_mags_of_star.astype(np.float)
                 V_mags = V_mags_of_star.astype(np.float)
             
-                # Compute the mean for the magnitudes of this object
+                # Compute the mean for the magnitudes of this star
                 # in each filter. 
                 B_mean = np.mean(B_mags)
                 V_mean = np.mean(V_mags)
 
                 # Store the mean values of the magnitude observed for
-                # these objects to compute the transforming coefficients 
+                # these stars to compute the transforming coefficients 
                 # of this day.
                 B_V_mags_of_day.extend([B_mags - V_mags])
                 V_mags_of_day.extend([V_mags])
                 
-                # Add the standard magnitudes of the object.
+                # Add the standard magnitudes of the star.
                 B_std_mag_star = \
                     np.array([float(magnitudes.get_std_mag(mag.star_name, \
                                                            B_FILTER_NAME))] * \
@@ -250,7 +250,7 @@ def calibrated_magnitudes(magnitudes, trans_coef):
             # Magnitudes of the star
             star_mags = magnitudes.get_mags_of_star(s.name)
             
-            # To store the magnitudes for this object in each filter.
+            # To store the magnitudes for this star in each filter.
             mags_of_B_filter = [m for m in star_mags \
                        if m.day == day and m.filter == B_FILTER_NAME]
             
@@ -298,9 +298,9 @@ def calibrated_magnitudes(magnitudes, trans_coef):
                               % (s.name, day))                
 
 def get_calibrated_magnitudes(magnitudes):
-    """Calculate the calibrated magnitude of the objects.
+    """Calculate the calibrated magnitude of the stars.
     
-    Calculate the calibrated magnitude of the objects 
+    Calculate the calibrated magnitude of the stars 
     using the extinction coefficient calculated previously and
     calibrating with the standard magnitudes.
     
@@ -309,9 +309,9 @@ def get_calibrated_magnitudes(magnitudes):
         
     """
 
-    # Calculate from extinction corrected magnitudes of no standard objects
+    # Calculate from extinction corrected magnitudes of no standard stars
     # the transformation coefficients to calculate the calibrated magnitudes.
     trans_coef = get_transforming_coefficients(magnitudes)
         
-    # Calculate the calibrated magnitudes for all the objects.
+    # Calculate the calibrated magnitudes for all the stars.
     calibrated_magnitudes(magnitudes, trans_coef)

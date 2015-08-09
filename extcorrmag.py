@@ -36,7 +36,7 @@ from utility import get_day_from_mjd
 class ExtinctionCoefficient(object):
     """The extinction coefficient values calculated for a day and a filter."""
     
-    # Minimum number of measures of standard objects to calculate extinction 
+    # Minimum number of measures of standard stars to calculate extinction 
     # coefficients.
     MIN_NUM_STD_MEASURES = 4    
     
@@ -225,7 +225,7 @@ class ExtCorrMagnitudes(object):
         return magnitudes_collected
 
     def calculate_extinction_coefficients(self):
-        """Get the extinction coefficient using the standard objects.
+        """Get the extinction coefficient using the standard stars.
         
         Args:
             stars: The list of all the stars.

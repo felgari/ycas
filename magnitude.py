@@ -17,9 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Obtains the magnitude of objects using the photometry calculated previously.
+"""Obtains the magnitude of stars using the photometry calculated previously.
 
-The magnitude values are stored in different files for each object.
+The magnitude values are stored in different files for each star.
 """
 
 import sys
@@ -39,14 +39,14 @@ from extcorrmag import ExtCorrMagnitudes
 from calibmag import get_calibrated_magnitudes
 
 def get_instrumental_magnitudes(stars, data_directoy_name):
-    """Receives a list of object and compiles the magnitudes for each object.
+    """Receives a list of star and compiles the magnitudes for each star.
     
     Args:
         stars: Features of the stars.
         data_directoy_name: Name of the directories that contains data images.     
     
     Returns:        
-        A list containing the magnitudes found for each object.
+        A list containing the magnitudes found for each star.
     
     """
     
@@ -77,10 +77,10 @@ def get_instrumental_magnitudes(stars, data_directoy_name):
                 # Sort the list of files to ensure a right processing of MJD.
                 mag_files_full_path.sort()               
                 
-                # Process the images of each object that has a RDLS file.
+                # Process the images of each star that has a RDLS file.
                 for mag_file in mag_files_full_path:
                     
-                    # Get the magnitudes for this object in current path.
+                    # Get the magnitudes for this star in current path.
                     ins_mag.read_inst_magnitudes(mag_file, path)
                             
     ins_mag.save_all_mag()                            
@@ -100,7 +100,7 @@ def correct_extinction_in_magnitudes(inst_mag):
     
     """
     
-    # Creates an object that calculates and applies the extinction coefficients.
+    # Creates an star that calculates and applies the extinction coefficients.
     ecm = ExtCorrMagnitudes(inst_mag)                   
             
     # First, calculate the extinction coefficients.
@@ -111,9 +111,9 @@ def correct_extinction_in_magnitudes(inst_mag):
     ecm.correct_magnitudes()
                                        
 def process_magnitudes(stars, data_directoy_name):
-    """Collect the instrumental magnitudes of all the objects of interest.
+    """Collect the instrumental magnitudes of all the stars of interest.
     Correct the magnitudes taking into account the atmospheric extinction.
-    Get a calibrated magnitude for the objects of interest according to the
+    Get a calibrated magnitude for the stars of interest according to the
     standard magnitudes of the Landolt catalog.
 
     Args:
@@ -125,7 +125,7 @@ def process_magnitudes(stars, data_directoy_name):
     
     """
     
-    # Get the instrumental magnitudes for the objects indicated.
+    # Get the instrumental magnitudes for the stars indicated.
     magnitudes = get_instrumental_magnitudes(stars, data_directoy_name)
     
     old_settings = np.seterr(all='ignore', over='warn')
@@ -140,7 +140,7 @@ def process_magnitudes(stars, data_directoy_name):
         # Get calibrated magnitudes.
         get_calibrated_magnitudes(magnitudes)
     else:
-        logging.warning("There is not any no standard object, " + \
+        logging.warning("There is not any no standard star, " + \
                         "so there is no extinction corrected magnitudes " + \
                         "nor calibrated ones.")
         

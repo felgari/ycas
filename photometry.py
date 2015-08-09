@@ -20,7 +20,7 @@
 """This module calculates the photometry.
 
 This module calculates the photometry of the objects detected previously
-by means of astrometry in a set of data images.
+by the astrometry in the data images.
 The photometry values calculated are stored in a text file that contains
 all the measures for the objects of an image.
 """
