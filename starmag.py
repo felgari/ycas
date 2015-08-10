@@ -203,9 +203,9 @@ class StarMagnitudes(object):
         # Read the catalog file that corresponds to this file.
         # First get the name of the catalog file from the current CSV file.
         catalog_file_name = mag_file.replace(
-            DATA_FINAL_SUFFIX + FILE_NAME_PARTS_DELIM + MAGNITUDE_FILE_EXT + 
-            "." + CSV_FILE_EXT, 
-            "." + CATALOG_FILE_EXT)
+            "%s%s%s" % 
+            (DATA_FINAL_SUFFIX, FILE_NAME_PARTS_DELIM, MAG_CSV_PATTERN), 
+            ".%s" %(CATALOG_FILE_EXT))
         return catalog_file_name
 
 

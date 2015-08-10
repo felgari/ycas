@@ -595,10 +595,11 @@ class SummaryReport(object):
         for i in range(len(image_files_no_final)):
             image = image_files_no_final[i]
             
-            photometry_file = image.replace("." + FIT_FILE_EXT, \
-                                            DATA_FINAL_SUFFIX + \
-                                            FILE_NAME_PARTS_DELIM + \
-                                            MAGNITUDE_FILE_EXT + "." + CSV_FILE_EXT)
+            photometry_file = image.replace(".%s" % (FIT_FILE_EXT),
+                                            "%s%s%s" %
+                                            (DATA_FINAL_SUFFIX,
+                                            FILE_NAME_PARTS_DELIM,
+                                            MAG_CSV_PATTERN))
              
             # Check if the final image related to current one exists.       
             if os.path.exists(photometry_file):
@@ -653,11 +654,11 @@ class SummaryReport(object):
                         calib_mag += 1
                         
                 messages.append(["Star %s has: " % s.name])
-                messages.append(["%d instrumental magnitudes." % \
+                messages.append(["%d instrumental magnitudes." %
                                  inst_mag])
-                messages.append(["%d extinction corrected magnitudes." % \
+                messages.append(["%d extinction corrected magnitudes." %
                                  ext_cor_mag])
-                messages.append(["%d calibrated magnitudes." % \
+                messages.append(["%d calibrated magnitudes." %
                                  calib_mag])                 
         
         # Print the summary.
