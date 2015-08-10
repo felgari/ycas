@@ -326,7 +326,7 @@ class OrganizeFIT(object):
                 
                 star_name = self.get_star_name(destiny_filename, file_header)
                 
-                if star_name in self._stars.star_names:
+                if self._stars.has_star(star_name):
             
                     filter_name = file_header[self._header_fields.filter]
                     

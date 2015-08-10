@@ -99,7 +99,7 @@ class ProgramArguments(object):
         
         self.__astrometry_num_of_objects = ProgramArguments.ASTROMETRY_NUM_OBJS
         
-        self.__stars_file_name = self.STARS_FILE_NAME  
+        self.__stars_file_name = self.STARS_FILE_NAME       
             
         # Initialize arguments of the parser.
         self.__parser = argparse.ArgumentParser()
@@ -184,7 +184,10 @@ class ProgramArguments(object):
                                    help="Use sextractor for astrometry.")                   
         
         self.__parser.add_argument("-t", dest="t", action="store_true", 
-                                   help="Use header information of FIT files.")                     
+                                   help="Use header information of FIT files.")  
+        
+        self.__parser.add_argument("-syn", metavar="synonym_file", dest="syn",
+                                   help="File with the synomyms for the names of the stars.")                            
         
         self.__args = None   
         
@@ -271,7 +274,16 @@ class ProgramArguments(object):
     @property
     def log_level(self):
         return self.__args.v     
-        
+    
+    
+    @property
+    def file_of_synonym_provided(self):
+        return self.__args.syn is not None   
+    
+    @property
+    def synonym_file_name(self):
+        return self.__args.syn    
+
     @property
     def source_dir_provided(self): 
         return self.__args.sd is not None     

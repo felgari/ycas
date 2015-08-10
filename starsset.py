@@ -122,6 +122,7 @@ class Star(object):
         self._name = name
         self._ra = ra
         self._dec = dec
+        self._synonyms = []
         
         if is_std:
             self._std_measures = []
@@ -163,18 +164,23 @@ class Star(object):
         return self._std_measures is not None and len(self._std_measures) > 0      
             
     def add_std_mag(self, std_mag):
-        """Add a standard magnitude to the star.
-        
-        """
+        """Add a standard magnitude to the star."""
         
         self._std_measures.append(std_mag)
         
     def add_field_star(self, ref_star):
-        """Add a field star.
-        
-        """
+        """Add a field star."""
         
         self._field_stars.append(ref_star)   
+        
+    def add_synomyms(self, list_of_synonyms):
+        """Add a list of synonyms to the stars."""
+        
+        for syn in list_of_synonyms:
+            self._synonyms.append(syn.strip())
+        
+    def has_synonym(self, synonym):
+        return synonym in self._synonyms
         
     @property
     def field_stars(self):
@@ -235,13 +241,13 @@ class StarsSet(object):
     OBJ_STD_MAG = 1
     OBJ_STD_NUM_FIELDS = 2
     
-    def __init__(self, file_name):
+    def __init__(self, file_name, synonym_file_name):
         
         self.__iter_idx = 0
         
         self._stars = []        
         
-        self.read_stars(file_name)    
+        self.read_stars(file_name, synonym_file_name)    
         
     def __str__(self):
         """Log the information of the stars."""
@@ -274,6 +280,17 @@ class StarsSet(object):
     @property
     def star_names(self):
         return [ s.name for s in self._stars ]
+    
+    def has_star(self, name):
+        
+        has = False
+        
+        for s in self._stars:
+            if s.name == name or s.has_synonym(name):
+                has = True
+                break
+        
+        return has
         
     @property
     def has_any_std_star(self):
@@ -321,7 +338,7 @@ class StarsSet(object):
         star = None
         
         for s in self._stars:
-            if s.name == name:
+            if s.name == name or s.has_synonym(name):
                 star = s
                 break
         
@@ -454,7 +471,7 @@ class StarsSet(object):
                 
         return star
         
-    def read_stars(self, file_name):
+    def read_stars(self, file_name, synonym_file_name):
         """Read the data of the stars from the file indicated.
         
         This file contains the name of the object and the AR, DEC 
@@ -462,32 +479,63 @@ class StarsSet(object):
         
         Args:
             file_name: Name of the file that contains the data of the stars.
+            synonym_file_name: Name of the file with the synonym of the stars.
         
         """
         
-        objects = list()
-        
         logging.debug("Reading stars from file: %s" % (file_name))
         
-        line_number = 0
+        row_number = 0
         
-        # Read the file that contains the stars.
-        with open(file_name, 'rb') as fr:
-            reader = csv.reader(fr, delimiter=',')        
-            
-            # Each line contains data for a star.
-            for line in reader:                 
+        try:
+            # Read the file that contains the stars.
+            with open(file_name, 'rb') as fr:
+                reader = csv.reader(fr, delimiter=',')        
                 
-                if len(line) > 0:
-                    # Only the column with name of the object.
-                    star = self.process_file_line(line, line_number)
+                # Each line contains data for a star.
+                for row in reader:                 
                     
-                    if star is not None:
-                        self.add_star(star)
+                    if len(row) > 0:
+                        # Only the column with name of the object.
+                        star = self.process_file_line(row, row_number)
+                        
+                        if star is not None:
+                            self.add_star(star)
+                        
+                    row_number = row_number + 1
                     
-                line_number = line_number + 1 
+            if synonym_file_name is not None:
+                self.read_synonym_os_stars(synonym_file_name)
+                    
+        except IOError as ioe:
+            logging.error("Reading the file of stars: '%s'." % (file_name))
                 
         logging.debug("Finished the reading of stars from file: %s" %
-                      (file_name))            
+                      (file_name))    
+        
+    def read_synonym_os_stars(self, synonym_file_name):
+        """Read the file that contains the synonyms for the names of the stars.
+        
+        Args:
+            synonym_file_name: The file with synonyms of the name of the stars. 
+            
+        """
+        
+        try:
+            with open(synonym_file_name, 'rb') as fr:
+                reader = csv.reader(fr, delimiter=',')        
                 
-        return objects   
+                # Each line contains data for a star.
+                for row in reader:                 
+                    
+                    # At least the name of the star and a synonym.
+                    if len(row) > 1:
+                        
+                        star = self.get_star(row[0])
+                        
+                        if star is not None:
+                            star.add_synomyms(row[1:])                        
+                    
+        except IOError as ioe:
+            logging.error("Reading the file of stars: '%s'." % 
+                          (synonym_file_name))        
