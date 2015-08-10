@@ -71,6 +71,7 @@ class SummaryReport(object):
             
         """
         
+        self._target_dir = target_dir
         self._report_file_name = report_file_name
         self._stars = stars
         self._stars_mag = stars_mag
@@ -294,7 +295,7 @@ class SummaryReport(object):
         messages.append(["> Summary for %s files." % (type_name)])
         
         subdirectories, files, directories_from_root = \
-            self.walk_directories(self.target_dir, "*", dir_name, True)
+            self.walk_directories(self._target_dir, "*", dir_name, True)
             
         # Number of directories with data (from root).        
         number_of_directories = len(directories_from_root)          
@@ -481,7 +482,7 @@ class SummaryReport(object):
         
         # Get all the files related to data images.
         subdirectories, files, directories_from_root = \
-            self.walk_directories(self.target_dir, "*." + FIT_FILE_EXT, 
+            self.walk_directories(self._target_dir, "*." + FIT_FILE_EXT, 
                                   DATA_DIRECTORY, True)
             
         # All the final images with its full path.
@@ -530,7 +531,7 @@ class SummaryReport(object):
         
         # Get all the files related to catalog images.
         subdirectories, files, directories_from_root = \
-            self.walk_directories(self.target_dir, "*." + FIT_FILE_EXT, 
+            self.walk_directories(self._target_dir, "*." + FIT_FILE_EXT, 
                                   DATA_DIRECTORY, True)   
         
         # Original images, those not final.
@@ -574,7 +575,7 @@ class SummaryReport(object):
         
         # Get all the original files related to images.
         subdirectories, files, directories_from_root = \
-            self.walk_directories(self.target_dir, "*." + FIT_FILE_EXT,
+            self.walk_directories(self._target_dir, "*." + FIT_FILE_EXT,
                                   DATA_DIRECTORY, True)   
         
         # Original images, those not final.
