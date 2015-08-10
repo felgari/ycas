@@ -469,11 +469,11 @@ class SummaryReport(object):
                                     MASTERBIAS_FILENAME)         
             
         # Summary for flats.        
-        self.sum_org_images_of_type(messages, True, "flat", self._flat_dir_name,
+        self.sum_org_images_of_type(messages, True, "flat", self.flat_dir_name,
                                     MASTERFLAT_FILENAME)  
         
         # Summary for data files.
-        self.sum_org_images_of_type(messages, True, "image", self._data_dir_name)    
+        self.sum_org_images_of_type(messages, True, "image", self.data_dir_name)    
         
         # Statistics for all the set, for each object of interest and for each
         # standard star and taking into account the filters.
@@ -627,8 +627,10 @@ class SummaryReport(object):
         
         # Check if the magnitudes have been received
         if self._stars:
-            if not self._stars_mag:
-                self.read_magnitude_files()
+            if self._stars_mag is None:                
+                self._stars_mag = StarMagnitudes(self._stars)
+                
+                self._stars_mag.read_magnitudes(self._target_dir)
         else:
             raise SummaryException("A file with information about " + \
                                    "stars must be specified to " + \
@@ -663,24 +665,3 @@ class SummaryReport(object):
         
         # Print the summary.
         self.print_summary(SummaryReport.MAG_SUM_NAME, messages)
-        
-    def read_magnitude_files(self):
-        """Look for files that contain magnitudes and process them in current 
-        directory.
-        
-        """       
-    
-        # Get the list of files related to magnitudes ignoring hidden files 
-        # (starting with dot).
-        mag_files_full_path = \
-            [f for f in glob.glob(os.path.join(path, "*.%s" % (TSV_FILE_EXT))) \
-            if not os.path.basename(f).startswith('.')]
-            
-        logging.debug("Found %d files with magnitudes." %
-                      (len(mag_files_full_path))) 
-        
-        # Process the files related to magnitudes.
-        for mag_file in mag_files_full_path:
-            
-            # TODO
-            pass

@@ -180,6 +180,7 @@ class Star(object):
             self._synonyms.append(syn.strip())
         
     def has_synonym(self, synonym):
+        
         return synonym in self._synonyms
         
     @property
@@ -280,17 +281,6 @@ class StarsSet(object):
     @property
     def star_names(self):
         return [ s.name for s in self._stars ]
-    
-    def has_star(self, name):
-        
-        has = False
-        
-        for s in self._stars:
-            if s.name == name or s.has_synonym(name):
-                has = True
-                break
-        
-        return has
         
     @property
     def has_any_std_star(self):
@@ -343,6 +333,18 @@ class StarsSet(object):
                 break
         
         return star
+    
+    def get_star_index(self, name):
+        
+        index = -1
+        
+        for i in range(len(self._stars)):
+            s = self._stars[i]
+            if s.name == name or s.has_synonym(name):
+                index = i
+                break
+        
+        return index    
     
     def number_of_fields_to_process(self, line, group_length):
         """Determines the number of fields to read from a line depending on the
