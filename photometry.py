@@ -190,7 +190,7 @@ def do_phot(image_file_name, catalog_file_name, output_mag_file_name,
         logging.error( "Iraf error is: %s" % (exc))
 
 def do_photometry(progargs, phot_params):   
-    """walk the directories searching for image to calculate its photometry.
+    """Walk the directories searching for image to calculate its photometry.
     
     This function walk the directories searching for catalog files
     that contains the x,y coordinates of the objects detected by the
@@ -206,7 +206,7 @@ def do_photometry(progargs, phot_params):
     """
     
     # Walk from current directory.
-    for path,dirs,files in os.walk('.'):
+    for path,dirs,files in os.walk(progargs.target_dir):
         
         # Process only directories without subdirectories.
         if len(dirs) == 0:
@@ -250,7 +250,7 @@ def do_photometry(progargs, phot_params):
                         logging.debug("Skipping phot for: %s, already done." %
                                       (output_mag_file_name))
                     
-def txdump_photometry_info(data_dir_name):
+def txdump_photometry_info(target_dir, data_dir_name):
     """Extract the results of photometry from files to save them to a text file.
     
     This function search files containing the results of photometry
@@ -258,12 +258,13 @@ def txdump_photometry_info(data_dir_name):
     to save it to a text file. 
     
     Args:    
-       data_dir_name: Name for the directories with data.    
+        target_dir: Directory that contains the files to process.
+        data_dir_name: Name for the directories with data.    
     
     """
     
     # Walk from current directory.
-    for path,dirs,files in os.walk('.'):
+    for path,dirs,files in os.walk(target_dir):
         
         # Process only directories without subdirectories.
         if len(dirs) == 0:
@@ -274,7 +275,7 @@ def txdump_photometry_info(data_dir_name):
                 logging.debug("Found a directory for data: %s" % (path))
 
                 # Get the list of magnitude files.
-                mag_files = glob.glob(os.path.join(path, "*." + \
+                mag_files = glob.glob(os.path.join(path, "*.%s" %
                                                    MAGNITUDE_FILE_EXT))
                 
                 logging.debug("Found %d magnitude files" % (len(mag_files)))    
@@ -285,7 +286,7 @@ def txdump_photometry_info(data_dir_name):
                     # Get the name of the file where the magnitude data will 
                     # be saved.
                     mag_dest_file_name = \
-                        mfile.replace("." + MAGNITUDE_FILE_EXT, 
+                        mfile.replace(".%s" %(MAGNITUDE_FILE_EXT), 
                                       "%s%s.%s" %
                                       (FILE_NAME_PARTS_DELIM,
                                       MAGNITUDE_FILE_EXT, CSV_FILE_EXT))
@@ -330,7 +331,7 @@ def calculate_photometry(progargs):
         do_photometry(progargs, phot_params)
         
         # Export photometry info to a text file with only the columns needed.
-        txdump_photometry_info(progargs.data_directory)        
+        txdump_photometry_info(progargs.target_dir, progargs.data_directory)        
     except PhotParamNotFound as ppnf:
         logging.error(ppnf)
         

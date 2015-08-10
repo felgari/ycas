@@ -244,7 +244,8 @@ def main(progargs):
         
     else:           
         # Object that generates the summary.     
-        sum_report = SummaryReport(progargs.summary_file_name,
+        sum_report = SummaryReport(progargs.target_dir,
+                                   progargs.summary_file_name,
                                    progargs.stars_file_name, 
                                    None)
         

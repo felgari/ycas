@@ -38,11 +38,12 @@ from starmag import StarMagnitudes
 from extcorrmag import ExtCorrMagnitudes
 from calibmag import get_calibrated_magnitudes
 
-def get_instrumental_magnitudes(stars, data_directoy_name):
+def get_instrumental_magnitudes(stars, target_dir, data_directoy_name):
     """Receives a list of star and compiles the magnitudes for each star.
     
     Args:
         stars: Features of the stars.
+        target_dir: Directory that contains the files to process.
         data_directoy_name: Name of the directories that contains data images.     
     
     Returns:        
@@ -53,7 +54,7 @@ def get_instrumental_magnitudes(stars, data_directoy_name):
     ins_mag = StarMagnitudes(stars)
         
     # Walk directories searching for files containing magnitudes.
-    for path,dirs,files in os.walk('.'):
+    for path,dirs,files in os.walk(target_dir):
 
         # Inspect only directories without subdirectories.
         if len(dirs) == 0:
@@ -110,7 +111,7 @@ def correct_extinction_in_magnitudes(inst_mag):
     # coefficients calculated.
     ecm.correct_magnitudes()
                                        
-def process_magnitudes(stars, data_directoy_name):
+def process_magnitudes(stars, target_dir, data_directoy_name):
     """Collect the instrumental magnitudes of all the stars of interest.
     Correct the magnitudes taking into account the atmospheric extinction.
     Get a calibrated magnitude for the stars of interest according to the
@@ -118,6 +119,7 @@ def process_magnitudes(stars, data_directoy_name):
 
     Args:
         stars: The list of stars.     
+        target_dir: Directory that contains the files to process.
         data_directoy_name: Name of the directories that contains data images. 
         
     Returns:
@@ -126,7 +128,8 @@ def process_magnitudes(stars, data_directoy_name):
     """
     
     # Get the instrumental magnitudes for the stars indicated.
-    magnitudes = get_instrumental_magnitudes(stars, data_directoy_name)
+    magnitudes = get_instrumental_magnitudes(stars, target_dir, 
+                                             data_directoy_name)
     
     old_settings = np.seterr(all='ignore', over='warn')
     

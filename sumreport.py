@@ -60,10 +60,11 @@ class SummaryReport(object):
     __SUM_PRO_REQ_PROP_COL = 1
     __SUM_PRO_BUILD_FUN_COL = 2    
     
-    def __init__(self, report_file_name, stars, stars_mag):
+    def __init__(self, target_dir, report_file_name, stars, stars_mag):
         """Constructor.
         
         Args:
+            target_dir: Directory that contains the files to process.
             report_file_name: Name of the file where the report is saved.
             stars: List of stars.
             stars_mag: The magnitudes calculated, if any.
@@ -293,7 +294,7 @@ class SummaryReport(object):
         messages.append(["> Summary for %s files." % (type_name)])
         
         subdirectories, files, directories_from_root = \
-            self.walk_directories(".", "*", dir_name, True)
+            self.walk_directories(self.target_dir, "*", dir_name, True)
             
         # Number of directories with data (from root).        
         number_of_directories = len(directories_from_root)          
@@ -480,8 +481,8 @@ class SummaryReport(object):
         
         # Get all the files related to data images.
         subdirectories, files, directories_from_root = \
-            self.walk_directories(".", "*." + FIT_FILE_EXT, DATA_DIRECTORY, 
-                                  True)
+            self.walk_directories(self.target_dir, "*." + FIT_FILE_EXT, 
+                                  DATA_DIRECTORY, True)
             
         # All the final images with its full path.
         final_images = [os.path.join(f[PATH_COL], f[FILE_NAME_COL]) \
@@ -529,8 +530,8 @@ class SummaryReport(object):
         
         # Get all the files related to catalog images.
         subdirectories, files, directories_from_root = \
-            self.walk_directories(".", "*." + FIT_FILE_EXT, DATA_DIRECTORY, 
-                                  True)   
+            self.walk_directories(self.target_dir, "*." + FIT_FILE_EXT, 
+                                  DATA_DIRECTORY, True)   
         
         # Original images, those not final.
         image_files_no_final = [os.path.join(f[PATH_COL], f[FILE_NAME_COL]) \
@@ -573,8 +574,8 @@ class SummaryReport(object):
         
         # Get all the original files related to images.
         subdirectories, files, directories_from_root = \
-            self.walk_directories(".", "*." + FIT_FILE_EXT, DATA_DIRECTORY, 
-                                  True)   
+            self.walk_directories(self.target_dir, "*." + FIT_FILE_EXT,
+                                  DATA_DIRECTORY, True)   
         
         # Original images, those not final.
         image_files_no_final = [os.path.join(f[PATH_COL], f[FILE_NAME_COL]) \
