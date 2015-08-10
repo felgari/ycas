@@ -58,80 +58,7 @@ def search_filter_from_set_in_file_name(filename):
         if index + len(f) == len(filename_no_ext) :
             filtername = f
     
-    return filtername
-
-def get_image_filter(header_fields, filename):
-    """ Returns the filter used for this image, if any. 
-    
-    At first, the filter is searched in header file. The filter name is part 
-    of the file name and is located in a concrete position.
-    If it is not found there, the filter is extracted from the file name.
-    
-    Args:
-        header_fields: Header fields of the file. 
-        filename: Name of the file.
-    
-    Returns:    
-        The filter name, if it is identified.
-    
-    """    
-
-    filtername = ''
-    field_processed = False
-        
-    # Check if any header field has been found.
-    if header_fields is not None and len(header_fields) > 0:
-        
-        # The header field could not have found.
-        try:    
-            # Retrieve the filter from the header field.
-            field_value = header_fields[FILTER_FIELD_NAME]
-            
-            if field_value is not None and field_value != "":
-                field_processed = True
-                
-                # Remove white spaces.
-                filtername = field_value.strip()
-        except KeyError as ke:
-            logging.warning("Header field '" + FILTER_FIELD_NAME + \
-                            "' not found in file " + filename)
-            
-    # If the header field has not been processed.
-    if not field_processed:
-        # Get the filter from the file name.
-        filtername = search_filter_from_set_in_file_name(filename)
-        
-    # If the filter has been identified, show the method used.
-    if len(filtername) > 0:      
-        if field_processed:
-            logging.debug(filename + " filter read from file headers: " + \
-                          filtername)
-        else:
-            logging.warning(filename + " filter read from file name: " + \
-                            filtername) 
-    
-    return filtername
-
-def get_image_filter_from_file(filename):
-    """ Returns the filter used for this image, if any. 
-    
-    This function get the header fields and pass them and the file name to
-    another function that actually gets the filter name.
-    
-    Args:
-        filename: Name of the file whose filter is requested.
-    
-    Returns:    
-        The filter name, if it is identified.
-            
-    """    
-    
-    # Get some fit header fields that can be used to organize the image.
-    header_fields = get_fit_fields(filename)
-    
-    # Get the image filter from the header fields or the file name
-    # if the filter can not be read from header fields.
-    return get_image_filter(header_fields, filename)  
+    return filtername 
 
 def get_fit_fields(fit_file_name, fields):
     """Retrieves the fields of the fit header from the file indicated.
@@ -401,4 +328,39 @@ def get_fit_table_data(fit_table_file_name):
         ldata.append([row[0], row[1]])
         n += 1
     
-    return ldata   
+    return ldata
+
+def get_header_value(file_name, field):
+    """Returns the value of a field in the header of a FIT file.
+    
+    Args:
+        file_name: Name of the file.
+        field: Field to get.
+        
+    Returns:
+        The value of the field.
+    
+    """
+    
+    value = None
+    
+    # Get value of the field.
+    try:
+        # Open FIT file.
+        hdulist = pyfits.open(file_name)   
+             
+        value = hdulist[0].header[field]
+        
+        hdulist.close()  
+        
+        logging.debug("Star %s identified for file %s." %
+                      (value, file_name))
+        
+    except IOError as ioe:
+        logging.error("Opening file '%s'." % (file_name))    
+              
+    except KeyError as ke:
+        logging.error("Field '%s' not found in file '%s'." %
+                      (field, file_name))    
+    
+    return value   

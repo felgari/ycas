@@ -30,7 +30,6 @@ import yargparser
 import glob
 import pyfits
 import csv
-import fitsheader
 from constants import *
 from textfiles import *
 from fitfiles import *
@@ -400,8 +399,7 @@ class Astrometry(object):
         
         # Get the star name from the filename, the name is at the beginning
         # and separated by a special character.
-        star_name = fitsheader.get_header_value(filename, 
-                                                self._header_fields.object)
+        star_name = get_header_value(filename, self._header_fields.object)
         
         # Look for an star of the list whose name matches that of the filename.
         star = self._stars.get_star(star_name)
