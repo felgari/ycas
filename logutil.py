@@ -19,6 +19,7 @@
 
 """Provides some utility functions for logging."""
 
+import os
 import logging
 
 # Log levels, taken from logging.
@@ -68,6 +69,9 @@ def init_log(progargs):
         log_file = progargs.log_file_name
     else:
         log_file = DEFAULT_LOG_FILE_NAME
+        
+    if progargs.target_dir_provided:
+        log_file = os.path.join(progargs.target_dir, log_file)
     
     # Set the file, format and level of logging output.
     logging.basicConfig(filename=log_file, \
