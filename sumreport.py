@@ -469,11 +469,11 @@ class SummaryReport(object):
                                     MASTERBIAS_FILENAME)         
             
         # Summary for flats.        
-        self.sum_org_images_of_type(messages, True, "flat", self.flat_dir_name,
+        self.sum_org_images_of_type(messages, True, "flat", self._flat_dir_name,
                                     MASTERFLAT_FILENAME)  
         
         # Summary for data files.
-        self.sum_org_images_of_type(messages, True, "image", self.data_dir_name)    
+        self.sum_org_images_of_type(messages, True, "image", self._data_dir_name)    
         
         # Statistics for all the set, for each object of interest and for each
         # standard star and taking into account the filters.
