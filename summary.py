@@ -46,8 +46,7 @@ def generate_summary(progargs, stars, stars_mag):
     """    
     
     # Object that generates the summary.     
-    sum_report = SummaryReport(progargs.target_dir, DEFAULT_DESTINY_FILE,  
-                               stars, stars_mag)     
+    sum_report = SummaryReport(progargs, DEFAULT_DESTINY_FILE, stars, stars_mag)     
     
     # Indicates the steps whose summary has been requested.
     if progargs.all_steps_requested: 
@@ -245,10 +244,7 @@ def main(progargs):
         
     else:           
         # Object that generates the summary.     
-        sum_report = SummaryReport(progargs.target_dir,
-                                   progargs.summary_file_name,
-                                   progargs.stars_file_name, 
-                                   None)
+        sum_report = SummaryReport(progargs, None)
         
         # Indicate the summaries to generate.
         if progargs.summary_all:

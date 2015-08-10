@@ -60,10 +60,11 @@ class SummaryReport(object):
     __SUM_PRO_REQ_PROP_COL = 1
     __SUM_PRO_BUILD_FUN_COL = 2    
     
-    def __init__(self, target_dir, report_file_name, stars, stars_mag):
+    def __init__(self, progargs, report_file_name, stars, stars_mag):
         """Constructor.
         
         Args:
+            progargs: Program arguments.
             target_dir: Directory that contains the files to process.
             report_file_name: Name of the file where the report is saved.
             stars: List of stars.
@@ -71,8 +72,11 @@ class SummaryReport(object):
             
         """
         
-        self._target_dir = target_dir
+        self._target_dir = progargs.target_dir
         self._report_file_name = report_file_name
+        self._data_dir_name = progargs.data_directory
+        self._bias_dir_name = progargs.bias_directory
+        self._flat_dir_name = progargs.flat_directory
         self._stars = stars
         self._stars_mag = stars_mag
         self._all_messages = []
@@ -460,15 +464,16 @@ class SummaryReport(object):
         messages = []   
             
         # Summary for bias.        
-        self.sum_org_images_of_type(messages, False, "bias", BIAS_DIRECTORY,
-                               MASTERBIAS_FILENAME)         
+        self.sum_org_images_of_type(messages, False, "bias", 
+                                    self._bias_dir_name,
+                                    MASTERBIAS_FILENAME)         
             
         # Summary for flats.        
-        self.sum_org_images_of_type(messages, True, "flat", FLAT_DIRECTORY,
-                               MASTERFLAT_FILENAME)  
+        self.sum_org_images_of_type(messages, True, "flat", self.flat_dir_name,
+                                    MASTERFLAT_FILENAME)  
         
         # Summary for data files.
-        self.sum_org_images_of_type(messages, True, "image", DATA_DIRECTORY)    
+        self.sum_org_images_of_type(messages, True, "image", self.data_dir_name)    
         
         # Statistics for all the set, for each object of interest and for each
         # standard star and taking into account the filters.
@@ -483,7 +488,7 @@ class SummaryReport(object):
         # Get all the files related to data images.
         subdirectories, files, directories_from_root = \
             self.walk_directories(self._target_dir, "*." + FIT_FILE_EXT, 
-                                  DATA_DIRECTORY, True)
+                                  self._data_dir_name, True)
             
         # All the final images with its full path.
         final_images = [os.path.join(f[PATH_COL], f[FILE_NAME_COL]) \
@@ -532,7 +537,7 @@ class SummaryReport(object):
         # Get all the files related to catalog images.
         subdirectories, files, directories_from_root = \
             self.walk_directories(self._target_dir, "*." + FIT_FILE_EXT, 
-                                  DATA_DIRECTORY, True)   
+                                  self._data_dir_name, True)   
         
         # Original images, those not final.
         image_files_no_final = [os.path.join(f[PATH_COL], f[FILE_NAME_COL]) \
@@ -576,7 +581,7 @@ class SummaryReport(object):
         # Get all the original files related to images.
         subdirectories, files, directories_from_root = \
             self.walk_directories(self._target_dir, "*." + FIT_FILE_EXT,
-                                  DATA_DIRECTORY, True)   
+                                  self._data_dir_name, True)   
         
         # Original images, those not final.
         image_files_no_final = [os.path.join(f[PATH_COL], f[FILE_NAME_COL]) \

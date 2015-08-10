@@ -43,6 +43,11 @@ class ProgramArguments(object):
     # Default number of objects to look at when doing astrometry.
     ASTROMETRY_NUM_OBJS = 20
     
+    # Default named of the directories containing different types of files.
+    BIAS_DIRECTORY = 'bias'
+    FLAT_DIRECTORY = 'flat'
+    DATA_DIRECTORY = 'data'    
+    
     # Error messages related to parameters coherence.
     NO_PIPELINE_STEPS_INDICATED = "At least one pipeline step should be " + \
         "indicated."           
@@ -86,9 +91,9 @@ class ProgramArguments(object):
         self.__min_number_of_args = 1
         
         # Initializes variables with default values.        
-        self.__bias_directory = BIAS_DIRECTORY
-        self.__flat_directory = FLAT_DIRECTORY
-        self.__data_directory = DATA_DIRECTORY      
+        self.__bias_directory = ProgramArguments.BIAS_DIRECTORY
+        self.__flat_directory = ProgramArguments.FLAT_DIRECTORY
+        self.__data_directory = ProgramArguments.DATA_DIRECTORY      
         
         self.__sextractor_cfg_path = os.getcwd()
         

@@ -51,11 +51,6 @@ IMSTAT_MEAN = "mean"
 IMARITH_SUBTRACT = "-"
 IMARITH_DIVIDE = "/"
 
-# Directory paths.
-PATH_FROM_FLAT_TO_BIAS = os.path.join("..", "..", BIAS_DIRECTORY)
-PATH_FROM_DATA_TO_BIAS = os.path.join("..", "..", BIAS_DIRECTORY)
-PATH_FROM_DATA_TO_FLAT = os.path.join("..", "..", FLAT_DIRECTORY)
-
 def is_data_directory(current_dir, data_dir_name):
     """Determines if the directory has a name identified as containing images
     with data.
@@ -84,7 +79,8 @@ def get_masterbias_file_name(data_path):
     
     # Get the masterbias file name using the data_path where it should
     # exists after organizing the files.
-    masterbias_name = os.path.join(data_path, PATH_FROM_DATA_TO_BIAS, 
+    masterbias_name = os.path.join(data_path, 
+                                   os.path.join("..", "..", self._bias_dir_name), 
                                    MASTERBIAS_FILENAME)
     
     # Check if bias really exists.
@@ -108,7 +104,8 @@ def get_masterflat_file_name(data_path):
     
     # Get the masterflat file name using the data_path where it should
     # exists after organizing the files.
-    masterflat_name = os.path.join(data_path, PATH_FROM_DATA_TO_FLAT,
+    masterflat_name = os.path.join(data_path, 
+                                   os.path.join("..", "..", self._flat_dir_name),
                                    split_path[-1], MASTERFLAT_FILENAME)
     
     # Check if bias really exists.
@@ -286,7 +283,8 @@ def generate_masterflat(path, files, masterflat_name):
     list_of_work_flat_files = str(work_files).translate(None, "[]\'")
     
     # Get the masterflat file name.
-    masterbias_name = os.path.join(path, PATH_FROM_FLAT_TO_BIAS,
+    masterbias_name = os.path.join(path, 
+                                   os.path.join("..", "..", self._bias_dir_name),
                                    MASTERBIAS_FILENAME)
     
     try:

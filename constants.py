@@ -19,11 +19,6 @@
 
 DEFAULT_DIFF_PHOT_FILE_NAME_PREFIX = "diff_mag"
 
-# Directories.
-BIAS_DIRECTORY = 'bias'
-FLAT_DIRECTORY = 'flat'
-DATA_DIRECTORY = 'data'
-
 # File extensions.
 FIT_FILE_EXT = "fit"
 CATALOG_FILE_EXT = 'cat'
