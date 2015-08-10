@@ -68,19 +68,20 @@ def is_data_directory(current_dir, data_dir_name):
     
     return split_path[-2] == data_dir_name
 
-def get_masterbias_file_name(data_path):
+def get_masterbias_file_name(data_path, bias_dir_name):
     """Get the masterbias file name related to the data_path containing the 
     data images.
     
     Args:
         data_path: Path of the directory with the data images.
+        bias_dir_name: Name of the directories containing bias images.
     
     """
     
     # Get the masterbias file name using the data_path where it should
     # exists after organizing the files.
     masterbias_name = os.path.join(data_path, 
-                                   os.path.join("..", "..", self._bias_dir_name), 
+                                   os.path.join("..", "..", bias_dir_name), 
                                    MASTERBIAS_FILENAME)
     
     # Check if bias really exists.
@@ -91,12 +92,13 @@ def get_masterbias_file_name(data_path):
         
     return masterbias_name
 
-def get_masterflat_file_name(data_path):
+def get_masterflat_file_name(data_path, flat_dir_name):
     """Get the masterflat file name related to the data_path containing the 
     data images.
     
     Args:
         data_path: Path of the directory with the data images.
+        flat_dir_name: Name of the directories containing bias images.
     
     """    
     
@@ -105,7 +107,7 @@ def get_masterflat_file_name(data_path):
     # Get the masterflat file name using the data_path where it should
     # exists after organizing the files.
     masterflat_name = os.path.join(data_path, 
-                                   os.path.join("..", "..", self._flat_dir_name),
+                                   os.path.join("..", "..", flat_dir_name),
                                    split_path[-1], MASTERFLAT_FILENAME)
     
     # Check if bias really exists.
@@ -263,15 +265,23 @@ def normalize_flats(files):
     return list_of_norm_flat_files
 
 
-def generate_masterflat(path, files, masterflat_name):
+def generate_masterflat(path, flat_files, masterflat_name, bias_dir_name):
     """Generates a master flat from the flat files received.
     
     Args:
         path: Full source path of the flat files.
         files: List of flat files.
         masterflat_name: The name of the masterflat file.
+        bias_dir_name: Name of the directories that contain bias images
         
     """
+    
+    # Check that there is not any work file in the list, it could exists if a
+    # previous execution was terminated just before removing a work file.
+    work_files_to_remove = \
+        [f for f in flat_files if f.find(WORK_FILE_SUFFIX) > 0 ]
+    
+    files = [f for f in flat_files if f.find(WORK_FILE_SUFFIX) < 0 ]   
     
     # Put the files list in a string.
     list_of_flat_files = str(files).translate(None, "[]\'")
@@ -284,7 +294,7 @@ def generate_masterflat(path, files, masterflat_name):
     
     # Get the masterflat file name.
     masterbias_name = os.path.join(path, 
-                                   os.path.join("..", "..", self._bias_dir_name),
+                                   os.path.join("..", "..", bias_dir_name),
                                    MASTERBIAS_FILENAME)
     
     try:
@@ -301,10 +311,15 @@ def generate_masterflat(path, files, masterflat_name):
         logging.debug("Normalizing flat files for: %s" % (masterflat_name))
         norm_flat_files = normalize_flats(files)
         
-        # After creating the normalized files, remove the work files to save 
-        # storage.
+        # After creating the normalized files, remove the work files in
+        # current to save storage and void processing them again as 
+        # different flat files.
         try:
             for wf in work_files:
+                os.remove(wf)
+                
+            # If there was any previous work file in the directory.
+            for wf in work_files_to_remove:
                 os.remove(wf)
                 
         except OSError as oe:            
@@ -337,7 +352,7 @@ def generate_masterflat(path, files, masterflat_name):
         
         logging.error("Iraf error is: %s" % (exc))
 
-def generate_all_masterflats(target_dir, flat_dir_name):
+def generate_all_masterflats(target_dir, flat_dir_name, bias_dir_name):
     """Calculation of all the masterflat files.
     
     This function search for flat files from current directory.
@@ -349,8 +364,9 @@ def generate_all_masterflats(target_dir, flat_dir_name):
     directory with an average operation using all the bias files.    
     
     Args:
-        flat_dir_name: Name of the directories containing flat images.     
-        target_dir: Directory of the files. 
+        target_dir: Directory of the files.    
+        flat_dir_name: Name of the directories containing flat images.      
+        bias_dir_name: Name of the directories containing bias images. 
         
     """
     
@@ -380,7 +396,8 @@ def generate_all_masterflats(target_dir, flat_dir_name):
                     logging.warning("Masterflat file exists, %s so resume to next directory." %
                                     (masterflat_name))
                 else:
-                    generate_masterflat(path, files, masterflat_name)                        
+                    generate_masterflat(path, files, masterflat_name,
+                                        bias_dir_name)                        
 
 def reduce_image(masterbias_name, masterflat_name, source_image, final_image):
     """Reduce an image.
@@ -462,23 +479,22 @@ def reduce_list_of_images(data_files, masterbias_filename, masterflat_filename):
     for source_image in data_files:
                 
         final_file_pattern = "%s.%s" % (DATA_FINAL_SUFFIX, FIT_FILE_EXT)
+            
+        # Get the name of the final file.
+        final_image = source_image.replace(".%s" % (FIT_FILE_EXT), 
+                                           final_file_pattern)
         
-        # Check if current file is not a final one.
-        if source_image.find(final_file_pattern) < 0:
-            
-            # Get the name of the final file.
-            final_image = source_image.replace(".%s" % (FIT_FILE_EXT), 
-                                               final_file_pattern)
-            
+        if os.path.exists(final_image):
+            logging.debug("Final image %s already exists, not reduced." %
+                          (final_image))
+        else:
             # Reduce the image.
             reduce_image(masterbias_filename, masterflat_filename, 
                          source_image, final_image)            
-        else:
-            # The final image already exists.
-            logging.warning("No reduction to get '%s', already exists" %
-                            (source_image)) 
 
-def reduce_data_images(target_dir, data_dir_name):
+
+def reduce_data_images(target_dir, data_dir_name, bias_dir_name,
+                        flat_dir_name):
     """Reduction all data images.
     
     This function search images from the source directory to reduce then. 
@@ -489,7 +505,9 @@ def reduce_data_images(target_dir, data_dir_name):
     
     Args:
         target_dir: Directory of the files.
-        data_dir_name: Name of the directories containing data images.     
+        data_dir_name: Name of the directories containing data images.  
+        bias_dir_name: Name of the directories containing bias images.    
+        flat_dir_name:Name of the directories containing flat images.
         
     """
 
@@ -512,9 +530,9 @@ def reduce_data_images(target_dir, data_dir_name):
                 
                 # Get the names of materbias and masterflat files to use for
                 # reduction.
-                masterbias_name = get_masterbias_file_name(path)
+                masterbias_name = get_masterbias_file_name(path, bias_dir_name)
                     
-                masterflat_name = get_masterflat_file_name(path)       
+                masterflat_name = get_masterflat_file_name(path, flat_dir_name)       
 
                 reduce_list_of_images(data_files, masterbias_name, 
                                       masterflat_name)
@@ -542,10 +560,13 @@ def reduce_images(progargs):
 
     # Generate all the average flat.
     generate_all_masterflats(progargs.target_dir,
-                             progargs.flat_directory)
+                             progargs.flat_directory,
+                             progargs.bias_directory)
 
     # Reduce all the data images applying the average bias and flats.
     reduce_data_images(progargs.target_dir,
-                       progargs.data_directory)
+                       progargs.data_directory,
+                       progargs.bias_directory,
+                       progargs.flat_directory)
     
     logging.info("Finished the reduction of images.")    
