@@ -97,7 +97,7 @@ def set_image_specific_phot_pars(fwhm, phot_params):
     
     # Set photometry parameters.
     iraf.datapars.fwhmpsf = fwhm
-    iraf.photpars.apertures = fwhm * phot_params.aperture_mult
+    iraf.photpars.apertures = fwhm * phot_params.aperture
     iraf.fitskypars.annulus = fwhm * phot_params.annulus_mult
     
     # Name of the fields FITS that contains these values.
@@ -113,16 +113,17 @@ def save_parameters():
     iraf.photpars.saveParList(filename='phot.par') 
 
 
-def calculate_datamin(image_file_name):
+def calculate_datamin(image_file_name, phot_params):
     """ Calculate a datamin value for the image received using imstat. 
     
     Args: 
-        image_file_name: Name of the file with the image. 
+        image_file_name: Name of the file with the image.
+        phot_params: Parameters for phot.
     
     """
     
     # Set a default value for datamin.
-    datamin = DATAMIN_VALUE
+    datamin = phot_params.datamin
     
     try:
         imstat_output = iraf.imstat(image_file_name, fields='mean,stddev', \
@@ -131,7 +132,7 @@ def calculate_datamin(image_file_name):
         values = imstat_values.split()
         
         # Set a calculated value for datamin.
-        datamin = float(values[0]) - DATAMIN_MULT * float(values[1])
+        datamin = float(values[0]) - phot_params.datamin_mult * float(values[1])
         
     except iraf.IrafError as exc:
         logging.error("Error executing imstat: Stats for data image: %s" %
@@ -144,8 +145,8 @@ def calculate_datamin(image_file_name):
         logging.error("mean is: %s stddev is: %s" % (values[0], values[1]))
         logging.error("Value Error is: %s" % (ve))
         
-    if datamin < DATAMIN_VALUE:
-        datamin = DATAMIN_VALUE
+    if datamin < phot_params.datamin:
+        datamin = phot_params.datamin
         
     return datamin
 
@@ -173,7 +174,7 @@ def do_phot(image_file_name, catalog_file_name, output_mag_file_name,
                   (image_file_name, output_mag_file_name))
     
     # Calculate datamin for this image.   
-    datamin = calculate_datamin(image_file_name)                         
+    datamin = calculate_datamin(image_file_name, phot_params)                         
            
     # Calculate FWHM for this image.
     fwhm = astromatics.get_fwhm(sextractor_cfg_path, image_file_name)
