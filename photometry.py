@@ -214,7 +214,7 @@ def do_photometry(progargs, phot_params):
             split_path = path.split(os.sep) 
             
             # Check if current directory is for data images.
-            if split_path[-2] == progargs.data_directory:
+            if split_path[-2] == progargs.light_directory:
                 logging.debug("Found a directory for data: %s" % (path))
 
                 # Get the list of catalog files.
@@ -335,7 +335,7 @@ def calculate_photometry(progargs):
         do_photometry(progargs, phot_params)
         
         # Export photometry info to a text file with only the columns needed.
-        txdump_photometry_info(progargs.target_dir, progargs.data_directory)        
+        txdump_photometry_info(progargs.target_dir, progargs.light_directory)        
     except PhotParamNotFound as ppnf:
         logging.error(ppnf)
         

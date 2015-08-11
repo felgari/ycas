@@ -82,7 +82,7 @@ class Astrometry(object):
         self._header_fields = header_fields
         
         self._target_dir = progargs.target_dir
-        self._data_dir_name = progargs.data_directory
+        self._data_dir_name = progargs.light_directory
         self._num_of_objects = progargs.number_of_objects_for_astrometry
         
         # Initializes attributes to store summary information of the astrometry.

@@ -565,7 +565,7 @@ def reduce_images(progargs):
 
     # Reduce all the data images applying the average bias and flats.
     reduce_data_images(progargs.target_dir,
-                       progargs.data_directory,
+                       progargs.light_directory,
                        progargs.bias_directory,
                        progargs.flat_directory)
     

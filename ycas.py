@@ -121,7 +121,7 @@ def pipeline(progargs):
     if progargs.magnitudes_requested or progargs.all_steps_requested:
         logging.info("* Step 5 * Calculating magnitudes of stars.")
         mag = magnitude.process_magnitudes(stars, progargs.target_dir,
-                                           progargs.data_directory)
+                                           progargs.light_directory)
         anything_done = True
     else:
         logging.info("* Step 5 * Skipping the calculation of magnitudes of stars. Not requested.")

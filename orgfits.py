@@ -342,7 +342,7 @@ class OrganizeFIT(object):
                     if filter_name in self._filters:
                         
                         data_dir = os.path.join(target_dir,
-                                                self._progargs.data_directory,
+                                                self._progargs.light_directory,
                                                 filter_name)
                             
                         self.create_directory(data_dir)
@@ -395,8 +395,8 @@ class OrganizeFIT(object):
         if current_directory == self._progargs.bias_directory or \
             current_directory == self._progargs.flat_directory or \
             parent_directrory == self._progargs.flat_directory or \
-            current_directory == self._progargs.data_directory or \
-            parent_directrory == self._progargs.data_directory:
+            current_directory == self._progargs.light_directory or \
+            parent_directrory == self._progargs.light_directory:
             ignore  = True
         
         return ignore  
@@ -509,7 +509,7 @@ class OrganizeFIT(object):
             
         """
         
-        data_path = os.path.join(path, self._progargs.data_directory)
+        data_path = os.path.join(path, self._progargs.light_directory)
         
         # If current path has data directory, process bias and flats
         if os.path.exists(data_path):

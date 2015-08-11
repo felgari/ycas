@@ -46,7 +46,7 @@ class ProgramArguments(object):
     # Default named of the directories containing different types of files.
     BIAS_DIRECTORY = 'bias'
     FLAT_DIRECTORY = 'flat'
-    DATA_DIRECTORY = 'data'    
+    LIGHT_DIRECTORY = 'light'    
     
     # Error messages related to parameters coherence.
     NO_PIPELINE_STEPS_INDICATED = "At least one pipeline step should be " + \
@@ -93,7 +93,7 @@ class ProgramArguments(object):
         # Initializes variables with default values.        
         self.__bias_directory = ProgramArguments.BIAS_DIRECTORY
         self.__flat_directory = ProgramArguments.FLAT_DIRECTORY
-        self.__data_directory = ProgramArguments.DATA_DIRECTORY      
+        self.__light_directory = ProgramArguments.LIGHT_DIRECTORY      
         
         self.__sextractor_cfg_path = os.getcwd()
         
@@ -122,38 +122,45 @@ class ProgramArguments(object):
         self.__parser.add_argument("-m", dest="m", action="store_true", 
                                    help="Calculate the magnitudes of stars.")
         
-        self.__parser.add_argument("-lc", dest="lc", action="store_true", 
-                                   help="Generates light curves.")        
+        self.__parser.add_argument("-g", dest="g", action="store_true", 
+                                   help="Graphics of light curves.")        
         
         self.__parser.add_argument("-sum", dest="sum", action="store_true", 
                                    help="Generates a summary of the results.")
         
-        self.__parser.add_argument("-s", metavar="stars_file_name",
-                                   dest="s",
+        self.__parser.add_argument("-stars", metavar="stars_file",
+                                   dest="stars",
                                    help="File of the stars to analyze.")    
         
-        self.__parser.add_argument("-i", metavar="instrument_file",
-                                   dest="i",
+        self.__parser.add_argument("-syn", metavar="synonym_file", dest="syn",
+                                   help="File with the synomyms for the names of the stars.")          
+        
+        self.__parser.add_argument("-ins", metavar="instrument_file",
+                                   dest="ins",
                                    help="File with features of the instrument.")
         
         self.__parser.add_argument("-pp", metavar="phot_param_file",
                                    dest="pp",
                                    help="File with parameters for phot.")   
         
-        self.__parser.add_argument("-hp", metavar="headers_param_file",
-                                   dest="hp",
-                                   help="File with parameters for FIT headers.")                                
-        
-        self.__parser.add_argument("-b", dest="b", metavar="bias_dir_name",
-                                   help="Name of the directory for bias.")
-        
-        self.__parser.add_argument("-f", dest="f", metavar="flat_dir_name",
-                                   help="Name of the directory for flat.")
-        
         self.__parser.add_argument("-filters", metavar="filters_file",
                                    dest="filters",
                                    help="Name of the file with the filters " + 
-                                   "to take into account.")   
+                                   "to take into account.")           
+        
+        self.__parser.add_argument("-fh", metavar="fit_headers_file",
+                                   dest="fh",
+                                   help="File with parameters for FIT headers.")                                
+        
+        self.__parser.add_argument("-bias", dest="bias", metavar="bias_dir_name",
+                                   help="Name of the directory for bias.")
+        
+        self.__parser.add_argument("-flat", dest="flat", metavar="flat_dir_name",
+                                   help="Name of the directory for flat.")
+        
+        self.__parser.add_argument("-light", dest="light", 
+                                   metavar="light_dir_name",
+                                   help="Name of the directory for light images.")        
         
         self.__parser.add_argument("-sd", metavar="source_dir",
                                    dest="sd",
@@ -162,10 +169,7 @@ class ProgramArguments(object):
         self.__parser.add_argument("-td", metavar="target_dir",
                                    dest="td",
                                    help="Target directory of the files.")                  
-        
-        self.__parser.add_argument("-d", dest="d", metavar="data_dir_name",
-                                   help="Name of the directory for data.")
-        
+                
         self.__parser.add_argument("-l", metavar="log_file", dest="l",
                                    help="File to save the log messages.") 
         
@@ -177,17 +181,11 @@ class ProgramArguments(object):
         
         self.__parser.add_argument("-no", dest="no",
                                    metavar="number_of_objects", type=int,
-                                   help="Number of objects to take into " + 
-                                   "account in images when doing astrometry.")   
+                                   help="Number of objects to use when " +
+                                   "doing astrometry.")   
         
         self.__parser.add_argument("-us", dest="us", action="store_true",  
-                                   help="Use sextractor for astrometry.")                   
-        
-        self.__parser.add_argument("-t", dest="t", action="store_true", 
-                                   help="Use header information of FIT files.")  
-        
-        self.__parser.add_argument("-syn", metavar="synonym_file", dest="syn",
-                                   help="File with the synomyms for the names of the stars.")                            
+                                   help="Use sextractor for astrometry.")                                              
         
         self.__args = None   
         
@@ -204,8 +202,8 @@ class ProgramArguments(object):
         return self.__flat_directory
     
     @property     
-    def data_directory(self):        
-        return self.__data_directory
+    def light_directory(self):        
+        return self.__light_directory
     
     @property     
     def sextractor_cfg_path(self):        
@@ -225,7 +223,7 @@ class ProgramArguments(object):
     
     @property    
     def file_of_stars_provided(self): 
-        return self.__args.s is not None      
+        return self.__args.stars is not None      
     
     @property
     def stars_file_name(self):
@@ -233,11 +231,11 @@ class ProgramArguments(object):
     
     @property    
     def file_of_instrument_provided(self): 
-        return self.__args.i is not None      
+        return self.__args.ins is not None      
     
     @property
     def intrument_file_name(self):
-        return self.__intrument_file_name   
+        return self.__args.ins   
     
     @property    
     def file_of_phot_params_provided(self): 
@@ -245,15 +243,15 @@ class ProgramArguments(object):
     
     @property
     def phot_params_file_name(self):
-        return self.__phot_params_file_name  
+        return self.__args.pp  
     
     @property    
     def file_of_header_params_provided(self): 
-        return self.__args.hp is not None      
+        return self.__args.fh is not None      
     
     @property
     def header_params_file_name(self):
-        return self.__header_params_file_name      
+        return self.__args.fh      
     
     @property
     def file_of_filters_provided(self):
@@ -274,8 +272,7 @@ class ProgramArguments(object):
     @property
     def log_level(self):
         return self.__args.v     
-    
-    
+        
     @property
     def file_of_synonym_provided(self):
         return self.__args.syn is not None   
@@ -299,6 +296,10 @@ class ProgramArguments(object):
     @property
     def target_dir(self):
         return self.__args.td
+        
+    @property
+    def use_sextractor_for_astrometry(self):
+        return self.__args.us      
     
     @property
     def organization_requested(self):
@@ -310,11 +311,7 @@ class ProgramArguments(object):
     
     @property
     def astrometry_requested(self):
-        return self.__args.a  
-        
-    @property
-    def use_sextractor_for_astrometry(self):
-        return self.__args.us      
+        return self.__args.a    
     
     @property
     def photometry_requested(self):
@@ -326,11 +323,7 @@ class ProgramArguments(object):
     
     @property
     def light_curves_requested(self):
-        return self.__args.lc           
-    
-    @property    
-    def use_headers_to_get_image_type(self):
-        return self.__args.t    
+        return self.__args.g           
     
     @property
     def summary_requested(self):
@@ -342,38 +335,34 @@ class ProgramArguments(object):
     
     def parse_and_update(self):
         """Parse the program arguments and update attributes."""
-        
-        # Parse program arguments.
-        self.__args = self.__parser.parse_args()          
+
+        try:
+            # Parse program arguments.        
+            self.__args = self.__parser.parse_args()        
+
+            # Update variables if a program argument has been received
+            # for their value.
+            if self.__args.bias is not None:
+                self.__bias_directory = self.__args.bias
+                
+            if self.__args.flat is not None:
+                self.__flat_directory = self.__args.flat
+                
+            if self.__args.light is not None:
+                self.__light_directory = self.__args.light
+                
+            if self.sextractor_cfg_file_provided:
+                self.__sextractor_cfg_path = self.__args.x
+                
+            if self.file_of_stars_provided:
+                self.__stars_file_name = self.__args.stars  
+                
+            if self.__args.no is not None:
+                self.__astrometry_num_of_objects = self.__args.no 
             
-        # Update variables if a program argument has been received
-        # for their value.
-        if self.__args.b is not None:
-            self.__bias_directory = self.__args.b
-            
-        if self.__args.f is not None:
-            self.__flat_directory = self.__args.f
-            
-        if self.__args.d is not None:
-            self.__data_directory = self.__args.d
-            
-        if self.sextractor_cfg_file_provided:
-            self.__sextractor_cfg_path = self.__args.x
-            
-        if self.file_of_stars_provided:
-            self.__stars_file_name = self.__args.s  
-            
-        if self.file_of_instrument_provided:
-            self.__intrument_file_name = self.__args.i
-            
-        if self.file_of_phot_params_provided:
-            self.__phot_params_file_name = self.__args.pp
-            
-        if self.file_of_header_params_provided:
-            self.__header_params_file_name = self.__args.hp
-            
-        if self.__args.no is not None:
-            self.__astrometry_num_of_objects = self.__args.no            
+        except argparse.ArgumentError as ae:
+            print ae.message
+            raise ProgramArgumentsException(ae.message)                         
             
     def check_arguments_coherence(self):
         """Check the coherence of program arguments received."""
@@ -453,11 +442,11 @@ class ProgramArguments(object):
                 
     def process_program_arguments(self):
         """Parse and check coherence of program arguments."""      
-        
+
         self.parse_and_update()
-      
+
         self.check_arguments_coherence()
-            
+ 
     def print_usage(self):
         """Print arguments options """
                 

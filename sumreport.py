@@ -74,7 +74,7 @@ class SummaryReport(object):
         
         self._target_dir = progargs.target_dir
         self._report_file_name = report_file_name
-        self._data_dir_name = progargs.data_directory
+        self._data_dir_name = progargs.light_directory
         self._bias_dir_name = progargs.bias_directory
         self._flat_dir_name = progargs.flat_directory
         self._stars = stars
