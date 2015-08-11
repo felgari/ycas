@@ -116,41 +116,46 @@ def read_input_files(file_names, calculate_median):
     # Iterate over the file names.
     for fn in file_names:
         
-        data = []
+        try:
         
-        # Open current file.
-        with open(fn, 'rb') as fr:
-            reader = csv.reader(fr, delimiter=CSV_FILE_DELIM)  
+            data = []
             
-            # Skip header.
-            next(reader)      
-        
-            # Process each row.
-            for row in reader:    
-                # Check if the row is valid.
-                if len(row) > 0:            
-                    # Check if the median may be calculated.                            
-                    if calculate_median:
-                                    
-                        new_row = []
-                                               
-                        # For each data, each row, add all the items but for
-                        # the column that contains the MJD, take only the 
-                        # integer part of the MJD. All the data with the same 
-                        # value in this part will be used to calculate a median 
-                        # value.
-                        for i in range(len(row)):
-                            if i == MJD_COL:
-                                item = row[i]
-                                new_row.extend([item[:item.find('.')]])
-                            else:
-                                new_row.extend([row[i]])   
-                                  
-                        data.append(new_row)
-                    else:
-                        data.append(row)  
-                    
-            files_data.append(data) 
+            # Open current file.
+            with open(fn, 'rb') as fr:
+                reader = csv.reader(fr, delimiter=CSV_FILE_DELIM)  
+                
+                # Skip header.
+                next(reader)      
+            
+                # Process each row.
+                for row in reader:    
+                    # Check if the row is valid.
+                    if len(row) > 0:            
+                        # Check if the median may be calculated.                            
+                        if calculate_median:
+                                        
+                            new_row = []
+                                                   
+                            # For each data, each row, add all the items but for
+                            # the column that contains the MJD, take only the 
+                            # integer part of the MJD. All the data with the same 
+                            # value in this part will be used to calculate a median 
+                            # value.
+                            for i in range(len(row)):
+                                if i == MJD_COL:
+                                    item = row[i]
+                                    new_row.extend([item[:item.find('.')]])
+                                else:
+                                    new_row.extend([row[i]])   
+                                      
+                            data.append(new_row)
+                        else:
+                            data.append(row)  
+                        
+                files_data.append(data) 
+                
+        except IOError as ioe:
+            logging.error("Reading magnitude file: '%s'" % (fn))             
             
         logging.debug("File " + fn + " read " + str(len(data)) + " lines.")
 
@@ -210,7 +215,7 @@ if __name__ == "__main__":
     # If no enough arguments are provided, show help and exit.
     if len(sys.argv) <= CurvesArguments.MIN_NUM_ARGVS:
         
-        print "Al least %d arguments may be provided." % \
+        print "At least %d arguments may be provided." % \
             (CurvesArguments.MIN_NUM_ARGVS)
                     
         progargs.print_help()

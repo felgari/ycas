@@ -94,7 +94,7 @@ def get_fit_fields(fit_file_name, fields):
         hdulist.close()
         
     except IOError as ioe:
-        logging.error("Error reading fit file '%s'. Error is: %s." % 
+        logging.error("Error reading fit file: '%s'. Error is: %s." % 
                       (fit_file_name, ioe))
         
     except KeyError as ke:
@@ -288,13 +288,13 @@ def get_file_binning(fit_file_name):
         
         hdulist.close() 
     except IOError as ioe:
-        logging.error("Error reading fit file '" + fit_file_name + \
-                      "'. Error is: " + str(ioe))
+        logging.error("Error reading fit file '%s'. Error is: %s" % 
+                      (fit_file_name, ioe))
     except KeyError as ke:
-        logging.warning("Header field for binning not found in file " + \
-                        fit_file_name)   
+        logging.warning("Header field for binning not found in file: '%s'" %
+                        (fit_file_name))   
     except:
-        logging.error("Unknown error reading fit file: " + fit_file_name)             
+        logging.error("Unknown error reading fit file: '%s'" % (fit_file_name))             
     
     return bin
 
@@ -309,24 +309,30 @@ def get_fit_table_data(fit_table_file_name):
         
     """
     
-    # Open the FITS file received.
-    fit_table_file = pyfits.open(fit_table_file_name) 
-
-    # Assume the first extension is a table.
-    table_data = fit_table_file[FIT_FIRST_TABLE_INDEX].data    
+    ldata = None
     
-    fit_table_file.close()
+    try:
+        # Open the FITS file received.
+        fit_table_file = pyfits.open(fit_table_file_name) 
     
-    # Convert data from fits table to a list.
-    ldata = list()
-    
-    # To add an index to the rows.
-    n = 1
-    
-    # Read the table data and save it in a list.
-    for row in table_data:
-        ldata.append([row[0], row[1]])
-        n += 1
+        # Assume the first extension is a table.
+        table_data = fit_table_file[FIT_FIRST_TABLE_INDEX].data    
+        
+        fit_table_file.close()
+        
+        # Convert data from fits table to a list.
+        ldata = list()
+        
+        # To add an index to the rows.
+        n = 1
+        
+        # Read the table data and save it in a list.
+        for row in table_data:
+            ldata.append([row[0], row[1]])
+            n += 1
+        
+    except IOError as ioe:
+        logging.error("Opening file: '%s'." % (fit_table_file_name))            
     
     return ldata
 
@@ -357,7 +363,7 @@ def get_header_value(file_name, field):
                       (value, file_name))
         
     except IOError as ioe:
-        logging.error("Opening file '%s'." % (file_name))    
+        logging.error("Opening file: '%s'." % (file_name))    
               
     except KeyError as ke:
         logging.error("Field '%s' not found in file '%s'." %

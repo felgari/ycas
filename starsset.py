@@ -281,6 +281,17 @@ class StarsSet(object):
     @property
     def star_names(self):
         return [ s.name for s in self._stars ]
+    
+    def has_star(self, name):
+        
+        has = False
+        
+        for s in self._stars:
+            if s.name == name or s.has_synonym(name):
+                has = True
+                break
+        
+        return has    
         
     @property
     def has_any_std_star(self):
@@ -294,6 +305,7 @@ class StarsSet(object):
                 break
         
         return has_std   
+        
         
     def create_star(self, line):
         """Create an object for a star with the data contained in the line
@@ -507,7 +519,7 @@ class StarsSet(object):
                     row_number = row_number + 1
                     
             if synonym_file_name is not None:
-                self.read_synonym_os_stars(synonym_file_name)
+                self.read_synonym_of_stars(synonym_file_name)
                     
         except IOError as ioe:
             logging.error("Reading the file of stars: '%s'." % (file_name))
@@ -515,7 +527,7 @@ class StarsSet(object):
         logging.debug("Finished the reading of stars from file: %s" %
                       (file_name))    
         
-    def read_synonym_os_stars(self, synonym_file_name):
+    def read_synonym_of_stars(self, synonym_file_name):
         """Read the file that contains the synonyms for the names of the stars.
         
         Args:
@@ -539,5 +551,5 @@ class StarsSet(object):
                             star.add_synomyms(row[1:])                        
                     
         except IOError as ioe:
-            logging.error("Reading the file of stars: '%s'." % 
+            logging.error("Reading file of synonyms: '%s'." % 
                           (synonym_file_name))        

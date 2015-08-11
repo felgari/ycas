@@ -345,18 +345,21 @@ class Astrometry(object):
         
         logging.debug("Writing catalog file: %s" % (catalog_file_name))
         
-        # Open the destiny file.
-        catalog_file = open(catalog_file_name, "w")
+        try:
+            # Open the destiny file.
+            catalog_file = open(catalog_file_name, "w")
+                
+            # Iterate over the range of indexes to write them to the file.
+            for i in range(len(indexes)):
+                # The indexes corresponds to items in the XY data list.
+                ind = indexes[i]
+                
+                catalog_file.write("%d %d %d" % (xy_data[ind][XY_DATA_X_COL],
+                                   xy_data[ind][XY_DATA_Y_COL], identifiers[i]))
             
-        # Iterate over the range of indexes to write them to the file.
-        for i in range(len(indexes)):
-            # The indexes corresponds to items in the XY data list.
-            ind = indexes[i]
-            
-            catalog_file.write("%d %d %d" % (xy_data[ind][XY_DATA_X_COL],
-                               xy_data[ind][XY_DATA_Y_COL], identifiers[i]))
-        
-        catalog_file.close()                       
+            catalog_file.close() 
+        except IOError as ioe:
+            logging.error("Writing file: %s" % (catalog_file))                      
         
     def print_summary(self):
         """Log a summary of the astrometry.

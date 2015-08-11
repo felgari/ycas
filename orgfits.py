@@ -108,7 +108,10 @@ class Filters(object):
             self._filters_list = list(self._filters)
             
         except TypeError as te:
-            logging.debug("%s. Reading file %s" % (te, file_name))
+            logging.debug("%s. Reading file: '%s'" % (te, file_name))
+            
+        except IOError as ioe:
+            logging.error("Reading filters file: '%s'" % (file_name))            
         
     def exists(self, filter_name):
         """Search for a filter with the name received.
@@ -197,20 +200,25 @@ class OrganizeFIT(object):
             star_name: The name of the star to set.
         """
         
-        # Open FIT file.
-        hdulist = pyfits.open(file_name, mode='update')
-        
-        # Get header of first hdu, only the first hdu is processed.
-        header = hdulist[0].header
-        
-        # Update, in the header of first hdu, the field for the name of 
-        # the object.
-        hdulist[0].header[self._header_fields.object] = star_name
-        
-        # Changes are written back to the original file.
-        hdulist.flush()
-        
-        hdulist.close()   
+        try:
+            # Open FIT file.
+            hdulist = pyfits.open(file_name, mode='update')
+            
+            # Get header of first hdu, only the first hdu is processed.
+            header = hdulist[0].header
+            
+            # Update, in the header of first hdu, the field for the name of 
+            # the object.
+            hdulist[0].header[self._header_fields.object] = star_name
+            
+            # Changes are written back to the original file.
+            hdulist.flush()
+            
+            hdulist.close()   
+            
+        except IOError as ioe:
+            logging.error("Error updating fit file '%s'. Error is: %s." % 
+                          (file_name, ioe))            
         
     def update_image_type(self, file_name, file_header):
         """ Try to fill the image type from the name of the file using the

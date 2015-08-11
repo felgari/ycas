@@ -295,19 +295,22 @@ def txdump_photometry_info(target_dir, data_dir_name):
                     # Remove the destiny file if exists.
                     if os.path.exists(mag_dest_file_name):
                         os.remove(mag_dest_file_name)
+                        
+                    try:                                            
+                        mag_dest_file = open(mag_dest_file_name, 'w' )
                     
-                    mag_dest_file = open(mag_dest_file_name, 'w' )
-                    
-                    try:
                         iraf.txdump(mfile, fields=TXDUMP_FIELDS, expr='yes', \
                                     Stdout=mag_dest_file)
+                        
+                        mag_dest_file.close()
                         
                     except iraf.IrafError as exc:
                         logging.error("Error executing txdump to get: %s" %
                                       (mag_dest_file_name))
-                        logging.error("Iraf error is: %s" % (exc))
+                        logging.error("Iraf error is: %s" % (exc)) 
                         
-                    mag_dest_file.close()
+                    except IOError as ioe:
+                        logging.error("Reading file: %s" % (mag_dest_file_name))                                           
                            
 def calculate_photometry(progargs):
     """Calculates the photometry for all the data images found.

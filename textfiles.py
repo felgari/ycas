@@ -48,14 +48,17 @@ def read_catalog_file(file_name):
     
     logging.debug("Reading coordinates from: %s" % (file_name))
     
-    # Read the coordinates from the file.
-    with open(file_name, 'rb') as fr:
-        reader = csv.reader(fr, delimiter=' ')        
-            
-        for row in reader:            
-            coordinates.append(row)  
-            
-            identifiers.extend([row[CAT_ID_COL]])
+    try:
+        # Read the coordinates from the file.
+        with open(file_name, 'rb') as fr:
+            reader = csv.reader(fr, delimiter=' ')        
+                
+            for row in reader:            
+                coordinates.append(row)  
+                
+                identifiers.extend([row[CAT_ID_COL]])
+    except IOError as ioe:
+        logging.error("Reading coordinates file: %s" % (file_name))                 
 
     logging.debug("Coordinates read: %s" % (identifiers))
 

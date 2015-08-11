@@ -303,72 +303,76 @@ class StarMagnitudes(object):
         
         logging.debug("Processing magnitudes file: " + mag_file)
         
-        with open(mag_file, 'rb') as fr:
-            reader = csv.reader(fr)
-            nrow = 0
-            mag = []
-            all_mag = []
-            mjd = None
-            
-            # Process all the instrumental magnitudes in the file.
-            for row in reader:
-                # Get a list of values from the CSV row read.
-                fields = str(row).translate(None, "[]\'").split()                            
+        try:            
+            with open(mag_file, 'rb') as fr:
+                reader = csv.reader(fr)
+                nrow = 0
+                mag = []
+                all_mag = []
+                mjd = None
                 
-                # Check that MJD has a defined value.
-                if fields[self.CSV_TIME_COL] != INDEF_VALUE:                
+                # Process all the instrumental magnitudes in the file.
+                for row in reader:
+                    # Get a list of values from the CSV row read.
+                    fields = str(row).translate(None, "[]\'").split()                            
                     
-                    # Save the mjd, it is the same for all the rows.
-                    mjd = fields[self.CSV_TIME_COL]    
-                    
-                    day = get_day_from_mjd(mjd)  
-                    
-                    # Add day and filter.
-                    self._day.add(day)
-                    self._filter.add(filter_name)                 
-                    
-                    # Get the identifier for current coordinate.
-                    current_coor = coordinates[nrow]              
-                    current_coor_id = \
-                        int(current_coor[StarMagnitudes.CSV_ID_COOR_COL])
-                    
-                    # If it is the star of interest, add the magnitude to the
-                    # magnitudes list.
-                    if current_coor_id == StarMagnitudes.OBJ_OF_INTEREST_ID:
-                        im = Magnitude(star_name,
-                                       mjd,
-                                       filter_name,
-                                       fields[StarMagnitudes.CSV_MAG_COL],
-                                       fields[StarMagnitudes.CSV_ERROR_COL],
-                                       fields[StarMagnitudes.CSV_AIRMASS_COL])
+                    # Check that MJD has a defined value.
+                    if fields[self.CSV_TIME_COL] != INDEF_VALUE:                
                         
-                        im.day = day
+                        # Save the mjd, it is the same for all the rows.
+                        mjd = fields[self.CSV_TIME_COL]    
                         
-                        mag.append(im)
-                    
-                    # Add the magnitude to the all magnitudes list.
-                    all_mag.append([fields[StarMagnitudes.CSV_MAG_COL], \
-                                    fields[StarMagnitudes.CSV_ERROR_COL], \
-                                    current_coor_id])
-                    
-                    nrow += 1
-                else:
-                    logging.warning("Found INDEF value for the observation " + 
-                                    "in file %s" % (mag_file))
-            
-            star_index = self._stars.get_star_index(star_name)       
-            
-            if star_index >= 0: 
+                        day = get_day_from_mjd(mjd)  
+                        
+                        # Add day and filter.
+                        self._day.add(day)
+                        self._filter.add(filter_name)                 
+                        
+                        # Get the identifier for current coordinate.
+                        current_coor = coordinates[nrow]              
+                        current_coor_id = \
+                            int(current_coor[StarMagnitudes.CSV_ID_COOR_COL])
+                        
+                        # If it is the star of interest, add the magnitude to
+                        # the magnitudes list.
+                        if current_coor_id == StarMagnitudes.OBJ_OF_INTEREST_ID:
+                            im = Magnitude(star_name,
+                                           mjd,
+                                           filter_name,
+                                           fields[StarMagnitudes.CSV_MAG_COL],
+                                           fields[StarMagnitudes.CSV_ERROR_COL],
+                                           fields[StarMagnitudes.CSV_AIRMASS_COL])
+                            
+                            im.day = day
+                            
+                            mag.append(im)
+                        
+                        # Add the magnitude to the all magnitudes list.
+                        all_mag.append([fields[StarMagnitudes.CSV_MAG_COL], \
+                                        fields[StarMagnitudes.CSV_ERROR_COL], \
+                                        current_coor_id])
+                        
+                        nrow += 1
+                    else:
+                        logging.warning("Found INDEF value for the observation " + 
+                                        "in file: '%s'" % (mag_file))
                 
-                self._magnitudes[star_index].extend(mag)
-
-                if len(all_mag) > 0:
-                    # Add all the magnitudes in the image sorted by identifier.
-                    self.add_all_mags(star_name, star_index, \
-                                      all_mag, mjd, filter_name)                
+                star_index = self._stars.get_star_index(star_name)       
                 
-            logging.info("Processed instrumental magnitudes of%d stars." % 
-                         (nrow))
+                if star_index >= 0: 
+                    
+                    self._magnitudes[star_index].extend(mag)
+    
+                    if len(all_mag) > 0:
+                        # Add all the magnitudes in the image sorted by 
+                        # identifier.
+                        self.add_all_mags(star_name, star_index, \
+                                          all_mag, mjd, filter_name)                
+                    
+                logging.info("Processed instrumental magnitudes of%d stars." % 
+                             (nrow))
+        except IOError as ioe:
+            logging.error("Reading magnitudes file: '%s'" % (mag_file))                 
 
     def read_inst_magnitudes(self, mag_file, path):
         """Searches in a given path all the magnitudes files.
@@ -409,17 +413,22 @@ class StarMagnitudes(object):
                     # Get the name of the output file.
                     output_file_name = "%s%s%s%s" % \
                         (s.name, ALL_INST_MAG_SUFFIX, ".", TSV_FILE_EXT)
-                
-                    with open(output_file_name, 'w') as fw:
                         
-                        writer = csv.writer(fw, delimiter='\t')
-                
-                        # It is a list that contains sublists, each sublist is
-                        # a different magnitude, so each one is written as a row.
-                        for imag in self._all_magnitudes[i]:
-                        
-                            # Write each magnitude in a row.
-                            writer.writerow(imag)                     
+                    try:                
+                        with open(output_file_name, 'w') as fw:
+                            
+                            writer = csv.writer(fw, delimiter='\t')
+                    
+                            # It is a list that contains sublists, each sublist is
+                            # a different magnitude, so each one is written as a row.
+                            for imag in self._all_magnitudes[i]:
+                            
+                                # Write each magnitude in a row.
+                                writer.writerow(imag)   
+                                
+                    except IOError as ioe:
+                        logging.error("Writing magnitudes file: '%s'" % 
+                                      (output_file_name)) 
             
             i = i + 1    
             
@@ -446,22 +455,25 @@ class StarMagnitudes(object):
                 # Get the name of the output file.
                 output_file_name = "%s%s%s" % (s.name, ".", TSV_FILE_EXT)      
                     
-                print output_file_name      
-        
-                with open(output_file_name, 'w') as fw:
-                    
-                    writer = csv.writer(fw, delimiter='\t')
-
-                    # It is a list that contains sublists, each sublist is
-                    # a different magnitude, so each one is written as a row.
-                    for m in mags:
+                try:              
+                    with open(output_file_name, 'w') as fw:
                         
-                        m_to_row = [m.mjd, m.filter, m.airmass, \
-                                    m.mag, m.mag_error, \
-                                    m.ext_cor_mag, m.calib_mag]                  
-                    
-                        # Write each magnitude in a row.
-                        writer.writerow(m_to_row) 
+                        writer = csv.writer(fw, delimiter='\t')
+    
+                        # It is a list that contains sublists, each sublist is
+                        # a different magnitude, so each one is written as a row.
+                        for m in mags:
+                            
+                            m_to_row = [m.mjd, m.filter, m.airmass, \
+                                        m.mag, m.mag_error, \
+                                        m.ext_cor_mag, m.calib_mag]                  
+                        
+                            # Write each magnitude in a row.
+                            writer.writerow(m_to_row)
+                            
+                except IOError as ioe:
+                    logging.error("Writing magnitudes file: '%s'" % 
+                                  (output_file_name))                             
                     
             i = i + 1   
             

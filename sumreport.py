@@ -220,10 +220,14 @@ class SummaryReport(object):
     def save_complete_report(self):
         """Save all the summary messages to a file. """
         
-        with open(self.report_file_name, 'a') as fw:
-            
-            for m in self._all_messages:
-                fw.write("%s\n" % (m))         
+        try:
+            with open(self.report_file_name, 'a') as fw:
+                
+                for m in self._all_messages:
+                    fw.write("%s\n" % (m))
+                    
+        except IOError as ioe:
+            logging.error("Writing report file: '%s'" % (self.report_file_name))                        
             
     def walk_directories(self, root_dir, file_pattern, dir_name = None,
                          dir_for_images = False):
@@ -469,11 +473,11 @@ class SummaryReport(object):
                                     MASTERBIAS_FILENAME)         
             
         # Summary for flats.        
-        self.sum_org_images_of_type(messages, True, "flat", self.flat_dir_name,
+        self.sum_org_images_of_type(messages, True, "flat", self._flat_dir_name,
                                     MASTERFLAT_FILENAME)  
         
         # Summary for data files.
-        self.sum_org_images_of_type(messages, True, "image", self.data_dir_name)    
+        self.sum_org_images_of_type(messages, True, "image", self._data_dir_name)    
         
         # Statistics for all the set, for each object of interest and for each
         # standard star and taking into account the filters.
