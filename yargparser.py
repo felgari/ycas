@@ -45,6 +45,7 @@ class ProgramArguments(object):
     
     # Default named of the directories containing different types of files.
     BIAS_DIRECTORY = 'bias'
+    DARK_DIRECTORY = 'dark' 
     FLAT_DIRECTORY = 'flat'
     LIGHT_DIRECTORY = 'light'    
     
@@ -92,6 +93,7 @@ class ProgramArguments(object):
         
         # Initializes variables with default values.        
         self.__bias_directory = ProgramArguments.BIAS_DIRECTORY
+        self.__dark_directory = ProgramArguments.DARK_DIRECTORY
         self.__flat_directory = ProgramArguments.FLAT_DIRECTORY
         self.__light_directory = ProgramArguments.LIGHT_DIRECTORY      
         
@@ -158,6 +160,9 @@ class ProgramArguments(object):
         self.__parser.add_argument("-flat", dest="flat", metavar="flat_dir_name",
                                    help="Name of the directory for flat.")
         
+        self.__parser.add_argument("-dark", dest="dark", metavar="dark_dir_name",
+                                   help="Name of the directory for dark.")          
+        
         self.__parser.add_argument("-light", dest="light", 
                                    metavar="light_dir_name",
                                    help="Name of the directory for light images.")        
@@ -196,6 +201,10 @@ class ProgramArguments(object):
     @property    
     def bias_directory(self):        
         return self.__bias_directory
+    
+    @property     
+    def dark_directory(self):        
+        return self.__dark_directory    
     
     @property     
     def flat_directory(self):        
@@ -344,6 +353,9 @@ class ProgramArguments(object):
             # for their value.
             if self.__args.bias is not None:
                 self.__bias_directory = self.__args.bias
+
+            if self.__args.dark is not None:
+                self.__bias_directory = self.__args.dark                   
                 
             if self.__args.flat is not None:
                 self.__flat_directory = self.__args.flat

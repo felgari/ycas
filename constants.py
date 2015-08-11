@@ -41,6 +41,7 @@ DATANAME_CHAR_SEP = "-"
 FIRST_DATA_IMG = "001"
 FILTERS = [ 'V', 'B', 'R', 'CN', 'Cont4430', 'Cont6840' ]
 
+MASTERDARK_FILENAME = "dark_avg.fit"
 MASTERBIAS_FILENAME = "bias_avg.fit"
 MASTERFLAT_FILENAME = "flat_avg.fit"
 DATA_FINAL_SUFFIX = "_final"

@@ -41,6 +41,8 @@ from constants import *
 
 # File patterns.
 WORK_FILE_SUFFIX = "_work.fit"
+WORK1_FILE_SUFFIX = "_work1.fit"
+WORK2_FILE_SUFFIX = "_work2.fit"
 NORM_FILE_SUFFIX = "_norm.fit"
 WILDCARD_FIT_FILE = "*.fit"
 
@@ -51,22 +53,46 @@ IMSTAT_MEAN = "mean"
 IMARITH_SUBTRACT = "-"
 IMARITH_DIVIDE = "/"
 
-def is_data_directory(current_dir, data_dir_name):
+def is_light_directory(current_dir, light_dir_name):
     """Determines if the directory has a name identified as containing images
     with data.
     
     Args:
         current_dir: The directory to analyze. It must have the full path.    
-        data_dir_name: Name used for data directories.
+        light_dir_name: Name used for data directories.
         
     Returns:
-        True if the directory is for data, False otherwise.
+        True if the directory is for light images, False otherwise.
         
     """
     
     split_path = current_dir.split(os.sep)
     
-    return split_path[-2] == data_dir_name
+    return split_path[-2] == light_dir_name
+
+def get_masterdark_file_name(data_path, dark_dir_name):
+    """Get the masterdark file name related to the data_path containing the 
+    data images.
+    
+    Args:
+        data_path: Path of the directory with the data images.
+        dark_dir_name: Name of the directories containing dark images.
+    
+    """
+    
+    # Get the masterbias file name using the data_path where it should
+    # exists after organizing the files.
+    masterdark_name = os.path.join(data_path, 
+                                   os.path.join("..", "..", dark_dir_name), 
+                                   MASTERDARK_FILENAME)
+    
+    # Check if bias really exists.
+    if not os.path.exists(masterdark_name):
+        logging.warning("Masterdark '%s' does not exists" % (masterdark_name))
+        
+        masterdark_name = ""
+        
+    return masterdark_name
 
 def get_masterbias_file_name(data_path, bias_dir_name):
     """Get the masterbias file name related to the data_path containing the 
@@ -207,6 +233,134 @@ def generate_all_masterbias(target_dir, bias_dir_name):
                                       (list_of_files))  
                         logging.error("Iraf error is: %s" % (exc))    
                         
+
+def generate_masterdark(logging, dark_files, masterdark_name, dark_dir_name):
+    """Generates a masterdark from the dark files received.
+    
+    Args:
+        path: Full source path of the flat files.
+        dark_files: List of dark files.
+        masterdark_name: The name of the masterdark file.
+        dark_dir_name: Name of the directories that contain dark images
+        
+    """
+    
+    # Check that there is not any work file in the list, it could exists if a
+    # previous execution was terminated just before removing a work file.
+    work_files_to_remove = \
+        [f for f in dark_files if f.find(WORK_FILE_SUFFIX) > 0 ]
+    
+    # The files to use are those that are not previous work files.    
+    files = [f for f in dark_files if f.find(WORK_FILE_SUFFIX) < 0 ]   
+    
+    # Create list of names of the work flat files.
+    work_files = [s.replace("." + FIT_FILE_EXT, WORK_FILE_SUFFIX) for s in files]
+    
+    # Put the work files list in a string to be used with imarith.
+    string_of_work_dark_files = str(work_files).translate(None, "[]\'")
+    
+    # Put the dark files list in a string to be used with imarith.
+    string_of_dark_files = str(files).translate(None, "[]\'")    
+    
+    # Get the masterbias file name.
+    masterbias_name = os.path.join(path, 
+                                   os.path.join("..", bias_dir_name),
+                                   MASTERBIAS_FILENAME)
+    
+    try:
+        # Check if masterbias exists.
+        if os.path.exists(masterbias_name):
+            
+            # Create the work files subtracting bias from dark.
+            iraf.imarith(string_of_dark_files, IMARITH_SUBTRACT, masterbias_name,
+                         string_of_work_dark_files)
+        else:
+            for i in range(len(files)):
+                # If there is not a masterbias create the work files as a 
+                # copy of dark files.
+                shutil.copyfile(files[i], work_files[i])
+        
+        logging.debug("Creating masterdark file: %s" % (masterdark_name))
+        
+        # Put the work dark files list in a string to be used with imcombine.
+        string_of_work_dark_files = str(work_files).translate(None, "[]\'")
+        
+        try:
+            iraf.imcombine(string_of_work_dark_files, masterdark_name, Stdout=1)
+            
+            # After calculating the masterdark, remove the work files
+            # to save storage space.
+            for wf in work_files:
+                os.remove(wf)
+                
+            # If there was any previous work file in the directory.
+            for wf in work_files_to_remove:
+                os.remove(wf)
+                
+        except OSError as oe:            
+            logging.error("OSError removing work dark is: %s" % (oe))
+        
+        except iraf.IrafError as exc:
+            logging.error("Error executing imcombine combining darks with: %s" %
+                          (string_of_work_dark_files))
+            
+            logging.error("Iraf error is: %s" % (exc))
+            
+        except OSError as oe:
+            logging.error("OSError removing normalized flat is: %s" % (oe))
+            
+    except iraf.IrafError as exc:
+        logging.error("Error in imarith. Subtracting masterbias %s to %s" %
+                      (masterbias_name, string_of_dark_files))
+        
+        logging.error("Iraf error is: %s" % (exc))
+
+def generate_all_masterdark(target_dir, dark_dir_name, bias_dir_name):
+    """ Calculation of all the masterdark files.
+    
+    This function search for bias files from current directory.
+    The dark images are located in specific directories that only
+    contains bias images and have a specific denomination, so searching
+    for dark files is searching these directories.
+    Once a directory for dark had been found a masterdark is calculated,
+    first subtracting the masterbias if ir exists, and secong generating the
+    masterdark with an average operation using all the dark files.
+    
+    Args:
+        target_dir: Directory of the files.
+        dark_dir_name: Name of the directories that contain dark images.
+        bias_dir_name: Name of the directories that contain bias images.     
+    
+    """
+
+    logging.info("Generating all masterdark files from %s ..." % target_dir)
+    
+    # Walk from current directory.
+    for path, dirs, files in os.walk(target_dir):
+        
+        # Check if current directory is for bias fits.
+        for dr in dirs:
+            if dr == dark_dir_name:
+                    
+                # Get the full path of the directory.                
+                full_dir = os.path.join(path, dr)
+                logging.debug("Found a directory for 'dark': %s" % (full_dir))
+                
+                # Get the list of files.
+                files = glob.glob(os.path.join(full_dir, WILDCARD_FIT_FILE))
+                logging.debug("Found %d dark files" % (len(files)))
+                
+                # Build the masterdark file name.
+                masterdark_name = os.path.join(full_dir, MASTERDARK_FILENAME) 
+                
+                # Check if masterdark already exists.
+                if os.path.exists(masterdark_name) == True:
+                    logging.debug("Masterdark file exists '%s', so resume to next directory." % 
+                                  (masterdark_name))
+                else:
+                    generate_masterdark(path, files, masterdark_name,
+                                        bias_dir_name)                        
+                        
 def normalize_flats(files):
     """ Normalize a set of flat files. 
     
@@ -264,7 +418,6 @@ def normalize_flats(files):
     
     return list_of_norm_flat_files
 
-
 def generate_masterflat(path, flat_files, masterflat_name, bias_dir_name):
     """Generates a master flat from the flat files received.
     
@@ -281,18 +434,19 @@ def generate_masterflat(path, flat_files, masterflat_name, bias_dir_name):
     work_files_to_remove = \
         [f for f in flat_files if f.find(WORK_FILE_SUFFIX) > 0 ]
     
+    # The files to use are those that are not previous work files.    
     files = [f for f in flat_files if f.find(WORK_FILE_SUFFIX) < 0 ]   
-    
-    # Put the files list in a string.
-    list_of_flat_files = str(files).translate(None, "[]\'")
     
     # Create list of names of the work flat files.
     work_files = [s.replace("." + FIT_FILE_EXT, WORK_FILE_SUFFIX) for s in files]
     
-    # Remove braces and quotes from the string.
-    list_of_work_flat_files = str(work_files).translate(None, "[]\'")
+    # Put the work files list in a string to be used with imarith.
+    string_of_work_flat_files = str(work_files).translate(None, "[]\'")
     
-    # Get the masterflat file name.
+    # Put the flat files list in a string to be used with imarith.
+    string_of_flat_files = str(files).translate(None, "[]\'")    
+    
+    # Get the masterbias file name.
     masterbias_name = os.path.join(path, 
                                    os.path.join("..", "..", bias_dir_name),
                                    MASTERBIAS_FILENAME)
@@ -301,14 +455,17 @@ def generate_masterflat(path, flat_files, masterflat_name, bias_dir_name):
         # Check if masterbias exists.
         if os.path.exists(masterbias_name):
             # Create the work files subtracting bias from flat.
-            iraf.imarith(list_of_flat_files, IMARITH_SUBTRACT, masterbias_name,
-                         list_of_work_flat_files)
+            iraf.imarith(string_of_flat_files, IMARITH_SUBTRACT, masterbias_name,
+                         string_of_work_flat_files)
         else:
             for i in range(len(files)):
-                # Create the work files as a copy of original files.
+                # If there is not a masterbias create the work files as a 
+                # copy of original files.
                 shutil.copyfile(files[i], work_files[i])
         
         logging.debug("Normalizing flat files for: %s" % (masterflat_name))
+        
+        # Normalize the flats passing the list of flat files.
         norm_flat_files = normalize_flats(files)
         
         # After creating the normalized files, remove the work files in
@@ -325,13 +482,15 @@ def generate_masterflat(path, flat_files, masterflat_name, bias_dir_name):
         except OSError as oe:            
             logging.error("OSError removing work flat is: %s" % (oe))
             
-        logging.debug("Creating flat files for: %s" % (masterflat_name))
+        logging.debug("Creating masterflat: %s" % (masterflat_name))
         
-        # Create list of names of the normalized flat files.
-        list_of_norm_flat_files = str(norm_flat_files).translate(None, "[]\'")
+        # Put the normalized flat files list in a string to be used with 
+        # imcombine.
+        string_of_norm_flat_files = str(norm_flat_files).translate(None, "[]\'")
         
         try:
-            iraf.imcombine(list_of_norm_flat_files, masterflat_name, Stdout=1)
+            iraf.imcombine(string_of_norm_flat_files, masterflat_name, Stdout=1)
+            
             # After calculating the masterflat, remove the normalized files
             # to save storage space.
             for nff in norm_flat_files:
@@ -339,7 +498,7 @@ def generate_masterflat(path, flat_files, masterflat_name, bias_dir_name):
         
         except iraf.IrafError as exc:
             logging.error("Error executing imcombine combining flats with: %s" %
-                          (list_of_work_flat_files))
+                          (string_of_work_flat_files))
             
             logging.error("Iraf error is: %s" % (exc))
             
@@ -348,11 +507,12 @@ def generate_masterflat(path, flat_files, masterflat_name, bias_dir_name):
             
     except iraf.IrafError as exc:
         logging.error("Error in imarith. Subtracting masterbias %s to %s" %
-                      (masterbias_name, list_of_flat_files))
+                      (masterbias_name, string_of_flat_files))
         
         logging.error("Iraf error is: %s" % (exc))
 
-def generate_all_masterflats(target_dir, flat_dir_name, bias_dir_name):
+def generate_all_masterflats(target_dir, flat_dir_name, dark_dir_name,
+                             bias_dir_name):
     """Calculation of all the masterflat files.
     
     This function search for flat files from current directory.
@@ -365,7 +525,8 @@ def generate_all_masterflats(target_dir, flat_dir_name, bias_dir_name):
     
     Args:
         target_dir: Directory of the files.    
-        flat_dir_name: Name of the directories containing flat images.      
+        flat_dir_name: Name of the directories containing flat images.    
+        dark_dir_name: Name of the directories containing dark images.   
         bias_dir_name: Name of the directories containing bias images. 
         
     """
@@ -399,77 +560,90 @@ def generate_all_masterflats(target_dir, flat_dir_name, bias_dir_name):
                     generate_masterflat(path, files, masterflat_name,
                                         bias_dir_name)                        
 
-def reduce_image(masterbias_name, masterflat_name, source_image, final_image):
+def reduce_image(masterdark_name, masterbias_name, masterflat_name, 
+                 source_file_name, final_image_name):
     """Reduce an image.
     
-    First, if the masterbias exists is subtracted, later the image is
-    divided by the flat, if it exists.
+    First, if the masterdark exists is subtracted, second, if the masterbias 
+    exists is subtracted, later the image is divided by the flat if it exists.
     These aritmethic operations on the images are performed with imarith.    
     
     Args:
+        masterdark_name: The full name of the masterdark file.
         masterbias_name: The full name of the masterbias file.
         masterflat_name: The full name of the masterflat file.
-        source_image:The name of the source image
-        final_image: The name for the image reduced.
+        source_file_name: Name of the file of the source image.
+        final_image_name: The name for file of the image reduced.
     """
     
     # Get the work file name, a temporary file to store the result between bias
     # and flat application.
-    work_file = source_image.replace("." + FIT_FILE_EXT, WORK_FILE_SUFFIX)
+    work_file_name_1 = \
+        source_file_name.replace("." + FIT_FILE_EXT, WORK1_FILE_SUFFIX)
+        
+    work_file_name_2 = \
+        source_file_name.replace("." + FIT_FILE_EXT, WORK2_FILE_SUFFIX)
     
     # Control imarith exception.
     try:
+        # If masterdark exists.
+        if len(masterdark_name) > 0:
+            
+            # Create the work files subtracting bias from flat.
+            iraf.imarith(source_file_name, IMARITH_SUBTRACT, masterdark_name, 
+                         work_file_name_1)
+        else:
+            
+            # Use as work file (the input for flat step) the original file.
+            work_file_name_1 = source_file_name         
+        
         # If masterbias exists.
         if len(masterbias_name) > 0:
             
             # Create the work files subtracting bias from flat.
-            iraf.imarith(source_image, IMARITH_SUBTRACT, masterbias_name, 
-                         work_file)
+            iraf.imarith(work_file_name_1, IMARITH_SUBTRACT, masterbias_name, 
+                         work_file_name_2)
         else:
             
             # Use as work file (the input for flat step) the original file.
-            work_file = source_image 
-                    
-        # Control imarith exception.
-        try:
+            work_file_name_2 = work_file_name_1 
+        
+        # If masterflat exists.
+        if len(masterflat_name) > 0: 
             
-            # If masterflat exists.
-            if len(masterflat_name) > 0: 
-                
-                # Create the final data dividing by master flat.
-                iraf.imarith(work_file, IMARITH_DIVIDE, masterflat_name, 
-                             final_image)
-            else:
-                # In this case the final file is the file resulting from bias 
-                # step. It could be even the original file if the masterbias 
-                # does not exist.
-                shutil.copyfile(work_file, final_image) 
-            
-            # If the work file is not the original file, and it is really a 
-            # temporary file, remove it to save storage space.
-            if len(masterbias_name) > 0: 
-                os.remove(work_file)
-                
-        except iraf.IrafError as exc:
-            logging.error("Error in imarith applying flat: %s %s %s for %s" %
-                          (work_file, IMARITH_DIVIDE, masterflat_name, 
-                           final_image))
-            
-            logging.error("Iraf error is: %s" % (exc))
+            # Create the final data dividing by master flat.
+            iraf.imarith(work_file_name_2, IMARITH_DIVIDE, masterflat_name, 
+                         final_image_name)
+        else:
+            # In this case the final file is the file resulting from bias 
+            # step. It could be even the original file if the masterbias 
+            # does not exist.
+            shutil.copyfile(work_file_name_2, final_image_name) 
             
     except iraf.IrafError as exc:
-        logging.error("Error in imarith applying bias: %s %s %s for %s" %
-                      (source_image, IMARITH_SUBTRACT, masterbias_name, 
-                       work_file))
+        logging.error("Error in imarith reducing: %s" % (source_file_name))
         
         logging.error("Iraf error is: %s" % (exc))
+        
+    # Remove temporary file to save storage space.
+    try:
+        if len(masterdark_name) > 0:
+            os.remove(work_file_name_1)
+            
+        if len(masterbias_name) > 0:
+            os.remove(work_file_name_2)
+    except OSError as oe:
+        logging.error("Removing temporary files when reducing: '%s'." %
+                      (source_file_name))        
 
-def reduce_list_of_images(data_files, masterbias_filename, masterflat_filename):
+def reduce_list_of_images(data_files, masterdark_filename, 
+                          masterbias_filename, masterflat_filename):
     """Reduce the images contained in the list of files received applying the
     masterbias and masterflat also received.
     
     Args:
         data_files: List of file to reduce.
+        masterdark_filename: Full path of the masterdark file.
         masterbias_filename: Full path of the masterbias file.
         masterflat_filename: Full path of the masterflat file.
     
@@ -479,22 +653,23 @@ def reduce_list_of_images(data_files, masterbias_filename, masterflat_filename):
     for source_image in data_files:
                 
         final_file_pattern = "%s.%s" % (DATA_FINAL_SUFFIX, FIT_FILE_EXT)
-            
+        
         # Get the name of the final file.
         final_image = source_image.replace(".%s" % (FIT_FILE_EXT), 
-                                           final_file_pattern)
+                                           final_file_pattern)        
         
-        if os.path.exists(final_image):
+        if os.path.exists(final_image) or \
+            source_image.endswith(final_file_pattern):
             logging.debug("Final image %s already exists, not reduced." %
-                          (final_image))
+                          (source_image))
         else:
             # Reduce the image.
-            reduce_image(masterbias_filename, masterflat_filename, 
-                         source_image, final_image)            
+            reduce_image(masterdark_filename, masterbias_filename, 
+                         masterflat_filename, source_image, final_image)            
 
 
-def reduce_data_images(target_dir, data_dir_name, bias_dir_name,
-                        flat_dir_name):
+def reduce_data_images(target_dir, light_dir_name, dark_dir_name,
+                       bias_dir_name, flat_dir_name):
     """Reduction all data images.
     
     This function search images from the source directory to reduce then. 
@@ -505,7 +680,8 @@ def reduce_data_images(target_dir, data_dir_name, bias_dir_name,
     
     Args:
         target_dir: Directory of the files.
-        data_dir_name: Name of the directories containing data images.  
+        light_dir_name: Name of the directories containing data images.
+        dark_dir_name: Name of the directories containing dark images.  
         bias_dir_name: Name of the directories containing bias images.    
         flat_dir_name:Name of the directories containing flat images.
         
@@ -519,7 +695,7 @@ def reduce_data_images(target_dir, data_dir_name, bias_dir_name,
         if len(dirs) == 0:    
                     
             # Look for directories with data images.
-            if is_data_directory(path, data_dir_name):
+            if is_light_directory(path, light_dir_name):
                 
                 logging.debug("Found a directory for data: %s" % (path))
 
@@ -528,14 +704,16 @@ def reduce_data_images(target_dir, data_dir_name, bias_dir_name,
                 
                 logging.debug("Found %d data files" % (len(data_files)))
                 
-                # Get the names of materbias and masterflat files to use for
-                # reduction.
+                # Get the names of masterdark, materbias and masterflat files 
+                # to use for reduction.
+                masterdark_name = get_masterdark_file_name(path, dark_dir_name)
+                
                 masterbias_name = get_masterbias_file_name(path, bias_dir_name)
                     
                 masterflat_name = get_masterflat_file_name(path, flat_dir_name)       
 
-                reduce_list_of_images(data_files, masterbias_name, 
-                                      masterflat_name)
+                reduce_list_of_images(data_files, masterdark_name, 
+                                      masterbias_name, masterflat_name)
 
                         
 def reduce_images(progargs):
@@ -558,14 +736,21 @@ def reduce_images(progargs):
     generate_all_masterbias(progargs.target_dir,
                             progargs.bias_directory)
 
+    # Generate all the average dark.
+    generate_all_masterdark(progargs.target_dir,
+                            progargs.dark_directory,
+                            progargs.bias_directory)
+
     # Generate all the average flat.
     generate_all_masterflats(progargs.target_dir,
                              progargs.flat_directory,
+                             progargs.dark_directory,
                              progargs.bias_directory)
 
     # Reduce all the data images applying the average bias and flats.
     reduce_data_images(progargs.target_dir,
                        progargs.light_directory,
+                       progargs.dark_directory,
                        progargs.bias_directory,
                        progargs.flat_directory)
     
