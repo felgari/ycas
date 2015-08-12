@@ -74,7 +74,7 @@ class SummaryReport(object):
         
         self._target_dir = progargs.target_dir
         self._report_file_name = report_file_name
-        self._data_dir_name = progargs.light_directory
+        self._light_dir_name = progargs.light_directory
         self._bias_dir_name = progargs.bias_directory
         self._flat_dir_name = progargs.flat_directory
         self._stars = stars
@@ -477,7 +477,7 @@ class SummaryReport(object):
                                     MASTERFLAT_FILENAME)  
         
         # Summary for data files.
-        self.sum_org_images_of_type(messages, True, "image", self._data_dir_name)    
+        self.sum_org_images_of_type(messages, True, "image", self._light_dir_name)    
         
         # Statistics for all the set, for each object of interest and for each
         # standard star and taking into account the filters.
@@ -487,49 +487,51 @@ class SummaryReport(object):
     def summary_reduction(self):
         """Get the summary for: Reduction. """
         
-        messages = []      
+        messages = []
+        all_light_files = []      
+        all_files = []
+        all_dirs = []
         
-        # Get all the files related to data images.
-        subdirectories, files, directories_from_root = \
-            self.walk_directories(self._target_dir, "*." + FIT_FILE_EXT, 
-                                  self._data_dir_name, True)
+        # Compile all the images and directories. 
+        for path, dirs, files in os.walk(self._target_dir):
+            all_files.extend(files)
+            all_dirs.extend(dirs)   
             
-        # All the final images with its full path.
-        final_images = [os.path.join(f[PATH_COL], f[FILE_NAME_COL]) \
-                        for f in files \
-                        if f[FILE_NAME_COL].find(DATA_FINAL_SUFFIX) > 0]    
-        
-        # Original images, those not final.
-        image_files_no_final = [os.path.join(f[PATH_COL], f[FILE_NAME_COL]) \
-                                for f in files \
-                                if f[FILE_NAME_COL].find(DATA_FINAL_SUFFIX) < 0]
-        
-        images_reduced = 0
-        images_not_reduced = []    
-    
-        # Check if each image has a final one.
-        for i in range(len(image_files_no_final)):
-            inf = image_files_no_final[i]
+            path_split_head = os.path.split(path)[0]
             
-            final_image = inf.replace("." + FIT_FILE_EXT, \
-                                      DATA_FINAL_SUFFIX + "." + FIT_FILE_EXT)
-             
-            # Check if the final image related to current one exists.       
-            if final_image in final_images:
-                images_reduced += 1
-            else:
-                images_not_reduced.extend([final_image])
-          
-        # Print the summary.      
-        messages.append(["Total number of images: %d" % 
-                         len(image_files_no_final)])
+            if os.path.split(path_split_head)[1] == self._light_dir_name:
+                
+                all_light_files.extend([ f for f in files \
+                                        if f.endswith(FIT_FILE_EXT) ])
+            
+        # Count the number of masterdark files.
+        masterdark_files = [ f for f in all_files \
+                                if f == MASTERDARK_FILENAME]
         
-        messages.append(["Number of images not reduced: %d" %
-                         len(images_not_reduced)])
-          
-        if len(images_not_reduced) > 0:
-            messages.append(["Images not reduced: %s" % 
-                             (str(images_not_reduced))])
+        # Count the number of masterbias files.
+        masterbias_files = [ f for f in all_files \
+                                if f == MASTERBIAS_FILENAME]     
+        
+        # Count the number of masterflat files.
+        masterflat_files = [ f for f in all_files \
+                                if f == MASTERFLAT_FILENAME]
+        
+        final_images = [ f for f in all_light_files \
+                        if f.find(DATA_FINAL_SUFFIX) > 0 ]     
+        
+        messages.append(["Total number of masterdark files: %d" % 
+                         len(masterdark_files)])  
+        
+        messages.append(["Total number of masterbias files: %d" % 
+                         len(masterbias_files)])  
+        
+        messages.append(["Total number of masterflat files: %d" % 
+                         len(masterflat_files)])                              
+        
+        messages.append(["Images reduced: %d" % (len(final_images))])
+        
+        messages.append(["Images not reduced: %d" % \
+                         (len(all_light_files) - 2 * len(final_images))])                
         
         self.print_summary(SummaryReport.RED_SUM_NAME, messages)        
     
@@ -541,7 +543,7 @@ class SummaryReport(object):
         # Get all the files related to catalog images.
         subdirectories, files, directories_from_root = \
             self.walk_directories(self._target_dir, "*." + FIT_FILE_EXT, 
-                                  self._data_dir_name, True)   
+                                  self._light_dir_name, True)   
         
         # Original images, those not final.
         image_files_no_final = [os.path.join(f[PATH_COL], f[FILE_NAME_COL]) \
@@ -585,7 +587,7 @@ class SummaryReport(object):
         # Get all the original files related to images.
         subdirectories, files, directories_from_root = \
             self.walk_directories(self._target_dir, "*." + FIT_FILE_EXT,
-                                  self._data_dir_name, True)   
+                                  self._light_dir_name, True)   
         
         # Original images, those not final.
         image_files_no_final = [os.path.join(f[PATH_COL], f[FILE_NAME_COL]) \
