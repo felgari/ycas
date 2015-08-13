@@ -26,7 +26,6 @@ from constants import *
 
 # Character to separate parameter name from its value in a configuration file.
 CFG_FILE_SEP_CHAR = "="
-COMMENT_CHARACTER = "#"
 
 def read_catalog_file(file_name):
     """Read a file containing in each file a x,y coordinate pair and a numeric 

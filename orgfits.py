@@ -100,7 +100,8 @@ class Filters(object):
             with open(file_name, "r") as f:
                 for line in f:
                     filter_name = line.strip()
-                    if len(filter_name) > 0:
+                    if len(filter_name) > 0 \
+                        and filter_name[0] != COMMENT_CHARACTER:
                         self._filters.add(filter_name)  
                     
             logging.debug("Read the following filters: %s" % (self._filters))

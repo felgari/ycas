@@ -34,6 +34,9 @@ MAG_CSV_PATTERN = "_mag.csv"
 # File name parts delimited.
 FILE_NAME_PARTS_DELIM = "_"
 
+# Character to specify a comment line in a file.
+COMMENT_CHARACTER = "#"
+
 # Special characters in file names.
 BIAS_STRING = 'bias'
 FLAT_STRING = 'flat'
