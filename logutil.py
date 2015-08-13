@@ -78,4 +78,6 @@ def init_log(progargs):
                         format="%(asctime)s:%(levelname)s:%(message)s", \
                         level=logging_level)
     
+    print "Logging initialized at: %s" % log_file
+    
     logging.debug("Logging initialized.")
