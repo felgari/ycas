@@ -293,7 +293,9 @@ class OrganizeFIT(object):
     
         if file_header is not None:
             
-            images_dir = os.path.split(path)[-1]
+            # Get the directory where the directories for the different types
+            # of files are going to be created.
+            images_dir = os.path.basename(os.path.normpath(path))
             
             target_dir = os.path.join(self._progargs.target_dir, images_dir)
     
