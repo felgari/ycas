@@ -84,7 +84,7 @@ def get_instrumental_magnitudes(stars, target_dir, data_directoy_name):
                     # Get the magnitudes for this star in current path.
                     ins_mag.read_inst_magnitudes(mag_file, path)
                             
-    ins_mag.save_all_mag()                            
+    ins_mag.save_all_mag(target_dir)                            
                         
     return ins_mag
 
@@ -150,6 +150,6 @@ def process_magnitudes(stars, target_dir, data_directoy_name):
     np.seterr(**old_settings)
     
     # Save magnitudes.
-    magnitudes.save_magnitudes()
+    magnitudes.save_magnitudes(target_dir)
     
     return magnitudes
