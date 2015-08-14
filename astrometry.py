@@ -354,7 +354,7 @@ class Astrometry(object):
                 # The indexes corresponds to items in the XY data list.
                 ind = indexes[i]
                 
-                catalog_file.write("%d %d %d" % (xy_data[ind][XY_DATA_X_COL],
+                catalog_file.write("%.10g %.10g %d\n" % (xy_data[ind][XY_DATA_X_COL],
                                    xy_data[ind][XY_DATA_Y_COL], identifiers[i]))
             
             catalog_file.close() 
