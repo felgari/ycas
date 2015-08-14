@@ -201,14 +201,21 @@ class StarMagnitudes(object):
                 
 
     def get_catalog_file_name(self, mag_file):
-        # Read the catalog file that corresponds to this file.
-        # First get the name of the catalog file from the current CSV file.
-        catalog_file_name = mag_file.replace(
-            "%s%s%s" % 
-            (DATA_FINAL_SUFFIX, FILE_NAME_PARTS_DELIM, MAG_CSV_PATTERN), 
-            ".%s" %(CATALOG_FILE_EXT))
-        return catalog_file_name
+        """Get the catalog file name from the magnitude.csv file name.
+        
+        Args:
+            mag_file: Name of the magnitude csv file.
+        """
+        
+        mag_csv_pattern = "%s%s" % \
+            (DATA_FINAL_SUFFIX, MAG_CSV_PATTERN)
+            
+        cat_pattern = ".%s" % (CATALOG_FILE_EXT)
+        
+        # Get the name of the catalog file from the current CSV file.
+        catalog_file_name = mag_file.replace(mag_csv_pattern, cat_pattern)
 
+        return catalog_file_name
 
     def get_filter_name(self, path):
         """ The name of the directory that contains the file is the name of 
@@ -328,10 +335,11 @@ class StarMagnitudes(object):
                         self._day.add(day)
                         self._filter.add(filter_name)                 
                         
-                        # Get the identifier for current coordinate.
+                        # Get the identifier for current coordinate read from
+                        # the catalog file.
                         current_coor = coordinates[nrow]              
                         current_coor_id = \
-                            int(current_coor[StarMagnitudes.CSV_ID_COOR_COL])
+                            int(current_coor[CAT_ID_COL])
                         
                         # If it is the star of interest, add the magnitude to
                         # the magnitudes list.
@@ -399,8 +407,13 @@ class StarMagnitudes(object):
             
             self.read_mag_file(mag_file, filter_name, star_name, coordinates)
     
-    def save_all_mag(self):
-        """ Save the magnitudes received."""
+    def save_all_mag(self, target_dir):
+        """ Save the magnitudes received.
+        
+        Args:
+            target_dir: The directory for results.
+        
+        """
         
         # For each star. The two list received contains the same 
         # number of stars.
@@ -414,8 +427,11 @@ class StarMagnitudes(object):
                     output_file_name = "%s%s%s%s" % \
                         (s.name, ALL_INST_MAG_SUFFIX, ".", TSV_FILE_EXT)
                         
+                    output_full_path = os.path.join(target_dir, 
+                                                    output_file_name)
+                        
                     try:                
-                        with open(output_file_name, 'w') as fw:
+                        with open(output_full_path, 'w') as fw:
                             
                             writer = csv.writer(fw, delimiter='\t')
                     
@@ -428,16 +444,15 @@ class StarMagnitudes(object):
                                 
                     except IOError as ioe:
                         logging.error("Writing magnitudes file: '%s'" % 
-                                      (output_file_name)) 
+                                      (output_full_path)) 
             
             i = i + 1    
             
-    def save_magnitudes(self):
+    def save_magnitudes(self, target_dir):
         """Save the magnitudes to a text file.
         
         Args:     
-            star_name: Name of the star that corresponds to the magnitudes.
-            magnitudes: List of magnitudes.
+            target_dir: The directory for results.
         
         """
         
@@ -453,10 +468,12 @@ class StarMagnitudes(object):
             if mags:                
                           
                 # Get the name of the output file.
-                output_file_name = "%s%s%s" % (s.name, ".", TSV_FILE_EXT)      
+                output_file_name = "%s%s%s" % (s.name, ".", TSV_FILE_EXT)  
+                
+                output_full_path = os.path.join(target_dir, output_file_name)                    
                     
                 try:              
-                    with open(output_file_name, 'w') as fw:
+                    with open(output_full_path, 'w') as fw:
                         
                         writer = csv.writer(fw, delimiter='\t')
     
@@ -473,7 +490,7 @@ class StarMagnitudes(object):
                             
                 except IOError as ioe:
                     logging.error("Writing magnitudes file: '%s'" % 
-                                  (output_file_name))                             
+                                  (output_full_path))                             
                     
             i = i + 1   
             
