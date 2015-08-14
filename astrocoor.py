@@ -128,24 +128,28 @@ def get_indexes_for_star_coor(rd_data, star):
     
     # If the star has been found.
     if new_index >= 0:
-        # Get the indexes for the stars references.
-        for star_of_field in star.field_stars:
-            new_index = get_rd_index(rd_data, star_of_field.ra, \
-                                     star_of_field.dec)
+        
+        # If the star isn't standard, get the indexes for the star in its field.
+        if not star.is_std:
             
-            # Check that an index has been found for this star.
-            if new_index >= 0:
-                logging.debug("Index for reference %.10g, %.10g with id %d is %d" %
-                              (star_of_field.ra, star_of_field.dec,
-                              star_of_field.id, new_index))        
-                                         
-                indexes.extend([new_index])  
+            # Get the indexes for the stars references.
+            for star_of_field in star.field_stars:
+                new_index = get_rd_index(rd_data, star_of_field.ra, \
+                                         star_of_field.dec)
                 
-                identifiers.extend([star_of_field.id])    
-            else:
-                logging.debug("Index for reference %.10g, %.10g with id %d not found" %
-                              (star_of_field.ra, star_of_field.dec, 
-                               star_of_field.id))
+                # Check that an index has been found for this star.
+                if new_index >= 0:
+                    logging.debug("Index for reference %.10g, %.10g with id %d is %d" %
+                                  (star_of_field.ra, star_of_field.dec,
+                                  star_of_field.id, new_index))        
+                                             
+                    indexes.extend([new_index])  
+                    
+                    identifiers.extend([star_of_field.id])    
+                else:
+                    logging.debug("Index for reference %.10g, %.10g with id %d not found" %
+                                  (star_of_field.ra, star_of_field.dec, 
+                                   star_of_field.id))
     else:
         logging.warning("Index for star %s not found" % star.name)
 
