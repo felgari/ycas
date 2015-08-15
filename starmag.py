@@ -377,7 +377,7 @@ class StarMagnitudes(object):
                         self.add_all_mags(star_name, star_index, \
                                           all_mag, mjd, filter_name)                
                     
-                logging.info("Processed instrumental magnitudes of%d stars." % 
+                logging.info("Processed instrumental magnitudes of %d stars." % 
                              (nrow))
         except IOError as ioe:
             logging.error("Reading magnitudes file: '%s'" % (mag_file))                 
