@@ -51,8 +51,8 @@ class HeaderFields(object):
     _FILTER_FIELD_NAME = "FILTER"
     _IMAGETYP_FIELD_NAME = "IMAGETYP"
     _MJD_FIELD_NAME = "MJD"
-    _OBJCRA_FIELD_NAME = "OBJCRA"
-    _OBJCDEC_FIELD_NAME = "OBJCDEC"
+    _RA_FIELD_NAME = "RA"
+    _DEC_FIELD_NAME = "DEC"
     _OBJECT_FIELD_NAME = "OBJECT"
     
     # Values used for the types of the images.
@@ -67,8 +67,8 @@ class HeaderFields(object):
                       _FILTER_FIELD_NAME,
                       _IMAGETYP_FIELD_NAME, 
                       _MJD_FIELD_NAME,
-                      _OBJCRA_FIELD_NAME, 
-                      _OBJCDEC_FIELD_NAME,
+                      _RA_FIELD_NAME, 
+                      _DEC_FIELD_NAME,
                       _OBJECT_FIELD_NAME]
     
     # The complete list of values for the types for the images.
@@ -115,8 +115,8 @@ class HeaderFields(object):
                 self._filter = header_fields[HeaderFields._FILTER_FIELD_NAME]
                 self._image_type = header_fields[HeaderFields._IMAGETYP_FIELD_NAME]
                 self._mjd = header_fields[HeaderFields._MJD_FIELD_NAME]
-                self._ra = header_fields[HeaderFields._OBJCRA_FIELD_NAME]
-                self._dec = header_fields[HeaderFields._OBJCDEC_FIELD_NAME]
+                self._ra = header_fields[HeaderFields._RA_FIELD_NAME]
+                self._dec = header_fields[HeaderFields._DEC_FIELD_NAME]
                 self._object = header_fields[HeaderFields._OBJECT_FIELD_NAME] 
                 
                 self._bias_value = header_fields[HeaderFields._BIAS_IMAGE_TYPE]
