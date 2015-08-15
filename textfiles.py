@@ -27,42 +27,6 @@ from constants import *
 # Character to separate parameter name from its value in a configuration file.
 CFG_FILE_SEP_CHAR = "="
 
-def read_catalog_file(file_name):
-    """Read a file containing in each file a x,y coordinate pair and a numeric 
-    identifier for each coordinate.
-        
-    Args:
-        file_name: The name of the file to read.
-    
-    Returns:    
-        The list of coordinates read from the file indicated.
-    
-    """
-    
-    # List of coordinates read.
-    coordinates = []
-    
-    # List of identifiers for the coordinates read.
-    identifiers = []
-    
-    logging.debug("Reading coordinates from: %s" % (file_name))
-    
-    try:
-        # Read the coordinates from the file.
-        with open(file_name, 'rb') as fr:
-            reader = csv.reader(fr, delimiter=' ')        
-                
-            for row in reader:            
-                coordinates.append(row)  
-                
-                identifiers.extend([row[CAT_ID_COL]])
-    except IOError as ioe:
-        logging.error("Reading coordinates file: %s" % (file_name))                 
-
-    logging.debug("Coordinates read: %s" % (identifiers))
-
-    return coordinates  
-
 def read_cfg_file(file_name):
     """Read parameters from a text file containing a pair parameter/value
     in each line separated by an equal character.

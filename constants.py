@@ -55,11 +55,6 @@ CAL_MAG_SUFFIX = "_cal_mag"
 
 IMSTAT_FIRST_VALUE = 1
 
-# Columns in catalog file.
-CAT_X_COL = 0
-CAT_Y_COL = 1
-CAT_ID_COL = 2
-
 # Columns in XY coordinates table.
 XY_DATA_X_COL = 0
 XY_DATA_Y_COL = 1

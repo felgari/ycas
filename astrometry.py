@@ -34,6 +34,7 @@ from constants import *
 from textfiles import *
 from fitfiles import *
 from astrocoor import *
+from starcat import *
 
 if sys.version_info < (3, 3):
     import subprocess32 as subprocess
@@ -312,54 +313,23 @@ class Astrometry(object):
             # coordinates validation criteria.
             if check_celestial_coordinates(image_file_name, star, indexes, \
                                            identifiers, rd_data, xy_data):
-    
-                # Write catalog file with the x,y coordinate to do the
-                # photometry.
-                self.write_catalog_file(catalog_full_file_name, indexes, \
-                                        xy_data, identifiers)        
                 
-                success = True
+                try:
+                    star_catalog = StarCatalog(catalog_full_file_name)
+            
+                    star_catalog.write(indexes, identifiers, xy_data)     
+                
+                    success = True
+                    
+                except StarCatalogException as sce:
+                    logging.error(sce)
             else:
                 logging.warning("Catalog file not saved, coordinates " + \
                                 "do not pass validation criteria.")
         else:
             logging.warning("Catalog file not saved, no stars found by astrometry")
             
-        return success  
-    
-    def write_catalog_file(self, catalog_file_name, indexes, xy_data, 
-                           identifiers):
-        """Write text files with the x,y and ra,dec coordinates.
-        
-        The coordinates written are related to the x,y data and indexes set 
-        received.
-        
-        Args:
-            catalog_file_name: File name o
-            indexes: List of indexes corresponding to the coordinates to write.
-            xy_data: List of the X, Y coordinates that are referenced by X, Y
-                coordinates.    
-            identifiers: Identifiers of the stars found.    
-        
-        """
-        
-        logging.debug("Writing catalog file: %s" % (catalog_file_name))
-        
-        try:
-            # Open the destiny file.
-            catalog_file = open(catalog_file_name, "w")
-                
-            # Iterate over the range of indexes to write them to the file.
-            for i in range(len(indexes)):
-                # The indexes corresponds to items in the XY data list.
-                ind = indexes[i]
-                
-                catalog_file.write("%.10g %.10g %d\n" % (xy_data[ind][XY_DATA_X_COL],
-                                   xy_data[ind][XY_DATA_Y_COL], identifiers[i]))
-            
-            catalog_file.close() 
-        except IOError as ioe:
-            logging.error("Writing file: %s" % (catalog_file))                      
+        return success                       
         
     def print_summary(self):
         """Log a summary of the astrometry.

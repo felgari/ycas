@@ -28,6 +28,7 @@ the instrumental magnitudes are also stored.
 import os
 from textfiles import *
 from constants import *
+from starcat import *
 from utility import get_day_from_mjd
 
 class Magnitude(object):
@@ -297,14 +298,14 @@ class StarMagnitudes(object):
             
         self._all_magnitudes[star_index].append(mag_row)
 
-    def read_mag_file(self, mag_file, filter_name, star_name, coordinates):
+    def read_mag_file(self, mag_file, filter_name, star_name, star_catalog):
         """Read the magnitudes from the file.
         
         Args:
             mag_file: The name of the file to read.
             filter_name: Name of the filter for these magnitudes.
             star_name: Name of the star whose magnitudes are read.
-            coordinates: List of X, Y coordinates of the stars in the image. 
+            star_catalog: Catalog of X, Y coordinates of the stars in the image. 
         
         """
         
@@ -333,32 +334,35 @@ class StarMagnitudes(object):
                         
                         # Add day and filter.
                         self._day.add(day)
-                        self._filter.add(filter_name)                 
+                        self._filter.add(filter_name)  
                         
-                        # Get the identifier for current coordinate read from
-                        # the catalog file.
-                        current_coor = coordinates[nrow]              
-                        current_coor_id = \
-                            int(current_coor[CAT_ID_COL])
-                        
-                        # If it is the star of interest, add the magnitude to
-                        # the magnitudes list.
-                        if current_coor_id == StarMagnitudes.OBJ_OF_INTEREST_ID:
-                            im = Magnitude(star_name,
-                                           mjd,
-                                           filter_name,
-                                           fields[StarMagnitudes.CSV_MAG_COL],
-                                           fields[StarMagnitudes.CSV_ERROR_COL],
-                                           fields[StarMagnitudes.CSV_AIRMASS_COL])
+                        try:
+                            current_coor_id = star_catalog.id(nrow)
                             
-                            im.day = day
-                            
-                            mag.append(im)
-                        
-                        # Add the magnitude to the all magnitudes list.
-                        all_mag.append([fields[StarMagnitudes.CSV_MAG_COL], \
-                                        fields[StarMagnitudes.CSV_ERROR_COL], \
-                                        current_coor_id])
+                             # If it is the star of interest, add the magnitude to
+                            # the magnitudes list.
+                            if current_coor_id == \
+                                    StarMagnitudes.OBJ_OF_INTEREST_ID:
+                                
+                                im = Magnitude(
+                                        star_name,
+                                        mjd,
+                                        filter_name,
+                                        fields[StarMagnitudes.CSV_MAG_COL],
+                                        fields[StarMagnitudes.CSV_ERROR_COL],
+                                        fields[StarMagnitudes.CSV_AIRMASS_COL])
+                                
+                                im.day = day
+                                
+                                mag.append(im)   
+                                
+                            # Add the magnitude to the all magnitudes list.
+                            all_mag.append([fields[StarMagnitudes.CSV_MAG_COL],
+                                            fields[StarMagnitudes.CSV_ERROR_COL],
+                                            current_coor_id])                                
+                                                         
+                        except StarCatalogException as sce:
+                            logging.error(sce)               
                         
                         nrow += 1
                     else:
@@ -401,11 +405,18 @@ class StarMagnitudes(object):
         
         # Search the catalog file containing the x,y coordinates of each star.
         if os.path.exists(catalog_file_name):
-        
-            # List of coordinates used to calculate the magnitudes of the image.
-            coordinates = read_catalog_file(catalog_file_name)
             
-            self.read_mag_file(mag_file, filter_name, star_name, coordinates)
+            try:            
+                star_catalog = StarCatalog(catalog_file_name)
+        
+                # Coordinates used to calculate the magnitudes of the image.
+                star_catalog.read()
+                
+                self.read_mag_file(mag_file, filter_name, star_name, 
+                                   star_catalog)
+                
+            except StarCatalogException as sce:
+                    logging.error(sce) 
     
     def save_all_mag(self, target_dir):
         """ Save the magnitudes received.
