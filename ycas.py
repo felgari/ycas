@@ -148,7 +148,7 @@ def main(progargs):
     This function performs all the steps needed to process the images.
     Each step is a calling to a function that implements a concrete task.
 
-    """    
+    """        
     
     try:
         # Process program arguments checking that programs arguments used are
@@ -169,6 +169,7 @@ def main(progargs):
         logging.error("Invalid header fields in file: %s" % 
                       progargs.header_params_file_name)        
   
+    logging.info("Program finished.")
 
 # Where all begins ...
 if __name__ == "__main__":
