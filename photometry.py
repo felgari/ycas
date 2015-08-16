@@ -34,7 +34,6 @@ from pyraf.iraf import noao, digiphot, apphot
 from constants import *
 from textfiles import *
 from fitfiles import *
-from images import *
 from photpars import *
 
 phot_progargs = None
