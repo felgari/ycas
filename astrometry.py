@@ -166,7 +166,7 @@ class Astrometry(object):
         
         # Compose the command use the base command and adding the arguments
         # for current image.
-        command = "%s %d --ra %.10g --dec %.10g %s" % \
+        command = "%s %s --ra %.10g --dec %.10g %s" % \
             (self._base_command, num_of_objects, 
              star.ra, star.dec, image_file)
             
