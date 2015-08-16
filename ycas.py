@@ -170,6 +170,8 @@ def main(progargs):
                       progargs.header_params_file_name)        
   
     logging.info("Program finished.")
+    
+    logging.shutdown()
 
 # Where all begins ...
 if __name__ == "__main__":
