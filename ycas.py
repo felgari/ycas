@@ -148,7 +148,7 @@ def main(progargs):
     This function performs all the steps needed to process the images.
     Each step is a calling to a function that implements a concrete task.
 
-    """        
+    """
     
     try:
         # Process program arguments checking that programs arguments used are
@@ -178,7 +178,7 @@ if __name__ == "__main__":
     progargs = yargparser.ProgramArguments()    
     
     # Check the number of arguments received.
-    if len(sys.argv) <= progargs.min_number_args:
+    if len(sys.argv) - 1 <= progargs.min_number_args:
         
         # If no arguments are provided show help and exit.
         print "The number of program arguments are not enough."   
