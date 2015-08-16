@@ -282,19 +282,12 @@ class StarMagnitudes(object):
                 # Get current magnitude to process.
                 current_mag = magnitudes[n_mag]
                 
-                if int(sf.id) == current_mag[MAG_ID_COL]:
-                    # If there is a magnitude for this reference, 
-                    # add the magnitude.
-                    mag_row.extend([current_mag[MAG_COL], \
-                                    current_mag[MAG_ERR_COL]])
-                    
-                    # Next magnitude if there is more magnitude values.
-                    if n_mag < len(magnitudes) - 1:
-                        n_mag += 1
-                else:
-                    # There is no magnitude for this reference, 
-                    # so add INDEF values.
-                    mag_row.extend([INDEF_VALUE, INDEF_VALUE])                     
+                mag_row.extend([current_mag[MAG_COL], \
+                                current_mag[MAG_ERR_COL]])
+                
+                # Next magnitude if there is more magnitude values.
+                if n_mag < len(magnitudes) - 1:
+                    n_mag += 1                    
             
         self._all_magnitudes[star_index].append(mag_row)
 
