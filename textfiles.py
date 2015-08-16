@@ -20,7 +20,6 @@
 """This module provides some functions on text files. """
 
 import os
-import logging
 import csv
 from constants import *
 
@@ -39,8 +38,6 @@ def read_cfg_file(file_name):
     """
     
     cfg_params = {}
-    
-    logging.debug("Reading configuration from file: %s" % (file_name))
     
     try:
     
@@ -66,14 +63,11 @@ def read_cfg_file(file_name):
                             logging.error(te)
                     else:
                         # the line has not a valid number of elements.
-                        logging.warning("Format invalid in '%s' of file %s, line ignored." %
-                                        (row, file_name))  
-                
-        logging.debug("Read these configurations parameters: %s from %s" % 
-                      (cfg_params, file_name))
+                         print "Format invalid in '%s' of file %s, line ignored." \
+                            % (row, file_name)  
                
     except IOError as ioe:
-        logging.error("Reading configuration file: %s" % (file_name))
+        print "Error reading configuration file: %s" % (file_name)
         
         # Return an empty set.
         cfg_params = set()   

@@ -24,14 +24,12 @@ import logging
 
 # Log levels, taken from logging.
 LOG_LEVELS = { "CRITICAL" : logging.CRITICAL,
-              "ERROR": logging.ERROR,
-              "WARNING": logging.WARNING,
-              "INFO": logging.INFO,
-              "DEBUG": logging.DEBUG }
+              "ERROR" : logging.ERROR,
+              "WARNING" : logging.WARNING,
+              "INFO" : logging.INFO,
+              "DEBUG" : logging.DEBUG }
 
 DEFAULT_LOG_LEVEL_NAME = "WARNING"
-
-DEFAULT_LOG_FILE_NAME = "ycas_log.txt"
 
 def convert_logging_level(level):
     """ Convert the log level received to one of the logging module checking
@@ -42,16 +40,20 @@ def convert_logging_level(level):
     
     """
     
+    level_name = level
+    
     try:
         logging_level = LOG_LEVELS[level]
-    except KeyError as ke:
+    except KeyError as ke:      
         # If no valid log level is indicated use the default level.
         logging_level = LOG_LEVELS[DEFAULT_LOG_LEVEL_NAME]
+        
+        level_name = DEFAULT_LOG_LEVEL_NAME;
         
         logging.warning("Log level provided is no valid '%s', using default value '%s'" 
                         % (level, DEFAULT_LOG_LEVEL_NAME))
     
-    return logging_level
+    return logging_level, level_name
 
 def init_log(progargs):
     """ Initializes the file log and messages format. 
@@ -62,22 +64,19 @@ def init_log(progargs):
     """    
     
     # Set the logging level.
-    logging_level = convert_logging_level(progargs.log_level)
+    logging_level, log_level_name = convert_logging_level(progargs.log_level)
     
-    # If a file name has been provided as program argument use it.
-    if progargs.log_file_provided:
-        log_file = progargs.log_file_name
-    else:
-        log_file = DEFAULT_LOG_FILE_NAME
-        
+    log_file = progargs.log_file_name
+
     if progargs.target_dir_provided:
         log_file = os.path.join(progargs.target_dir, log_file)
     
     # Set the file, format and level of logging output.
-    logging.basicConfig(filename=log_file, \
-                        format="%(asctime)s:%(levelname)s:%(message)s", \
+    logging.basicConfig(filename=log_file,
+                        format="%(asctime)s:%(levelname)s:%(message)s",
                         level=logging_level)
     
-    print "Logging file created at: %s" % log_file
+    print "Logging file created at: '%s' with level: %s" % \
+            (log_file, log_level_name)
     
     logging.debug("Logging initialized.")
