@@ -318,18 +318,24 @@ class OrganizeFIT(object):
                 
                 logging.debug("%s identified as flat." % (full_file_name))
                 
-                filter_name = file_header[self._header_fields.filter]
+                try:
+                    filter_name = file_header[self._header_fields.filter]
+                    
+                    # Check that the filter of the image is one of the specified.
+                    if filter_name in self._filters:
+                    
+                        flat_dir = os.path.join(target_dir,
+                                                self._progargs.flat_directory,
+                                                filter_name)
+                                    
+                        self.create_directory(flat_dir)
                 
-                # Check that the filter of the image is one of the specified.
-                if filter_name in self._filters:
-                
-                    flat_dir = os.path.join(target_dir,
-                                            self._progargs.flat_directory,
-                                            filter_name)
-                                
-                    self.create_directory(flat_dir)
-            
-                    file_destination = os.path.join(flat_dir, destiny_filename)
+                        file_destination = os.path.join(flat_dir, 
+                                                        destiny_filename)
+                        
+                except KeyError as ke:
+                    logging.error("File identified as flat hasn't FILTER field: %s" %
+                                  full_file_name)
         
             # Otherwise the file is considered a light image.
             else:
@@ -338,21 +344,26 @@ class OrganizeFIT(object):
                 star_name = self.get_star_name(destiny_filename, file_header)
                 
                 if self._stars.has_star(star_name):
-            
-                    filter_name = file_header[self._header_fields.filter]
                     
-                    # Check that the filter of the image is one of the specified.        
-                    if filter_name in self._filters:
+                    try:
+            
+                        filter_name = file_header[self._header_fields.filter]
                         
-                        data_dir = os.path.join(target_dir,
-                                                self._progargs.light_directory,
-                                                filter_name)
+                        # Check that the filter of the image is one of the specified.        
+                        if filter_name in self._filters:
                             
-                        self.create_directory(data_dir)
-                
-                        # Prefixes are removed from file name.
-                        file_destination = os.path.join(data_dir, 
-                                                        destiny_filename)
+                            data_dir = os.path.join(target_dir,
+                                                    self._progargs.light_directory,
+                                                    filter_name)
+                                
+                            self.create_directory(data_dir)
+                    
+                            # Prefixes are removed from file name.
+                            file_destination = os.path.join(data_dir, 
+                                                            destiny_filename)
+                    except KeyError as ke:
+                        logging.error("File identified as light hasn't FILTER field: %s" %
+                                      full_file_name)                            
                 else:
                     logging.warning("Star '%s' isn't in the list of stars." %
                                     (star_name))
