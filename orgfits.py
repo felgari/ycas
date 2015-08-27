@@ -256,6 +256,38 @@ class OrganizeFIT(object):
             file_header = None
             
         return file_header
+    
+    def update_image_filter(self, file_name, file_header):
+        """ Try to fill the image filter from the name of the file using the
+        convention used in OSN (Observatorio de Sierra Nevada).
+        
+        Args:     
+            path: Path where is the file.         
+            filename: Name of the file to analyze.
+            
+        Returns:
+            The header updated if possible, otherwise None.
+        
+        """
+        
+        # By default, no filter name.
+        filtername = ""
+        
+        # Remove the extension from the file name.
+        filename_no_ext = file_name[:-len('.' + FIT_FILE_EXT)]
+        
+        # Search in the file name, the name of one of the filters in use.
+        for f in self._filters:
+            index = filename_no_ext.rfind(f)
+            
+            # The filter must be at the end of the file name.
+            if index + len(f) == len(filename_no_ext) :
+                filtername = f
+            
+        if filtername:
+            file_header[self._header_fields.filter] = filtername
+            
+        return file_header    
 
     def analyze_and_copy_file(self, path, filename):
         """Establish the type of the file and copies it to the appropriate 
@@ -318,22 +350,29 @@ class OrganizeFIT(object):
                 
                 logging.debug("%s identified as flat." % (full_file_name))
                 
-                try:
-                    filter_name = file_header[self._header_fields.filter]
-                    
-                    # Check that the filter of the image is one of the specified.
-                    if filter_name in self._filters:
-                    
-                        flat_dir = os.path.join(target_dir,
-                                                self._progargs.flat_directory,
-                                                filter_name)
-                                    
-                        self.create_directory(flat_dir)
+                # If the header has not the filter value, try update it 
+                # from the file name.                 
+                if not self._header_fields.filter in file_header:
+                    file_header = self.update_image_filter(destiny_filename, 
+                                                           file_header)
                 
-                        file_destination = os.path.join(flat_dir, 
-                                                        destiny_filename)
+                    if self._header_fields.filter in file_header:
+                        filter_name = file_header[self._header_fields.filter]
                         
-                except KeyError as ke:
+                        # Check that the filter of the image is one of the 
+                        # specified.
+                        if filter_name in self._filters:
+                        
+                            flat_dir = os.path.join(target_dir,
+                                                    self._progargs.flat_directory,
+                                                    filter_name)
+                                        
+                            self.create_directory(flat_dir)
+                    
+                            file_destination = os.path.join(flat_dir, 
+                                                            destiny_filename)
+                        
+                else:
                     logging.error("File identified as flat hasn't FILTER field: %s" %
                                   full_file_name)
         
@@ -345,23 +384,28 @@ class OrganizeFIT(object):
                 
                 if self._stars.has_star(star_name):
                     
-                    try:
-            
-                        filter_name = file_header[self._header_fields.filter]
-                        
-                        # Check that the filter of the image is one of the specified.        
-                        if filter_name in self._filters:
-                            
-                            data_dir = os.path.join(target_dir,
-                                                    self._progargs.light_directory,
-                                                    filter_name)
-                                
-                            self.create_directory(data_dir)
+                    # If the header has not the filter value, try update it 
+                    # from the file name. 
+                    if not self._header_fields.filter in file_header:
+                        file_header = self.update_image_filter(destiny_filename, 
+                                                               file_header)                    
                     
-                            # Prefixes are removed from file name.
-                            file_destination = os.path.join(data_dir, 
-                                                            destiny_filename)
-                    except KeyError as ke:
+                        if self._header_fields.filter in file_header:            
+                            filter_name = file_header[self._header_fields.filter]
+                            
+                            # Check that the filter of the image is one of the specified.        
+                            if filter_name in self._filters:
+                                
+                                data_dir = os.path.join(target_dir,
+                                                        self._progargs.light_directory,
+                                                        filter_name)
+                                    
+                                self.create_directory(data_dir)
+                        
+                                # Prefixes are removed from file name.
+                                file_destination = os.path.join(data_dir, 
+                                                                destiny_filename)
+                    else:
                         logging.error("File identified as light hasn't FILTER field: %s" %
                                       full_file_name)                            
                 else:
