@@ -234,8 +234,6 @@ class OrganizeFIT(object):
         
         """
         
-        print file_name
-        
         # Take only the part that indicates the type.
         if file_name.find(DATANAME_CHAR_SEP) >= 0:            
             type_part = file_name[:file_name.find(DATANAME_CHAR_SEP)]
@@ -243,8 +241,6 @@ class OrganizeFIT(object):
             type_part = file_name[:file_name.find(FILE_NAME_PARTS_DELIM)]
         else:
             type_part = file_name[:file_name.find('.')]
-        
-        print type_part
          
         if type_part.upper() == self._header_fields.bias_value:
             
@@ -606,6 +602,45 @@ class OrganizeFIT(object):
                 
                 # If now flat directory is empty is removed.
                 self.remove_dir_if_empty(flat_path)
+                
+    def remove_dir_without_light(self, target_path):
+        """Remove directories without light images.
+        
+        Args: 
+            target_path: Path to analyze for removing.
+            
+        """ 
+        
+        target_subdirs = [d for d in os.listdir(target_path) \
+                          if os.path.isdir(os.path.join(target_path, d))]        
+        
+        for subdir in target_subdirs:
+            
+            light_found = False
+            
+            for o in os.listdir(os.path.join(target_path, subdir)):
+                if o == self._progargs.light_directory:
+                    light_found = True
+            
+            if not light_found:
+                
+                rm_dir = os.path.join(target_path, subdir)
+                
+                try:
+                    for root, target_subdirs, files in os.walk(rm_dir):
+                        for f in files:
+                            os.remove(os.path.join(root, f))
+                        for d in target_subdirs:
+                            os.rmdir(os.path.join(root, d))
+                            
+                    os.rmdir(rm_dir)
+
+                    logging.debug("Removed directory '%s' without light images"
+                                  % rm_dir)
+                    
+                except OSError as oe:
+                    logging.error("Removing directory: '%s'" % (rm_dir))
+                    logging.error("Error is: %s" % (oe))        
             
     def process_directories(self):
         """This function walks the directories searching for image files,
@@ -613,7 +648,7 @@ class OrganizeFIT(object):
         are analyzed and organized.
         
         """          
-        
+        """
         # Walk from source directory.
         for path, dirs, files in os.walk(self._progargs.source_dir):
             
@@ -644,7 +679,9 @@ class OrganizeFIT(object):
 
             # Check the directory to remove bias and flat
             # with a different binning of data images.
-            self.remove_images_according_to_binning(path)      
+            self.remove_images_according_to_binning(path)
+        """   
+        self.remove_dir_without_light(self._progargs.target_dir)     
 
 def organize_files(progargs, stars, header_fields, filters):
     """Get the data necessary to process files and initiates the search of 
