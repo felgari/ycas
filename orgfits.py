@@ -235,19 +235,19 @@ class OrganizeFIT(object):
         """
         
         # Take only the part that indicates the type.
-        type_part = file_name[:file_name.find(DATANAME_CHAR_SEP)].upper()
+        type_part = file_name[:file_name.find(DATANAME_CHAR_SEP)]
          
-        if type_part == self._header_fields.bias_value:
+        if type_part.upper() == self._header_fields.bias_value:
             
             file_header[self._header_fields.image_type] = \
                 self._header_fields.bias_value
                 
-        elif type_part == self._header_fields.flat_value:   
+        elif type_part.upper() == self._header_fields.flat_value:   
              
             file_header[self._header_fields.image_type] = \
                 self._header_fields.flat_value
                             
-        elif type_part in self._stars.star_names:
+        elif self._stars.has_star(type_part):
             
             file_header[self._header_fields.image_type] = \
                 self._header_fields.light_value
