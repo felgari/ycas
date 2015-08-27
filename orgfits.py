@@ -234,8 +234,17 @@ class OrganizeFIT(object):
         
         """
         
+        print file_name
+        
         # Take only the part that indicates the type.
-        type_part = file_name[:file_name.find(DATANAME_CHAR_SEP)]
+        if file_name.find(DATANAME_CHAR_SEP) >= 0:            
+            type_part = file_name[:file_name.find(DATANAME_CHAR_SEP)]
+        elif file_name.find(FILE_NAME_PARTS_DELIM) >= 0:
+            type_part = file_name[:file_name.find(FILE_NAME_PARTS_DELIM)]
+        else:
+            type_part = file_name[:file_name.find('.')]
+        
+        print type_part
          
         if type_part.upper() == self._header_fields.bias_value:
             

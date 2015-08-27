@@ -112,7 +112,7 @@ def get_fit_fields(fit_file_name, fields):
     return header_fields
   
 def remove_prefixes(file_name):
-    """ Returns a file where the numeric prefixes are removed.
+    """ Returns a file where the numeric prefixes and of other types are removed.
     
     The numeric prefixes should be separated by dots.
     
@@ -127,30 +127,20 @@ def remove_prefixes(file_name):
     # By default the file name returned is the name received.
     final_file_name = file_name 
     
-    # Find the position of the character that delimits the end of 
-    # the file type part.
-    pos_sep = file_name.find(DATANAME_CHAR_SEP)
-    
     # Split the name by dots.
-    dot_splitted = file_name[:pos_sep].split(".")
+    dot_splitted = file_name.split(".")
     
-    # If there is any dot.
-    if len(dot_splitted) > 1:
+    # If there is more than one dot. Join the last two plus the previous that
+    # contains at least one letter. 
+    if len(dot_splitted) > 1:        
+        final_file_name = "%s.%s" % (dot_splitted[-2], dot_splitted[-1])
         
-        # Indicated the first split that is not removed.
-        first_valid_split = 0
-
-        # Iterate over the split discarding the firsts one that are
-        # numeric.    
-        for s in dot_splitted:
-            if s.isdigit(): 
-                first_valid_split += 1
-            else:
-                break
-            
-        # The splits that are valid are concatenated using dots.
-        final_file_name = ".".join(dot_splitted[first_valid_split:]) \
-            + file_name[pos_sep:]
+        for i in range(3, len(dot_splitted)):
+            if any(c.isalpha() for c in dot_splitted[-i]):
+                final_file_name = "%s.%s" % (dot_splitted[-i], final_file_name)
+        
+    if not ( final_file_name[0].isdigit() or final_file_name[0].isalpha() ):
+        final_file_name = final_file_name[1:]
         
     return final_file_name 
 
