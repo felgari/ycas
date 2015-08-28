@@ -609,44 +609,70 @@ class OrganizeFIT(object):
                 # If now flat directory is empty is removed.
                 self.remove_dir_if_empty(flat_path)
                 
-    def remove_dir_without_light(self, target_path):
-        """Remove directories without light images.
+    def remove_not_empty_dir(self, dir):
+        """Remove a directory, removing previously all its contents.
+        
+        Args:
+            dir: Directory to remove.
+        """
+        
+        try:
+            # Delete directory contents.
+            for root, subdirs, files in os.walk(dir):
+                
+                # Removing files.
+                for f in files:
+                    os.remove(os.path.join(root, f))
+                
+                # Subdirectories.
+                for d in subdirs:
+                    
+                    dir_to_rm = os.path.join(dir, d)
+                    
+                    self.remove_not_empty_dir(dir_to_rm)
+                    
+            os.rmdir(dir)
+    
+            logging.debug("Removed directory '%s' without light images" % dir)
+            
+        except OSError as oe:
+            logging.error("Removing directory: '%s'" % (rm_dir))
+            logging.error("Error is: %s" % (oe))                     
+                
+    def remove_dir_with_incomplete_data(self, target_path):
+        """Remove directories without light images or without files to reduce 
+        the light images.
         
         Args: 
             target_path: Path to analyze for removing.
             
         """ 
         
+        # Analyze all the directories in the target path.
         target_subdirs = [d for d in os.listdir(target_path) \
                           if os.path.isdir(os.path.join(target_path, d))]        
         
         for subdir in target_subdirs:
             
             light_found = False
+            bias_found = False
+            flat_found = False
             
             for o in os.listdir(os.path.join(target_path, subdir)):
                 if o == self._progargs.light_directory:
                     light_found = True
+                elif o == self._progargs.bias_directory:
+                    bias_found = True
+                elif o == self._progargs.flat_directory:
+                    flat_found = True
             
-            if not light_found:
+            # Remove directories without light or only with light (cannot be
+            # reduced).
+            if not light_found or not (bias_found or flat_found):
                 
-                rm_dir = os.path.join(target_path, subdir)
+                dir_to_rm = os.path.join(target_path, subdir) 
                 
-                try:
-                    for root, target_subdirs, files in os.walk(rm_dir):
-                        for f in files:
-                            os.remove(os.path.join(root, f))
-                        for d in target_subdirs:
-                            os.rmdir(os.path.join(root, d))
-                            
-                    os.rmdir(rm_dir)
-
-                    logging.debug("Removed directory '%s' without light images"
-                                  % rm_dir)
-                    
-                except OSError as oe:
-                    logging.error("Removing directory: '%s'" % (rm_dir))
-                    logging.error("Error is: %s" % (oe))        
+                self.remove_not_empty_dir(dir_to_rm)
             
     def process_directories(self):
         """This function walks the directories searching for image files,
@@ -687,7 +713,8 @@ class OrganizeFIT(object):
             # with a different binning of data images.
             self.remove_images_according_to_binning(path)
 
-        self.remove_dir_without_light(self._progargs.target_dir)     
+        # Remove directories with files that are incomplete to get data reduced,
+        self.remove_dir_with_incomplete_data(self._progargs.target_dir)     
 
 def organize_files(progargs, stars, header_fields, filters):
     """Get the data necessary to process files and initiates the search of 
