@@ -105,17 +105,11 @@ class TransformingCoefficient(object):
         # transforming coefficients.
         if np.mean(y) > MIN_VALUE_TO_CALC_COEF: 
             
-            print np.array(B_V_std_mag)
-            print y
-            
             slope1, intercept1, r_value1, p_value1, std_err1 = \
                 stats.linregress(np.array(B_V_std_mag), y)
                 
             # Second calculation is:
             # (B-V)std = slope * (B-V)obs + intercept
-            
-            print B_V_observed_mag
-            print B_V_std_mag
             
             slope2, intercept2, r_value2, p_value2, std_err2 = \
                 stats.linregress(B_V_observed_mag, B_V_std_mag)            
