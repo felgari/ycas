@@ -142,6 +142,8 @@ def remove_prefixes(file_name):
     if not ( final_file_name[0].isdigit() or final_file_name[0].isalpha() ):
         final_file_name = final_file_name[1:]
         
+    logging.debug("Removing prefixes: %s to %s" % (file_name, final_file_name))
+        
     return final_file_name 
 
 def file_is_type(header_fields, filename_path, field_type, type_string):
