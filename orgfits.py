@@ -292,6 +292,12 @@ class OrganizeFIT(object):
         if filtername:
             file_header[self._header_fields.filter] = filtername
             
+            logging.debug("Setting filter %s to file %s." % 
+                          (filtername, file_name))
+        else:
+            logging.debug("No filter found in the name of the file %s." % 
+                          file_name)            
+            
         return file_header    
 
     def analyze_and_copy_file(self, path, filename):
@@ -361,21 +367,21 @@ class OrganizeFIT(object):
                     file_header = self.update_image_filter(destiny_filename, 
                                                            file_header)
                 
-                    if self._header_fields.filter in file_header:
-                        filter_name = file_header[self._header_fields.filter]
-                        
-                        # Check that the filter of the image is one of the 
-                        # specified.
-                        if filter_name in self._filters:
-                        
-                            flat_dir = os.path.join(target_dir,
-                                                    self._progargs.flat_directory,
-                                                    filter_name)
-                                        
-                            self.create_directory(flat_dir)
+                if self._header_fields.filter in file_header:
+                    filter_name = file_header[self._header_fields.filter]
                     
-                            file_destination = os.path.join(flat_dir, 
-                                                            destiny_filename)
+                    # Check that the filter of the image is one of the 
+                    # specified.
+                    if filter_name in self._filters:
+                    
+                        flat_dir = os.path.join(target_dir,
+                                                self._progargs.flat_directory,
+                                                filter_name)
+                                    
+                        self.create_directory(flat_dir)
+                
+                        file_destination = os.path.join(flat_dir, 
+                                                        destiny_filename)
                         
                 else:
                     logging.error("File identified as flat hasn't FILTER field: %s" %
@@ -395,21 +401,21 @@ class OrganizeFIT(object):
                         file_header = self.update_image_filter(destiny_filename, 
                                                                file_header)                    
                     
-                        if self._header_fields.filter in file_header:            
-                            filter_name = file_header[self._header_fields.filter]
-                            
-                            # Check that the filter of the image is one of the specified.        
-                            if filter_name in self._filters:
-                                
-                                data_dir = os.path.join(target_dir,
-                                                        self._progargs.light_directory,
-                                                        filter_name)
-                                    
-                                self.create_directory(data_dir)
+                    if self._header_fields.filter in file_header:            
+                        filter_name = file_header[self._header_fields.filter]
                         
-                                # Prefixes are removed from file name.
-                                file_destination = os.path.join(data_dir, 
-                                                                destiny_filename)
+                        # Check that the filter of the image is one of the specified.        
+                        if filter_name in self._filters:
+                            
+                            data_dir = os.path.join(target_dir,
+                                                    self._progargs.light_directory,
+                                                    filter_name)
+                                
+                            self.create_directory(data_dir)
+                    
+                            # Prefixes are removed from file name.
+                            file_destination = os.path.join(data_dir, 
+                                                            destiny_filename)
                     else:
                         logging.error("File identified as light hasn't FILTER field: %s" %
                                       full_file_name)                            
@@ -648,7 +654,7 @@ class OrganizeFIT(object):
         are analyzed and organized.
         
         """          
-        """
+
         # Walk from source directory.
         for path, dirs, files in os.walk(self._progargs.source_dir):
             
@@ -680,7 +686,7 @@ class OrganizeFIT(object):
             # Check the directory to remove bias and flat
             # with a different binning of data images.
             self.remove_images_according_to_binning(path)
-        """   
+
         self.remove_dir_without_light(self._progargs.target_dir)     
 
 def organize_files(progargs, stars, header_fields, filters):
