@@ -683,7 +683,7 @@ def reduce_list_of_images(data_files, masterdark_filename,
         if os.path.exists(final_image) or \
             source_image.endswith(final_file_pattern):
             logging.debug("Final image %s already exists, not reduced." %
-                          (source_image))
+                          (final_image))
         else:
             # Reduce the image.
             reduce_image(masterdark_filename, masterbias_filename, 
