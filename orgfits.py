@@ -633,12 +633,12 @@ class OrganizeFIT(object):
                     
             os.rmdir(dir)
     
-            logging.debug("Removed directory '%s' without light images" % dir)
+            logging.debug("Removed directory '%s' with incomplete data" % dir)
             
         except OSError as oe:
             logging.error("Removing directory: '%s'" % (rm_dir))
-            logging.error("Error is: %s" % (oe))                     
-                
+            logging.error("Error is: %s" % (oe))
+                    
     def remove_dir_with_incomplete_data(self, target_path):
         """Remove directories without light images or without files to reduce 
         the light images.
@@ -658,18 +658,63 @@ class OrganizeFIT(object):
             bias_found = False
             flat_found = False
             
-            for o in os.listdir(os.path.join(target_path, subdir)):
+            flat_filters = []
+            light_filters = []
+            
+            subdir_path = os.path.join(target_path, subdir)
+            
+            for o in os.listdir(subdir_path):
                 if o == self._progargs.light_directory:
                     light_found = True
+                    light_path = os.path.join(subdir_path, o)                    
+                    light_filters = [d for d in os.listdir(light_path) \
+                          if os.path.isdir(os.path.join(light_path, d))]
+                    
                 elif o == self._progargs.bias_directory:
                     bias_found = True
+                    
                 elif o == self._progargs.flat_directory:
                     flat_found = True
+                    flat_path = os.path.join(subdir_path, o)
+                    flat_filters = [d for d in os.listdir(flat_path) \
+                          if os.path.isdir(os.path.join(flat_path, d))]
+                    
+            # Check the information contained in the directory and if it is
+            # incomplete to reduce the images discard the images removing the
+            # directory.
+            remove_directory = True
             
-            # Remove directories without light or only with light (cannot be
-            # reduced).
-            if not light_found or not (bias_found or flat_found):
+            # Light, bias and flat are compulsory.
+            if light_found and bias_found and flat_found:
                 
+                # Only images with light and flat are considered.
+                intersection = [f for f in flat_filters if f in light_filters]
+                
+                logging.debug("Filters in light and flat: %s for %s" % 
+                              (intersection, subdir_path))
+                
+                # Get the directories of light without the corresponding flats.
+                light_to_remove = [f for f in light_filters if f not in intersection]
+                
+                # Remove light images without flat in these filters.                
+                for filter in light_to_remove:
+                    self.remove_not_empty_dir(os.path.join(subdir_path, 
+                                                      self._progargs.light_directory,
+                                                      filter))
+                        
+                # Get the directories of flat without light to reduce.      
+                flat_to_remove = [f for f in flat_filters if f not in intersection] 
+                
+                # Remove flat images without light in these filters.                    
+                for filter in flat_to_remove:
+                    self.remove_not_empty_dir(os.path.join(subdir_path, 
+                                                      self._progargs.flat_directory,
+                                                      filter))                
+                
+            else:
+                logging.debug("Directory %s has light: %s, bias: %s, flat: %s" %
+                              (subdir_path, light_found, bias_found, flat_found))     
+                           
                 dir_to_rm = os.path.join(target_path, subdir) 
                 
                 self.remove_not_empty_dir(dir_to_rm)
@@ -680,7 +725,7 @@ class OrganizeFIT(object):
         are analyzed and organized.
         
         """          
-
+        """
         # Walk from source directory.
         for path, dirs, files in os.walk(self._progargs.source_dir):
             
@@ -712,7 +757,7 @@ class OrganizeFIT(object):
             # Check the directory to remove bias and flat
             # with a different binning of data images.
             self.remove_images_according_to_binning(path)
-
+        """
         # Remove directories with files that are incomplete to get data reduced,
         self.remove_dir_with_incomplete_data(self._progargs.target_dir)     
 
