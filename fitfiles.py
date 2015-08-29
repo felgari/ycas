@@ -135,7 +135,7 @@ def remove_prefixes(file_name):
     if len(dot_splitted) > 1:        
         final_file_name = "%s.%s" % (dot_splitted[-2], dot_splitted[-1])
         
-        for i in range(3, len(dot_splitted)):
+        for i in range(3, len(dot_splitted) + 1):
             if any(c.isalpha() for c in dot_splitted[-i]):
                 final_file_name = "%s.%s" % (dot_splitted[-i], final_file_name)
         
