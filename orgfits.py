@@ -407,14 +407,14 @@ class OrganizeFIT(object):
                         # Check that the filter of the image is one of the specified.        
                         if filter_name in self._filters:
                             
-                            data_dir = os.path.join(target_dir,
+                            light_dir = os.path.join(target_dir,
                                                     self._progargs.light_directory,
                                                     filter_name)
                                 
-                            self.create_directory(data_dir)
+                            self.create_directory(light_dir)
                     
                             # Prefixes are removed from file name.
-                            file_destination = os.path.join(data_dir, 
+                            file_destination = os.path.join(light_dir, 
                                                             destiny_filename)
                     else:
                         logging.error("File identified as light hasn't FILTER field: %s" %
@@ -427,7 +427,7 @@ class OrganizeFIT(object):
                           % (full_file_name))
     
         # Determines if the file must be copied.
-        if file_destination is not None:
+        if file_destination:
             
             logging.debug("Copying '%s' to '%s'" % 
                           (full_file_name, file_destination))
@@ -725,7 +725,7 @@ class OrganizeFIT(object):
         are analyzed and organized.
         
         """          
-        """
+
         # Walk from source directory.
         for path, dirs, files in os.walk(self._progargs.source_dir):
             
@@ -757,7 +757,7 @@ class OrganizeFIT(object):
             # Check the directory to remove bias and flat
             # with a different binning of data images.
             self.remove_images_according_to_binning(path)
-        """
+
         # Remove directories with files that are incomplete to get data reduced,
         self.remove_dir_with_incomplete_data(self._progargs.target_dir)     
 
