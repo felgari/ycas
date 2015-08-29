@@ -361,6 +361,11 @@ class OrganizeFIT(object):
                 
                 logging.debug("%s identified as flat." % (full_file_name))
                 
+                if filename.upper().find(FLAT_STRING.upper()) < 0:
+                    logging.warning("File %s identified as Flat, hasn't '%s' "
+                                    "in its name." % 
+                                    (full_file_name, FLAT_STRING))
+                
                 # If the header has not the filter value, try update it 
                 # from the file name.                 
                 if not self._header_fields.filter in file_header:
