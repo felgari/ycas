@@ -226,7 +226,7 @@ def generate_all_masterbias(target_dir, bias_dir_name):
                     only_files_names = [ os.path.split(f)[1] for f in files]
                     
                     # Put the files list in a string.
-                    list_of_files = str(only_files_names).translate(None, "[]\'")
+                    list_of_files = ",".join(only_files_names)
                     
                     #show_bias_files_statistics(list_of_files)
                         	
@@ -268,10 +268,10 @@ def generate_masterdark(logging, dark_files, masterdark_name, dark_dir_name):
     work_files = [s.replace("." + FIT_FILE_EXT, WORK_FILE_SUFFIX) for s in files]
     
     # Put the work files list in a string to be used with imarith.
-    string_of_work_dark_files = str(work_files).translate(None, "[]\'")
+    string_of_work_dark_files = ",".join(work_files)
     
     # Put the dark files list in a string to be used with imarith.
-    string_of_dark_files = str(files).translate(None, "[]\'")    
+    string_of_dark_files = ",".join(files)  
     
     # Get the masterbias file name.
     masterbias_name = os.path.join(path, 
@@ -302,8 +302,7 @@ def generate_masterdark(logging, dark_files, masterdark_name, dark_dir_name):
         only_files_names = [ os.path.split(f)[1] for f in work_files]      
         
         # Put the work dark files list in a string to be used with imcombine.
-        string_of_work_dark_files = \
-            str(only_files_names).translate(None, "[]\'")
+        string_of_work_dark_files = ",".join(only_files_names)
         
         try:
             iraf.imcombine(string_of_work_dark_files, masterdark_name, Stdout=1)
@@ -462,10 +461,10 @@ def generate_masterflat(path, flat_files, masterflat_name, bias_dir_name):
     work_files = [s.replace("." + FIT_FILE_EXT, WORK_FILE_SUFFIX) for s in files]
     
     # Put the work files list in a string to be used with imarith.
-    string_of_work_flat_files = str(work_files).translate(None, "[]\'")
+    string_of_work_flat_files = ",".join(work_files)
     
     # Put the flat files list in a string to be used with imarith.
-    string_of_flat_files = str(files).translate(None, "[]\'")    
+    string_of_flat_files = ",".join(files)   
     
     # Get the masterbias file name.
     masterbias_name = os.path.join(path, 
@@ -508,7 +507,7 @@ def generate_masterflat(path, flat_files, masterflat_name, bias_dir_name):
         
         # Put the normalized flat files list in a string to be used with 
         # imcombine.
-        string_of_norm_flat_files = str(norm_flat_files).translate(None, "[]\'")
+        string_of_norm_flat_files = ",".join(norm_flat_files)
         
         try:
             iraf.imcombine(string_of_norm_flat_files, masterflat_name, Stdout=1)
