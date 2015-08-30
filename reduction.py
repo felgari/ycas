@@ -512,11 +512,6 @@ def generate_masterflat(path, flat_files, masterflat_name, bias_dir_name):
         
         try:
             iraf.imcombine(string_of_norm_flat_files, masterflat_name, Stdout=1)
-            
-            # After calculating the masterflat, remove the normalized files
-            # to save storage space.
-            for nff in norm_flat_files:
-                os.remove(nff) # Combine all the flat files.
         
         except iraf.IrafError as exc:
             logging.error("Error executing imcombine combining flats with: %s" %
@@ -526,6 +521,12 @@ def generate_masterflat(path, flat_files, masterflat_name, bias_dir_name):
             
         except OSError as oe:
             logging.error("OSError removing normalized flat is: %s" % (oe))
+            
+        finally:
+            # After calculating the masterflat, remove the normalized files
+            # to save storage space.
+            for nff in norm_flat_files:
+                os.remove(nff) # Combine all the flat files.            
             
     except iraf.IrafError as exc:
         logging.error("Error in imarith. Subtracting masterbias %s to %s" %
