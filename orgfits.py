@@ -529,7 +529,7 @@ class OrganizeFIT(object):
                 
                 # Get the binning of each file in the directory.
                 for f in files:
-                    path_file = os.path.join(path,f)
+                    path_file = os.path.join(path, f)
                     
                     bin = fitfiles.get_file_binning(path_file)
         
@@ -585,6 +585,8 @@ class OrganizeFIT(object):
         
         data_path = os.path.join(path, self._progargs.light_directory)
         
+        print data_path
+        
         # If current path has data directory, process bias and flats
         if os.path.exists(data_path):
         
@@ -593,6 +595,8 @@ class OrganizeFIT(object):
             
             # Get the binning of images in data directory.
             binnings = self.get_binnings_of_images(data_path)
+            
+            print binnings
             
             # Remove images in bias directory with different binning of that of 
             # images.
@@ -759,9 +763,12 @@ class OrganizeFIT(object):
                         else:
                             logging.debug("Ignoring file: %s" % (fn))
 
-            # Check the directory to remove bias and flat
-            # with a different binning of data images.
-            self.remove_images_according_to_binning(path)
+                # Check the directory to remove bias and flat
+                # with a different binning of data images.
+                images_dir = os.path.basename(os.path.normpath(path))                
+                target_dir = os.path.join(self._progargs.target_dir, images_dir)            
+                
+                self.remove_images_according_to_binning(target_dir)
 
         # Remove directories with files that are incomplete to get data reduced,
         self.remove_dir_with_incomplete_data(self._progargs.target_dir)     
