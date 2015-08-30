@@ -579,10 +579,22 @@ def generate_all_masterflats(target_dir, flat_dir_name, dark_dir_name,
                     logging.warning("Masterflat file exists, %s so resume to next directory." %
                                     (masterflat_name))
                 else:
-                    generate_masterflat(path, files, masterflat_name,
-                                        bias_dir_name)                        
+                    # Save current work directory and change to the directory
+                    # of the files as a long list of files generates an error
+                    # in imcombine. The removing of the path shortens the list.                    
+                    work_dir = os.getcwd()                    
+                    os.chdir(path)
+                    
+                    only_files_names = [ os.path.split(f)[1] for f in files]                                        
+                    
+                    generate_masterflat(".", only_files_names, 
+                                        MASTERFLAT_FILENAME,
+                                        bias_dir_name)      
+                    
+                    # After imcombine change to original working directory.
+                    os.chdir(work_dir)                                          
 
-def reduce_image(masterdark_name, masterbias_name, masterflat_name, 
+def reduce_image(masterdark_name, masterbias_name, masterflat_name,
                  source_file_name, final_image_name):
     """Reduce an image.
     
@@ -605,33 +617,41 @@ def reduce_image(masterdark_name, masterbias_name, masterflat_name,
         
     work_file_name_2 = \
         source_file_name.replace("." + FIT_FILE_EXT, WORK2_FILE_SUFFIX)
+        
+    # To control when ir is necessary the removing od temporary files.
+    dark_reduction_success = False
+    bias_reduction_success = False
     
     # Control imarith exception.
     try:
         # If masterdark exists.
-        if len(masterdark_name) > 0:
+        if masterdark_name:
             
             # Create the work files subtracting bias from flat.
             iraf.imarith(source_file_name, IMARITH_SUBTRACT, masterdark_name, 
                          work_file_name_1)
+            
+            dark_reduction_success = True
         else:
             
             # Use as work file (the input for flat step) the original file.
             work_file_name_1 = source_file_name         
         
         # If masterbias exists.
-        if len(masterbias_name) > 0:
+        if masterbias_name:
             
             # Create the work files subtracting bias from flat.
             iraf.imarith(work_file_name_1, IMARITH_SUBTRACT, masterbias_name, 
                          work_file_name_2)
+            
+            bias_reduction_success = True
         else:
             
             # Use as work file (the input for flat step) the original file.
             work_file_name_2 = work_file_name_1 
         
         # If masterflat exists.
-        if len(masterflat_name) > 0: 
+        if masterflat_name: 
             
             # Create the final data dividing by master flat.
             iraf.imarith(work_file_name_2, IMARITH_DIVIDE, masterflat_name, 
@@ -649,10 +669,10 @@ def reduce_image(masterdark_name, masterbias_name, masterflat_name,
         
     # Remove temporary file to save storage space.
     try:
-        if len(masterdark_name) > 0:
+        if masterdark_name and dark_reduction_success:
             os.remove(work_file_name_1)
             
-        if len(masterbias_name) > 0:
+        if masterbias_name and bias_reduction_success:
             os.remove(work_file_name_2)
     except OSError as oe:
         logging.error("Removing temporary files when reducing: '%s'." %
