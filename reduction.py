@@ -684,11 +684,14 @@ def reduce_list_of_images(data_files, masterdark_filename,
         if os.path.exists(final_image) or \
             source_image.endswith(final_file_pattern):
             logging.debug("Final image %s already exists, not reduced." %
-                          (final_image))
-        else:
-            # Reduce the image.
+                          final_image)
+        elif masterbias_filename and masterflat_filename:
+            # Reduce the image if there is a masterbias and a masterflat.
             reduce_image(masterdark_filename, masterbias_filename, 
-                         masterflat_filename, source_image, final_image)            
+                         masterflat_filename, source_image, final_image)
+        else:
+            logging.warning("Image %s not reduced, it lacks masterbias or masterflat."
+                            % source_image)            
 
 
 def reduce_data_images(target_dir, light_dir_name, dark_dir_name,
