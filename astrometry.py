@@ -260,8 +260,8 @@ class Astrometry(object):
                         self._images_without_astrometry.extend([image_file])                     
                     
                 except StarNotFound as onf:
-                    logging.debug("Star not identified for image_file: %s" % 
-                                  (onf.filename))                      
+                    logging.debug("Star %s not identified for image file: %s" % 
+                                  (star.name, onf.filename))                      
                     
             else:
                 logging.debug("Catalog '%s' already exists." % 
