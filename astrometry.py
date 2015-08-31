@@ -94,8 +94,10 @@ class Astrometry(object):
         # Initialize base command to call external software to do astrometry.
         use_sextractor = ""
         if progargs.use_sextractor_for_astrometry:
-            use_sextractor = "%s %s" % \
-                (ASTROMETRY_OPT_USE_SEXTRACTOR, progargs.sextractor_cfg_path)     
+            use_sextractor = "%s %s %s" % \
+                (ASTROMETRY_OPT_USE_SEXTRACTOR, 
+                 ASTROMETRY_OPT_SEXTRACTOR_CONFIG,
+                 progargs.sextractor_cfg_path)     
         
         self._base_command = "%s %s %s --radius %s -d " % \
             (ASTROMETRY_COMMAND, ASTROMETRY_PARAMS, 
@@ -198,7 +200,7 @@ class Astrometry(object):
         
         # Check if the astrometry has been successful.
         if success:
-            logging.debug("Astrometry first execution successful with %d objects" %
+            logging.debug("Astrometry first execution successful with %s objects" %
                           (self._num_of_objects))
             
         elif self._num_of_objects < Astrometry.NUM_OBJECTS_SECOND_TRY:
