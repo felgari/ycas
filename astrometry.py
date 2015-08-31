@@ -57,7 +57,7 @@ ASTROMETRY_OPT_USE_SEXTRACTOR = " --use-sextractor "
 ASTROMETRY_OPT_SEXTRACTOR_CONFIG = "--sextractor-config "
 
 # Overwrite previous files and limit the number of objects to look at"
-ASTROMETRY_PARAMS = "--overwrite "
+ASTROMETRY_PARAMS = "--overwrite"
     
 class StarNotFound(Exception):
     """Raised if star is not found from file name. """
@@ -99,7 +99,7 @@ class Astrometry(object):
                  ASTROMETRY_OPT_SEXTRACTOR_CONFIG,
                  progargs.sextractor_cfg_path)     
         
-        self._base_command = "%s %s %s --radius %s -d " % \
+        self._base_command = "%s %s %s --radius %s -d" % \
             (ASTROMETRY_COMMAND, ASTROMETRY_PARAMS, 
             use_sextractor, SOLVE_FIELD_RADIUS) 
             
@@ -260,8 +260,8 @@ class Astrometry(object):
                         self._images_without_astrometry.extend([image_file])                     
                     
                 except StarNotFound as onf:
-                    logging.debug("Star %s not identified for image file: %s" % 
-                                  (star.name, onf.filename))                      
+                    logging.debug("Star not identified for image file: %s" % 
+                                  onf.filename)                      
                     
             else:
                 logging.debug("Catalog '%s' already exists." % 
@@ -375,6 +375,12 @@ class Astrometry(object):
         # Get the star name from the filename, the name is at the beginning
         # and separated by a special character.
         star_name = get_header_value(filename, self._header_fields.object)
+        
+        # If the name is not in the header try to get it from the file name.
+        if star_name == fitsheader.DEFAULT_OBJECT_NAME or not star_name:
+            
+            # Get the star name from the filename..
+            star_name = get_star_name_from_file_name(filename)          
         
         # Look for an star of the list whose name matches that of the filename.
         star = self._stars.get_star(star_name)

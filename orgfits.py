@@ -40,7 +40,6 @@ import shutil
 import pyfits
 import textfiles
 import fitsheader
-import fitfiles
 from fitfiles import *
 from constants import *
 
@@ -181,14 +180,9 @@ class OrganizeFIT(object):
         
         # If the name if the header is the default one, extract it from
         # the name of the file.
-        if star_name == fitsheader.DEFAULT_OBJECT_NAME:
+        if star_name == fitsheader.DEFAULT_OBJECT_NAME or not star_name:
             
-            # Split file name from the path.
-            path, file = os.path.split(full_file_name)
-            
-            # Get the star name from the filename, the name is at 
-            # the beginning and separated by a special character.
-            star_name = file.split(DATANAME_CHAR_SEP)[0]
+            star_name = get_star_name_from_file_name(full_file_name)
             
         return star_name    
             

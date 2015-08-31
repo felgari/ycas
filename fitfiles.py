@@ -19,6 +19,7 @@
 
 """This module groups some functions performed on fit files. """
 
+import os
 import logging
 import pyfits
 import fitsheader
@@ -347,7 +348,7 @@ def get_header_value(file_name, field):
         # Open FIT file.
         hdulist = pyfits.open(file_name)   
              
-        value = hdulist[0].header[field]
+        value = hdulist[0].header[field].strip()
         
         hdulist.close()  
         
@@ -361,4 +362,23 @@ def get_header_value(file_name, field):
         logging.error("Field '%s' not found in file '%s'." %
                       (field, file_name))    
     
-    return value   
+    return value
+
+def get_star_name_from_file_name(file_name):
+    """Sometimes the header doesn't contain the name of the star, in these
+    cases, the name could be obtained from the file name
+    
+    Args:
+        file_name: Name of the file.
+        
+    Returns:
+        The name of the object obtained from the file name.
+    
+    """
+    
+    # Split file name from the path.
+    _, file = os.path.split(file_name)
+    
+    # Get the star name from the filename, the name is at 
+    # the beginning and separated by a special character.
+    return file.split(DATANAME_CHAR_SEP)[0]    
