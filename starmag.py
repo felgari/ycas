@@ -332,11 +332,9 @@ class StarMagnitudes(object):
                         try:
                             current_coor_id = star_catalog.id(nrow)
                             
-                             # If it is the star of interest, add the magnitude to
+                            # If it is the star of interest, add the magnitude to
                             # the magnitudes list.
-                            if current_coor_id == \
-                                    StarMagnitudes.OBJ_OF_INTEREST_ID:
-                                
+                            if nrow == 0:                                
                                 im = Magnitude(
                                         star_name,
                                         mjd,
@@ -365,7 +363,6 @@ class StarMagnitudes(object):
                 star_index = self._stars.get_star_index(star_name)       
                 
                 if star_index >= 0: 
-                    
                     self._magnitudes[star_index].extend(mag)
     
                     if len(all_mag) > 0:
@@ -463,8 +460,7 @@ class StarMagnitudes(object):
         # For each star. The two list received contains the same 
         # number of stars.
         i = 0
-        for s in self._stars:          
-            
+        for s in self._stars:    
             # Retrieve the magnitudes of current star.
             mags = self._magnitudes[i]
             
@@ -495,8 +491,7 @@ class StarMagnitudes(object):
                 except IOError as ioe:
                     logging.error("Writing magnitudes file: '%s'" % 
                                   (output_full_path))                             
-                    
-            i = i + 1   
+            i += 1
             
     def read_magnitude_files(self, target_dir):
         """Look for files that contain magnitudes and process them in current 
