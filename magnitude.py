@@ -51,7 +51,7 @@ def get_instrumental_magnitudes(stars, target_dir, data_directoy_name):
     
     """
     
-    ins_mag = StarMagnitudes(stars)
+    star_mags = StarMagnitudes(stars)
         
     # Walk directories searching for files containing magnitudes.
     for path,dirs,files in os.walk(target_dir):
@@ -82,11 +82,11 @@ def get_instrumental_magnitudes(stars, target_dir, data_directoy_name):
                 for mag_file in mag_files_full_path:
                     
                     # Get the magnitudes for this star in current path.
-                    ins_mag.read_inst_magnitudes(mag_file, path)
+                    star_mags.read_inst_magnitudes(mag_file, path)
                             
-    ins_mag.save_all_mag(target_dir)                            
+    star_mags.save_all_mag(target_dir)                            
                         
-    return ins_mag
+    return star_mags
 
 def correct_extinction_in_magnitudes(inst_mag):
     """Returns the magnitudes corrected taking into account the atmospheric
