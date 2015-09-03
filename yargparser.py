@@ -155,7 +155,9 @@ class ProgramArguments(object):
                 
         self._args = None   
         
-        self._parser = None                                              
+        self._parser = None  
+        
+        self.init_parser()                                             
         
     @property
     def min_number_args(self):
@@ -627,8 +629,6 @@ class ProgramArguments(object):
                 
     def process_program_arguments(self):
         """Parse and check coherence of program arguments."""     
-        
-        self.init_parser() 
 
         self.parse_and_update()
 
