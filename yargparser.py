@@ -562,6 +562,7 @@ class ProgramArguments(object):
             not self.astrometry_requested and \
             not self.photometry_requested and \
             not self.magnitudes_requested and \
+            not self.light_curves_requested and \
             not self.all_steps_requested and \
             not self.summary_requested:
             raise ProgramArgumentsException(ProgramArguments.NO_PIPELINE_STEPS_REQUESTED)        
