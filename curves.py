@@ -24,103 +24,197 @@ the magnitudes calculated.
 """
 
 import sys
+import os
 import csv
 import logging
+import glob
 import argparse
+import numpy as np
+import matplotlib.pyplot as plt
 import magnitude
 from constants import *
 
 TSV_FILE_DELIM = '\t'
 
-MJD_COL = 3
-MAG_COL = 4
-ERR_COL = 5
+MAG_MARGIN_MULT = 0.5
+MJD_MARGIN_MULT = 0.05
 
-NO_VALUE = "NA"
-        
-class LightCurves(object):
-    """Class to generate light curves from the magnitudes calculated for the
-    objects of interest.
+def read_all_mag(star_name, file_name):
+    """Read the contents of a file with all the magnitudes related to a star
+    and the rest of star of its field.
     
-    Two types of light curves are generated. One type of curves shows 
-    differential magnitudes and the other one shows magnitudes calibrated.
-    
-    """
-
-def read_input_files(file_names, calculate_median):
-    """Read a set of csv file whose names have been received as parameters.
-    
-    All the data read from the files is returned as a list that contains
-    lists, each of these lists with data read from a file.
-        
     Args:
-        file_names: The names of the files to read.
-        calculate_median: True if the median may be calculated.
+        star_name: Name of the star.
+        file_name: Name of the file to read.
     
     Returns:  
         The data read in the files.  
         
     """
     
-    files_data = []
+    all_mags = []
     
-    # Iterate over the file names.
-    for fn in file_names:
-        
-        try:
-        
-            data = []
+    try:            
+        with open(file_name, 'rb') as fr:
+            reader = csv.reader(fr, delimiter=TSV_FILE_DELIM)
             
-            # Open current file.
-            with open(fn, 'rb') as fr:
-                reader = csv.reader(fr, delimiter=CSV_FILE_DELIM)  
-                
-                # Skip header.
-                next(reader)      
-            
-                # Process each row.
-                for row in reader:    
-                    # Check if the row is valid.
-                    if len(row) > 0:            
-                        # Check if the median may be calculated.                            
-                        if calculate_median:
-                                        
-                            new_row = []
-                                                   
-                            # For each data, each row, add all the items but for
-                            # the column that contains the MJD, take only the 
-                            # integer part of the MJD. All the data with the same 
-                            # value in this part will be used to calculate a median 
-                            # value.
-                            for i in range(len(row)):
-                                if i == MJD_COL:
-                                    item = row[i]
-                                    new_row.extend([item[:item.find('.')]])
-                                else:
-                                    new_row.extend([row[i]])   
-                                      
-                            data.append(new_row)
-                        else:
-                            data.append(row)  
-                        
-                files_data.append(data) 
-                
-        except IOError as ioe:
-            logging.error("Reading magnitude file: '%s'" % (fn))             
-            
-        logging.debug("File " + fn + " read " + str(len(data)) + " lines.")
+            # Process all the instrumental magnitudes in the file.
+            for row in reader: 
+                all_mags.append(row)                                                          
+                                
+    except IOError as ioe:
+        logging.error("Reading magnitudes file: '%s'" % (file_name))  
 
-    return files_data
+    return all_mags  
 
-def generate_curves(stars, stars_mag):
+
+def compose_data_to_plot(all_mags):
+    """From the data received compose a data structure in a format easy to plot.
+    
+    Args:
+        all_mags: All the composed_values of magnitudes for a star and its 
+        field's stars.
+        
+    Returns:
+        Values composed and the filters found in the data.
+    """
+    
+    composed_values = []
+    
+    filters = set()
+    
+    # Compose the values to plot.
+    for m in all_mags:
+        
+        mjd = float(m[0])
+        
+        filter = m[1]
+        filters.add(filter)
+        
+        if m[2] != INDEF_VALUE and m[3] != INDEF_VALUE:
+            
+            # Magnitude and error for the star.
+            mag = float(m[2])
+            err = float(m[3])
+            
+            # Sum of the magnitudes and errors for the rest of stars in the 
+            # field.
+            sum_other_mag = 0.0
+            err_other_mag = 0.0
+            
+            # sum the values for the rest of magnitudes and their errors.
+            count = 0
+            for i in range(4, len(m), 2):                
+                if m[i] != INDEF_VALUE and m[i + 1] != INDEF_VALUE:
+                    sum_other_mag += float(m[i])
+                    err_other_mag += float(m[i + 1])
+                    count += 1
+            
+            # If there isn't any value for other star in the field the 
+            # difference is not calculated for this value.
+            if count > 0:
+                # Get a mean value for the sum of the rest of magnitudes and 
+                # errors.
+                sum_other_mag /= count
+                err_other_mag /= count
+                composed_values.append([filter, mjd, mag - sum_other_mag, 
+                                        err + err_other_mag])
+                
+    return composed_values, filters
+
+def plot_star_diff_curve(star_name, values, filters):
+    """Plot a curve of differential magnitudes. 
+    
+    Args:
+        star_name: Name of the star.
+        values: Values to plot.
+        filters: Filters of the values.
+    """
+    
+    # Plot by filter.
+    for f in filters:      
+        values_filter = [v[1:] for v in values if v[0] == f]
+        
+        # Sort by MDJ.
+        values_ord = sorted(values_filter, key=lambda a_entry: a_entry[0])
+
+        # Create a matrix to get the values by columns.        
+        mat = np.matrix(values_ord)
+        
+        mjd = list(np.array(mat[:,0]).reshape(-1,))
+        mag = list(np.array(mat[:,1]).reshape(-1,))
+        err = list(np.array(mat[:,2]).reshape(-1,))             
+        
+        # Plot.
+        plt.figure()
+        plt.errorbar(mjd, mag, yerr=err, c='k',
+                     fmt='.', ecolor='k', capthick=2, ls='-')
+
+        # MJD axis.
+        mjd_min_val = np.min(mjd)
+        mjd_max_val = np.max(mjd)        
+        mjd_dif_val = mjd_max_val - mjd_min_val       
+        
+        mjd_margin = MJD_MARGIN_MULT * mjd_dif_val
+        
+        # Magnitude axis.
+        mag_min_val = np.min(mag)
+        mag_max_val = np.max(mag)        
+        mag_dif_val = mag_max_val - mag_min_val     
+        
+        mag_margin = MAG_MARGIN_MULT * mag_dif_val
+        
+        # The y axis is inverted to, greater magnitude is less brighter.
+        plt.axis([mjd_min_val - mjd_margin,
+                  mjd_max_val + mjd_margin,
+                  mag_max_val + mag_margin, 
+                  mag_min_val - mag_margin])
+        
+        plt.title("%s - %s filter" % (star_name, f))
+        plt.xlabel("MJD")
+        plt.ylabel("%s mag. - mean(ref. stars mag.)" % star_name)         
+        
+        plt.show()     
+        
+def plot_diff_magnitude(stars, target_dir):
+    """Read the magnitudes of the stars from files and plot a differential 
+    light curve.
+    
+    Args:
+        stars: List of stars.
+        target_dir: Directory of the files to read and where to write the plots.
+        
+    """
+    
+    # Get the list of file with magnitudes ignoring hidden files.
+    mag_files_full_path = \
+                    [f for f in glob.glob(os.path.join(target_dir, "*%s.%s" %
+                                                       (ALL_INST_MAG_SUFFIX,
+                                                        TSV_FILE_EXT))) \
+                    if not os.path.basename(f).startswith('.')]
+                    
+    # For each file with magnitudes plot the difference.
+    for f in mag_files_full_path:
+        
+        file_name = os.path.basename(f)
+        star_name = file_name[:file_name.find(ALL_INST_MAG_SUFFIX)]
+        
+        # Check that the star of this file is in the list of stars.
+        if stars.has_star(star_name):
+            all_mags = read_all_mag(star_name, f)
+            
+            values, filters = compose_data_to_plot(all_mags)
+            
+            if len(values) > 1:
+                plot_star_diff_curve(star_name, values, filters)
+
+def generate_curves(stars, target_dir):
     """Generate curves from the magnitudes files of the stars received.
     
     Args:
         stars: List of stars.
-        stars_mag: The magnitudes calculated.
+        target_dir: Directory of the files to read and where to write the plots.
         
-    """
-    
-    if stars_mag is None:
-        # TODO
-        pass
+    """    
+        
+    plot_diff_magnitude(stars, target_dir)

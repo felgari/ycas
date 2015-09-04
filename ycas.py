@@ -130,7 +130,7 @@ def pipeline(progargs):
     # generates a light curves.
     if progargs.light_curves_requested or progargs.all_steps_requested:
         logging.info("* Step 6 * Generating light curves.")
-        curves.generate_curves(stars, mag)
+        curves.generate_curves(stars, progargs.target_dir)
         anything_done = True
     else:
         logging.info("* Step 6 * Skipping the generation of light curves. Not requested.")        
