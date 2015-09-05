@@ -39,7 +39,7 @@ import yargparser
 import shutil
 import pyfits
 import textfiles
-import fitsheader
+from fitsheader import *
 from fitfiles import *
 from constants import *
 
@@ -294,7 +294,7 @@ class OrganizeFIT(object):
             
         return file_header    
 
-    def analyze_and_copy_file(self, path, filename):
+    def analyze_and_copy_file(self, path, filename, images_dir):
         """Establish the type of the file and copies it to the appropriate 
         directory. 
         
@@ -306,8 +306,14 @@ class OrganizeFIT(object):
         
         Args:     
             path: Path where is the file.         
-            filename: Name of the file to analyze.  	
+            filename: Name of the file to analyze.  
+            images_dir: Directory where to copy the images.	
         """
+        
+        target_dir = os.path.join(self._progargs.target_dir, images_dir)        
+        
+        logging.debug("Analyzing files in %s to be copied to %s" % 
+                      (path, target_dir))
         
         file_destination = None
         
@@ -329,12 +335,6 @@ class OrganizeFIT(object):
             file_header = self.update_image_type(destiny_filename, file_header)
     
         if file_header is not None:
-            
-            # Get the directory where the directories for the different types
-            # of files are going to be created.
-            images_dir = os.path.basename(os.path.normpath(path))
-            
-            target_dir = os.path.join(self._progargs.target_dir, images_dir)
     
             # If the file is a bias.
             if file_header[self._header_fields.image_type].strip() == \
@@ -721,6 +721,41 @@ class OrganizeFIT(object):
                 dir_to_rm = os.path.join(target_path, subdir) 
                 
                 self.remove_not_empty_dir(dir_to_rm)
+                
+    def get_mjd_at_noon(self, path):
+        """Get the Modified Julian Day minus 0.5, this is, the day begining at 
+        noon, as in JD, so all the observations of a night have the same number.
+        
+        Args:
+            path: Path to analyze.
+        
+        Returns:
+            The Julian Day of the files in the path indicated.
+        """
+        
+        mjd_at_noon = 0
+        
+        for file in os.listdir(path):
+            
+            if file.endswith(FIT_FILE_EXT):
+                
+                file_full_path = os.path.join(path, file)
+                
+                header_fields = get_fit_fields(file_full_path, 
+                                               [self._header_fields.mjd])
+                
+                if self._header_fields.mjd in header_fields.keys():
+                    
+                    mjd_f = float(header_fields[self._header_fields.mjd])
+                    
+                    mjd_at_noon = int(mjd_f - 0.5)
+                    
+                    break
+                
+        if mjd_at_noon == 0:
+            logging.error("MJD cannot be determined for path: %s" % path)         
+                
+        return mjd_at_noon
             
     def process_directories(self):
         """This function walks the directories searching for image files,
@@ -742,6 +777,13 @@ class OrganizeFIT(object):
                     logging.debug("Ignoring directory '%s', already organized."
                                   % (path))
                 else:
+                    # Get the name for the target directory where to copy the
+                    # files.
+                    mjd_at_noon = self.get_mjd_at_noon(path)
+                    
+                    # Sort to get a processing easy to follow.
+                    files.sort()
+                    
                     # For each file move it to he proper directory.
                     for fn in files:
                         # The extension is the final string of the list 
@@ -753,7 +795,8 @@ class OrganizeFIT(object):
                             logging.debug("Analyzing: %s" %
                                           (os.path.join(path, fn)))
                             
-                            self.analyze_and_copy_file(path, fn)
+                            self.analyze_and_copy_file(path, fn, 
+                                                       str(mjd_at_noon))
                         else:
                             logging.debug("Ignoring file: %s" % (fn))
 
