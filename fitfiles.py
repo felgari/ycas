@@ -89,8 +89,9 @@ def get_fit_fields(fit_file_name, fields):
         # For all the header fields of interest.
         for f in fields:
             
-            # Retrieve and store the value of this field.
-            header_fields[f] = header[f]
+            # Retrieve and store the value of this field if possible.
+            if f in header.keys():
+                header_fields[f] = header[f]
         
         hdulist.close()
         
