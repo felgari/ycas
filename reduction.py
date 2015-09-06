@@ -215,35 +215,24 @@ def generate_all_masterbias(target_dir, bias_dir_name):
                 if os.path.exists(masterbias_name) == True:
                     logging.debug("Masterbias file exists '%s', so resume to next directory." % 
                                   (masterbias_name))
-                else:
-                    
-                    # Save current work directory and change to the directory
-                    # of the files as a long list of files generates an error
-                    # in imcombine. The removing of the path shortens the list.
-                    work_dir = os.getcwd()                    
-                    os.chdir(full_dir)
-                    
-                    only_files_names = [ os.path.split(f)[1] for f in files]
-                    
+                else:                                        
                     # Put the files list in a string.
-                    list_of_files = ",".join(only_files_names)
+                    list_of_files = ",".join(files)
                     
                     #show_bias_files_statistics(list_of_files)
                         	
                     # Combine all the bias files.
                     try:
-                        logging.debug("Creating bias file: %s" %
-                                      (MASTERBIAS_FILENAME))
+                        logging.debug("Creating bias file: %s" % 
+                                    masterbias_name)
+                                    
                         iraf.imcombine(list_of_files, masterbias_name, Stdout=1)
-                        
+                                                
                     except iraf.IrafError as exc:
                         logging.error("Error executing imcombine combining " + \
                                       "bias with: %s" %
                                       (list_of_files))  
-                        logging.error("Iraf error is: %s" % (exc))   
-                        
-                    # After imcombine change to original working directory.
-                    os.chdir(work_dir)                        
+                        logging.error("Iraf error is: %s" % (exc))                        
 
 def generate_masterdark(logging, dark_files, masterdark_name, dark_dir_name):
     """Generates a masterdark from the dark files received.
@@ -291,18 +280,10 @@ def generate_masterdark(logging, dark_files, masterdark_name, dark_dir_name):
                 # copy of dark files.
                 shutil.copyfile(files[i], work_files[i])
         
-        logging.debug("Creating masterdark file: %s" % (masterdark_name))
-        
-        # Save current work directory and change to the directory
-        # of the files as a long list of files generates an error
-        # in imcombine. The removing of the path shortens the list.
-        work_dir = os.getcwd()                    
-        os.chdir(path)
-        
-        only_files_names = [ os.path.split(f)[1] for f in work_files]      
+        logging.debug("Creating masterdark file: %s" % (masterdark_name))    
         
         # Put the work dark files list in a string to be used with imcombine.
-        string_of_work_dark_files = ",".join(only_files_names)
+        string_of_work_dark_files = ",".join(work_files)
         
         try:
             iraf.imcombine(string_of_work_dark_files, masterdark_name, Stdout=1)
@@ -325,9 +306,6 @@ def generate_masterdark(logging, dark_files, masterdark_name, dark_dir_name):
                           (string_of_work_dark_files))
             
             logging.error("Iraf error is: %s" % (exc))
-            
-        # After imcombine, change to the original working directory.
-        os.chdir(work_dir)
             
     except iraf.IrafError as exc:
         logging.error("Error in imarith. Subtracting masterbias %s to %s" %
@@ -393,13 +371,7 @@ def normalize_flats(files):
     Args: 
         files: The names of the files corresponding to the flat images.
     
-    Returns:    
-        The list of file names related to the normalized images.
-    
     """
-    
-    # The output list of normalized files is created.
-    list_of_norm_flat_files = []
     	
     for fl in files:
         # Get the 'work' and 'normalized' names for the flat files to process.
@@ -417,9 +389,6 @@ def normalize_flats(files):
                                 
                 # Normalize flat dividing flat by its mean value.
                 iraf.imarith(work_file, '/', mean_value, norm_file)
-                
-                # If success, add the file to the list of normalized flats.
-                list_of_norm_flat_files.extend([norm_file])
     			
             except iraf.IrafError as exc:
                 logging.error("Error executing imarith: normalizing flat image: %s" %
@@ -435,103 +404,87 @@ def normalize_flats(files):
             logging.error("Error executing imstat: getting stats for flat image: %s" %
                           (fl))
             logging.error("Iraf error is: %s" % (exc))       
-    
-    return list_of_norm_flat_files
 
-def generate_masterflat(path, flat_files, masterflat_name, bias_dir_name):
-    """Generates a master flat from the flat files received.
+def reduce_flats(flat_files, masterbias_name):
+    """Reduce the flat files received subtracting the masterbias indicated.
     
     Args:
-        path: Full source path of the flat files.
-        files: List of flat files.
-        masterflat_name: The name of the masterflat file.
-        bias_dir_name: Name of the directories that contain bias images
+        flat_files: The flat files to reduce
         
     """
     
-    # Check that there is not any work file in the list, it could exists if a
-    # previous execution was terminated just before removing a work file.
-    work_files_to_remove = \
-        [f for f in flat_files if f.find(WORK_FILE_SUFFIX) > 0 ]
+    for ff in flat_files: 
+        
+        work_file = ff.replace(".fit", WORK_FILE_SUFFIX)
     
-    # The files to use are those that are not previous work files.    
-    files = [f for f in flat_files if f.find(WORK_FILE_SUFFIX) < 0 ]   
+        try:
+            # Create the work file subtracting the masterbias from the flat.
+            iraf.imarith(ff, IMARITH_SUBTRACT, masterbias_name, work_file)
+                
+        except iraf.IrafError as exc:
+            logging.error("Error in imarith. Subtracting masterbias to %s" % ff)
+
+def remove_temporary_files(path):
+    """Remove the work files in the path indicated.
     
-    # Create list of names of the work flat files.
-    work_files = [s.replace("." + FIT_FILE_EXT, WORK_FILE_SUFFIX) for s in files]
+    Args:
+        path: Path where to look for work files to remove.
+        
+    """
     
-    # Put the work files list in a string to be used with imarith.
-    string_of_work_flat_files = ",".join(work_files)
+    for file in os.listdir(path):
+        
+        if file.endswith(WORK_FILE_SUFFIX) or file.endswith(NORM_FILE_SUFFIX):
+            
+            try:
+                full_file_name = os.path.join(path, file)
+                os.remove(full_file_name)            
+                                
+            except OSError as oe:            
+                logging.error("OSError removing temporary file: %s" % 
+                              (full_file_name)) 
     
-    # Put the flat files list in a string to be used with imarith.
-    string_of_flat_files = ",".join(files)   
+def generate_masterflat(path, flat_files, masterflat_name, masterbias_name):
+    """Generates a master flat from the flat files_to_flat received.
     
-    # Get the masterbias file name.
-    masterbias_name = os.path.join(path, 
-                                   os.path.join("..", "..", bias_dir_name),
-                                   MASTERBIAS_FILENAME)
+    Args:
+        path: Full source path of the flat files_to_flat.
+        files_to_flat: List of flat files_to_flat.
+        masterflat_name: The name of the masterflat file.
+        masterbias_name: The name of the masterbias file.
+        
+    """
+    
+    logging.debug("Creating masterflat: %s" % (masterflat_name))   
+    
+    # Check that there is not any previous temporary file in the path, 
+    # it could exists if a previous execution was terminated just before 
+    # removing them.
+    remove_temporary_files(path) 
+    
+    # Get the fit files in the directory, those should be only the flat ones.
+    flat_files = glob.glob(os.path.join(path, "*." + FIT_FILE_EXT))
+    
+    reduce_flats(flat_files, masterbias_name)
+    
+    # Normalize the flats passing the list of flat files, 
+    normalize_flats(flat_files) 
+    
+    norm_files = [os.path.join(path,f) for f in os.listdir(path) if f.endswith(NORM_FILE_SUFFIX)]
+
+    # Put the normalized flat files list in a string to be used with 
+    # imcombine. 
+    string_of_norm_files = ",".join(norm_files)
     
     try:
-        # Check if masterbias exists.
-        if os.path.exists(masterbias_name):
-            # Create the work files subtracting bias from flat.
-            iraf.imarith(string_of_flat_files, IMARITH_SUBTRACT, masterbias_name,
-                         string_of_work_flat_files)
-        else:
-            for i in range(len(files)):
-                # If there is not a masterbias create the work files as a 
-                # copy of original files.
-                shutil.copyfile(files[i], work_files[i])
-        
-        logging.debug("Normalizing flat files for: %s" % (masterflat_name))
-        
-        # Normalize the flats passing the list of flat files, 
-        # not the flat files!!!!.
-        norm_flat_files = normalize_flats(files)
-        
-        # After creating the normalized files, remove the work files in
-        # current to save storage and void processing them again as 
-        # different flat files.
-        try:
-            for wf in work_files:
-                os.remove(wf)
-                
-            # If there was any previous work file in the directory.
-            for wf in work_files_to_remove:
-                os.remove(wf)
-                
-        except OSError as oe:            
-            logging.error("OSError removing work flat is: %s" % (oe))
-            
-        logging.debug("Creating masterflat: %s" % (masterflat_name))
-        
-        # Put the normalized flat files list in a string to be used with 
-        # imcombine.
-        string_of_norm_flat_files = ",".join(norm_flat_files)
-        
-        try:
-            iraf.imcombine(string_of_norm_flat_files, masterflat_name, Stdout=1)
-        
-        except iraf.IrafError as exc:
-            logging.error("Error executing imcombine combining flats with: %s" %
-                          (string_of_work_flat_files))
-            
-            logging.error("Iraf error is: %s" % (exc))
-            
-        except OSError as oe:
-            logging.error("OSError removing normalized flat is: %s" % (oe))
-            
-        finally:
-            # After calculating the masterflat, remove the normalized files
-            # to save storage space.
-            for nff in norm_flat_files:
-                os.remove(nff) # Combine all the flat files.            
-            
+        iraf.imcombine(string_of_norm_files, masterflat_name, Stdout=1)
+    
     except iraf.IrafError as exc:
-        logging.error("Error in imarith. Subtracting masterbias %s to %s" %
-                      (masterbias_name, string_of_flat_files))
+        logging.error("Error executing imcombine combining flats with: %s" %
+                      (string_of_norm_files))
         
-        logging.error("Iraf error is: %s" % (exc))
+    finally:                
+        remove_temporary_files(path)
 
 def generate_all_masterflats(target_dir, flat_dir_name, dark_dir_name,
                              bias_dir_name):
@@ -565,35 +518,33 @@ def generate_all_masterflats(target_dir, flat_dir_name, dark_dir_name,
             # Check if current directory is for flats.
             if split_path[-2] == flat_dir_name:
                 logging.debug("Found a directory for 'flat': %s" % (path))
+                
+                # Get the masterbias file name.
+                masterbias_name = os.path.join(path,"..", "..", bias_dir_name,
+                                               MASTERBIAS_FILENAME)
 
-                # Get the list of files.
-                files = glob.glob(os.path.join(path, WILDCARD_FIT_FILE))
-                
-                logging.debug("Found %d flat files" % (len(files)))
-                
-                # Buid the masterflat file name.
-                masterflat_name = os.path.join(path, MASTERFLAT_FILENAME) 
-                
-                # Check if masterflat already exists.
-                if os.path.exists(masterflat_name) == True:
-                    logging.warning("Masterflat file exists, %s so resume to next directory." %
-                                    (masterflat_name))
+                # Create the masterflat only if it can be reduced with a bias,
+                if os.path.exists(masterbias_name):                   
+                    # Buid the masterflat file name.
+                    masterflat_name = os.path.join(path, MASTERFLAT_FILENAME) 
+                    
+                    # Check if masterflat already exists.
+                    if os.path.exists(masterflat_name) == True:
+                        logging.warning("Masterflat file exists so resume " + 
+                                        "to next directory.")
+                    else:    
+                        # Get the list of files.
+                        files = glob.glob(os.path.join(path, WILDCARD_FIT_FILE))
+                    
+                        logging.debug("Found %d flat files" % (len(files)))
+                                            
+                        generate_masterflat(path, files, 
+                                            masterflat_name,
+                                            masterbias_name)  
                 else:
-                    # Save current work directory and change to the directory
-                    # of the files as a long list of files generates an error
-                    # in imcombine. The removing of the path shortens the list.                    
-                    work_dir = os.getcwd()                    
-                    os.chdir(path)
+                    logging.debug("There isn't a masterbias, " +
+                                  "so the masterflat is not created.")                    
                     
-                    only_files_names = [ os.path.split(f)[1] for f in files]                                        
-                    
-                    generate_masterflat(".", only_files_names, 
-                                        MASTERFLAT_FILENAME,
-                                        bias_dir_name)      
-                    
-                    # After imcombine change to original working directory.
-                    os.chdir(work_dir)                                          
-
 def reduce_image(masterdark_name, masterbias_name, masterflat_name,
                  source_file_name, final_image_name):
     """Reduce an image.
