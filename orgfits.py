@@ -308,6 +308,10 @@ class OrganizeFIT(object):
         Args:     
             path: Path where is the file.         
             filename: Name of the file to analyze.  
+            
+        Returns:
+            The name of the target directory created, if any.
+            
         """        
         
         file_destination = None
@@ -440,6 +444,8 @@ class OrganizeFIT(object):
             # Update the name of the star in header of the file if necessary.
             if star_name is not None:
                 self.update_star_name(file_destination, star_name)
+                
+        return target_dir
             
     def ignore_current_directory(self, dir):
         """ Determines if current directory should be ignored.
@@ -495,7 +501,7 @@ class OrganizeFIT(object):
                 for f in files:
                     path_file = os.path.join(path,f)
                     
-                    bin = fitfiles.get_file_binning(path_file)
+                    bin = get_file_binning(path_file)
         
                 # If the binning has been read.
                 if bin is not None:
@@ -517,6 +523,7 @@ class OrganizeFIT(object):
             binnings: List of binnings to consider.
         
         """
+        print binnings
         
         # Walk from current directory.
         for path, dirs, files in os.walk(data_path):
@@ -528,7 +535,8 @@ class OrganizeFIT(object):
                 for f in files:
                     path_file = os.path.join(path, f)
                     
-                    bin = fitfiles.get_file_binning(path_file)
+                    bin = get_file_binning(path_file)
+                    print "file %s binning %s" % (path_file, bin)
         
                     # If the binning has been read.
                     if bin is not None:
@@ -581,7 +589,7 @@ class OrganizeFIT(object):
         """
         
         data_path = os.path.join(path, self._progargs.light_directory)
-        
+        print "DATAPATH: " + data_path
         # If current path has data directory, process bias and flats
         if os.path.exists(data_path):
         
@@ -776,7 +784,9 @@ class OrganizeFIT(object):
                 if self.ignore_current_directory(path):
                     logging.debug("Ignoring directory '%s', already organized."
                                   % (path))
-                else:                    
+                else:              
+                    target_dir = ""
+                          
                     # Sort to get a processing easy to follow.
                     files.sort()
                     
@@ -791,16 +801,12 @@ class OrganizeFIT(object):
                             logging.debug("Analyzing: %s" %
                                           (os.path.join(path, fn)))
                             
-                            self.analyze_and_copy_file(path, fn)
+                            target_dir = self.analyze_and_copy_file(path, fn)
                         else:
-                            logging.debug("Ignoring file: %s" % (fn))
-
-                # Check the directory to remove bias and flat
-                # with a different binning of data images.
-                images_dir = os.path.basename(os.path.normpath(path))                
-                target_dir = os.path.join(self._progargs.target_dir, images_dir)            
-                
-                self.remove_images_according_to_binning(target_dir)
+                            logging.debug("Ignoring file: %s" % (fn))   
+                            
+                    if target_dir:
+                        self.remove_images_according_to_binning(target_dir)
 
         # Remove directories with files that are incomplete to get data reduced,
         #self.remove_dir_with_incomplete_data(self._progargs.target_dir)     
