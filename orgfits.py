@@ -523,7 +523,6 @@ class OrganizeFIT(object):
             binnings: List of binnings to consider.
         
         """
-        print binnings
         
         # Walk from current directory.
         for path, dirs, files in os.walk(data_path):
@@ -536,7 +535,6 @@ class OrganizeFIT(object):
                     path_file = os.path.join(path, f)
                     
                     bin = get_file_binning(path_file)
-                    print "file %s binning %s" % (path_file, bin)
         
                     # If the binning has been read.
                     if bin is not None:
@@ -589,7 +587,7 @@ class OrganizeFIT(object):
         """
         
         data_path = os.path.join(path, self._progargs.light_directory)
-        print "DATAPATH: " + data_path
+
         # If current path has data directory, process bias and flats
         if os.path.exists(data_path):
         
