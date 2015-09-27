@@ -67,7 +67,7 @@ def read_cfg_file(file_name):
                             % (row, file_name)  
                
     except IOError as ioe:
-        print "Error reading configuration file: %s" % (file_name)
+        print "Error reading configuration file: %s" % file_name
         
         # Return an empty set.
         cfg_params = set()   

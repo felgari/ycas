@@ -73,7 +73,7 @@ def get_fit_fields(fit_file_name, fields):
         
     """
     
-    logging.debug("Extracting header fields for: %s" % (fit_file_name))
+    logging.debug("Extracting header fields for: %s" % fit_file_name)
     
     # Create a dictionary to retrieve easily the appropriate list
     # using the name of the object.
@@ -103,7 +103,7 @@ def get_fit_fields(fit_file_name, fields):
         logging.warning("Header field '%s' not found in file %s." %
                         (f,fit_file_name))   
     except:
-        logging.error("Unknown error reading fit file: %s." % (fit_file_name))             
+        logging.error("Unknown error reading fit file: %s." % fit_file_name)             
         
     # If the object has not the field for tha name, add it with the default 
     # value.
@@ -185,8 +185,8 @@ def file_is_type(header_fields, filename_path, field_type, type_string):
                 if field_value == field_type:
                     is_type = True
         except KeyError as ke:
-            logging.warning("Header field '" + IMAGE_TYPE_FIELD_NAME + \
-                            "' not found in file " + filename_path)       
+            logging.warning("Header field '%s' not found in file %s" %
+                            (IMAGE_TYPE_FIELD_NAME, filename_path))     
         
     # If the header field has not been processed.
     if not field_processed:
@@ -209,9 +209,9 @@ def file_is_type(header_fields, filename_path, field_type, type_string):
     # If the type has been identified, show the method used.
     if is_type:      
         if field_processed:
-            logging.debug("%s type using file headers." % (filename))
+            logging.debug("%s type using file headers." % filename)
         else:
-            logging.warning("%s type using file name." % (filename))        
+            logging.warning("%s type using file name." % filename)        
     
     return is_type       
 
@@ -286,9 +286,9 @@ def get_file_binning(fit_file_name):
                       (fit_file_name, ioe))
     except KeyError as ke:
         logging.warning("Header field for binning not found in file: '%s'" %
-                        (fit_file_name))   
+                        fit_file_name)   
     except:
-        logging.error("Unknown error reading fit file: '%s'" % (fit_file_name))             
+        logging.error("Unknown error reading fit file: '%s'" % fit_file_name)             
     
     return bin
 
@@ -326,7 +326,7 @@ def get_fit_table_data(fit_table_file_name):
             n += 1
         
     except IOError as ioe:
-        logging.error("Opening file: '%s'." % (fit_table_file_name))            
+        logging.error("Opening file: '%s'." % fit_table_file_name)            
     
     return ldata
 
@@ -357,7 +357,7 @@ def get_header_value(file_name, field):
                       (value, file_name))
         
     except IOError as ioe:
-        logging.error("Opening file: '%s'." % (file_name))    
+        logging.error("Opening file: '%s'." % file_name)    
               
     except KeyError as ke:
         logging.error("Field '%s' not found in file '%s'." %
